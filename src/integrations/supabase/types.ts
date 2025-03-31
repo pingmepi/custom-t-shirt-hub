@@ -9,7 +9,224 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      addresses: {
+        Row: {
+          city: string
+          country: string
+          created_at: string | null
+          id: string
+          is_default: boolean | null
+          label: string | null
+          line1: string
+          line2: string | null
+          postal_code: string
+          state: string
+          user_id: string
+        }
+        Insert: {
+          city: string
+          country?: string
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          label?: string | null
+          line1: string
+          line2?: string | null
+          postal_code: string
+          state: string
+          user_id: string
+        }
+        Update: {
+          city?: string
+          country?: string
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          label?: string | null
+          line1?: string
+          line2?: string | null
+          postal_code?: string
+          state?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      designs: {
+        Row: {
+          created_at: string | null
+          design_data: Json | null
+          final_user_image_url: string | null
+          id: string
+          initial_model_image_url: string | null
+          name: string
+          preview_url: string | null
+          question_responses: Json | null
+          user_id: string | null
+          user_style_metadata: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          design_data?: Json | null
+          final_user_image_url?: string | null
+          id?: string
+          initial_model_image_url?: string | null
+          name?: string
+          preview_url?: string | null
+          question_responses?: Json | null
+          user_id?: string | null
+          user_style_metadata?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          design_data?: Json | null
+          final_user_image_url?: string | null
+          id?: string
+          initial_model_image_url?: string | null
+          name?: string
+          preview_url?: string | null
+          question_responses?: Json | null
+          user_id?: string | null
+          user_style_metadata?: Json | null
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          color: string
+          created_at: string | null
+          design_id: string | null
+          fulfillment_type: string | null
+          id: string
+          order_status: string
+          payment_id: string | null
+          payment_status: string
+          quantity: number
+          shipping_address: Json
+          size: string
+          user_id: string | null
+          vendor_id: string | null
+          vendor_order_ref: string | null
+        }
+        Insert: {
+          color: string
+          created_at?: string | null
+          design_id?: string | null
+          fulfillment_type?: string | null
+          id?: string
+          order_status: string
+          payment_id?: string | null
+          payment_status: string
+          quantity?: number
+          shipping_address: Json
+          size: string
+          user_id?: string | null
+          vendor_id?: string | null
+          vendor_order_ref?: string | null
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          design_id?: string | null
+          fulfillment_type?: string | null
+          id?: string
+          order_status?: string
+          payment_id?: string | null
+          payment_status?: string
+          quantity?: number
+          shipping_address?: Json
+          size?: string
+          user_id?: string | null
+          vendor_id?: string | null
+          vendor_order_ref?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_design_id_fkey"
+            columns: ["design_id"]
+            isOneToOne: false
+            referencedRelation: "designs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          full_name: string | null
+          id: string
+          phone_number: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          full_name?: string | null
+          id: string
+          phone_number?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          phone_number?: string | null
+        }
+        Relationships: []
+      }
+      questions: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          options: Json | null
+          question_text: string
+          type: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          options?: Json | null
+          question_text: string
+          type: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          options?: Json | null
+          question_text?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      sample_images: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string
+          is_featured: boolean | null
+          title: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url: string
+          is_featured?: boolean | null
+          title: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string
+          is_featured?: boolean | null
+          title?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
