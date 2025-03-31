@@ -1,6 +1,8 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Question } from "@/lib/types";
@@ -28,9 +30,8 @@ const MOCK_QUESTIONS: Question[] = [
   },
   {
     id: "q3",
-    type: "color",
+    type: "text", // Changed from color to text to fix the missing text input issue
     question_text: "What's your preferred color palette?",
-    options: ["Monochrome", "Vibrant", "Pastels", "Earth tones", "Neon"],
     is_active: true,
   },
   {
@@ -42,7 +43,7 @@ const MOCK_QUESTIONS: Question[] = [
   },
   {
     id: "q5",
-    type: "text",
+    type: "textarea",
     question_text: "Any additional details you'd like to include in your design?",
     is_active: true,
   },
@@ -69,7 +70,7 @@ const QuestionForm = ({ questions: initialQuestions, onComplete }: QuestionFormP
           } else if (data && data.length > 0) {
             const formattedQuestions: Question[] = data.map(q => ({
               id: q.id,
-              type: q.type as 'text' | 'choice' | 'color',
+              type: q.type as 'text' | 'choice' | 'color' | 'textarea',
               question_text: q.question_text,
               options: q.options as string[] | undefined,
               is_active: q.is_active === true
@@ -175,6 +176,21 @@ const QuestionForm = ({ questions: initialQuestions, onComplete }: QuestionFormP
         </div>
       )}
       
+      {currentQuestion.type === "textarea" && (
+        <div className="mb-6">
+          <Label htmlFor={currentQuestion.id} className="sr-only">
+            {currentQuestion.question_text}
+          </Label>
+          <Textarea
+            id={currentQuestion.id}
+            value={responses[currentQuestion.id] || ""}
+            onChange={(e) => handleTextChange(currentQuestion.id, e.target.value)}
+            placeholder="Type your detailed answer here..."
+            className="w-full min-h-[100px]"
+          />
+        </div>
+      )}
+      
       {currentQuestion.type === "choice" && currentQuestion.options && (
         <div className="mb-6 space-y-2">
           <RadioGroup
@@ -191,19 +207,18 @@ const QuestionForm = ({ questions: initialQuestions, onComplete }: QuestionFormP
         </div>
       )}
       
-      {currentQuestion.type === "color" && currentQuestion.options && (
-        <div className="mb-6 space-y-2">
-          <RadioGroup
+      {currentQuestion.type === "color" && (
+        <div className="mb-6">
+          <Label htmlFor={currentQuestion.id} className="sr-only">
+            {currentQuestion.question_text}
+          </Label>
+          <Input
+            id={currentQuestion.id}
             value={responses[currentQuestion.id] || ""}
-            onValueChange={(value) => handleChoiceChange(currentQuestion.id, value)}
-          >
-            {currentQuestion.options.map((option) => (
-              <div key={option} className="flex items-center space-x-2">
-                <RadioGroupItem value={option} id={`${currentQuestion.id}-${option}`} />
-                <Label htmlFor={`${currentQuestion.id}-${option}`}>{option}</Label>
-              </div>
-            ))}
-          </RadioGroup>
+            onChange={(e) => handleTextChange(currentQuestion.id, e.target.value)}
+            placeholder="Type your color preference here..."
+            className="w-full"
+          />
         </div>
       )}
       

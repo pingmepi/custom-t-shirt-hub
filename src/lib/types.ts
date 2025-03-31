@@ -1,7 +1,7 @@
 
 export interface Question {
   id: string;
-  type: 'text' | 'choice' | 'color';
+  type: 'text' | 'choice' | 'color' | 'textarea';
   question_text: string;
   options?: string[];
   is_active: boolean;

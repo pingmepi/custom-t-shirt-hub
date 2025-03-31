@@ -19,12 +19,22 @@ export function useDesignState(user: any) {
   const [loading, setLoading] = useState(false);
 
   const handleQuestionsComplete = (responses: Record<string, any>) => {
+    if (!responses || Object.keys(responses).length === 0) {
+      toast.error("Please answer all questions before proceeding");
+      return;
+    }
+    
     setQuestionResponses(responses);
     setActiveStep("design");
     toast.success("Preferences saved! Let's customize your design.");
   };
 
   const handleDesignUpdated = (data: any) => {
+    if (!data) {
+      toast.error("Design data is incomplete");
+      return;
+    }
+    
     setDesignData(data);
   };
 
@@ -36,6 +46,11 @@ export function useDesignState(user: any) {
     if (!user) {
       toast.error("Please login or sign up to save your design");
       navigate("/login");
+      return;
+    }
+    
+    if (!designData) {
+      toast.error("Please complete your design before saving");
       return;
     }
     
@@ -69,11 +84,17 @@ export function useDesignState(user: any) {
       navigate("/login");
       return;
     }
+    
+    if (!designData) {
+      toast.error("Please complete your design before adding to cart");
+      return;
+    }
+    
     toast.success("Added to cart successfully!");
   };
 
   const handleNavigateToStep = (step: string) => {
-    if (step === "design" && !Object.keys(questionResponses).length) {
+    if (step === "design" && Object.keys(questionResponses).length === 0) {
       toast.error("Please complete the questions first");
       return;
     }
