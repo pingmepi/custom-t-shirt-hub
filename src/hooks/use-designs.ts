@@ -2,13 +2,14 @@
 import { SampleImage } from "@/types/sample-images";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Database } from "@/types/database.types";
 
 export function useDesigns() {
   return useQuery({
     queryKey: ['designs'],
     queryFn: async (): Promise<SampleImage[]> => {
       const { data, error } = await supabase
-        .from('sample_images')
+        .from<"sample_images", Database["public"]["Tables"]["sample_images"]["Row"]>('sample_images')
         .select('*');
       
       if (error) {
@@ -25,7 +26,7 @@ export function useFeaturedDesigns() {
     queryKey: ['designs', 'featured'],
     queryFn: async (): Promise<SampleImage[]> => {
       const { data, error } = await supabase
-        .from('sample_images')
+        .from<"sample_images", Database["public"]["Tables"]["sample_images"]["Row"]>('sample_images')
         .select('*')
         .eq('is_featured', true);
       
@@ -43,7 +44,7 @@ export function useDesignsByCategory(category: string) {
     queryKey: ['designs', 'category', category],
     queryFn: async (): Promise<SampleImage[]> => {
       const { data, error } = await supabase
-        .from('sample_images')
+        .from<"sample_images", Database["public"]["Tables"]["sample_images"]["Row"]>('sample_images')
         .select('*')
         .eq('category', category);
       
