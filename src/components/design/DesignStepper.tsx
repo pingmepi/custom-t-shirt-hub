@@ -1,5 +1,5 @@
-
 import { CheckCircle } from "lucide-react";
+import { useState } from "react";
 
 interface DesignStepperProps {
   activeStep: string;
@@ -8,12 +8,14 @@ interface DesignStepperProps {
   isDesignComplete: boolean;
 }
 
-const DesignStepper = ({
+const DesignStepper: React.FC<DesignStepperProps> = ({
   activeStep,
   questionResponses,
   designData,
   isDesignComplete,
-}: DesignStepperProps) => {
+}) => {
+  console.log("DesignStepper received designData:", designData); // Log the designData prop
+  console.log("DesignStepper received activeStep:", activeStep); // Log the activeStep prop
   return (
     <div className="mb-8">
       <div className="relative">
@@ -67,6 +69,33 @@ const DesignStepper = ({
             <span className="mt-2 text-sm font-medium">Options</span>
           </div>
         </div>
+      </div>
+    </div>
+  );
+};
+
+// Import the QuestionForm component
+import QuestionForm from "./QuestionForm";
+
+const ParentComponent = () => {
+  const [designData, setDesignData] = useState<any[]>([]);
+
+  const handleFormSubmit = (data: any) => {
+    console.log("Form submitted with data:", data); // Log submitted data
+    setDesignData((prev) => {
+      const updatedData = [...prev, data];
+      console.log("Updated designData array:", updatedData); // Log updated array
+      return updatedData;
+    });
+  };
+      {/* Ensure QuestionForm is imported or defined */}
+      <QuestionForm onSubmit={handleFormSubmit} />
+  return (
+    <div>
+      <QuestionForm onSubmit={handleFormSubmit} />
+      <div className="mt-4">
+        <h2 className="text-lg font-medium">Current Design Data:</h2>
+        <pre className="bg-gray-100 p-4 rounded">{JSON.stringify(designData, null, 2)}</pre>
       </div>
     </div>
   );
