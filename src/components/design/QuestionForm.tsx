@@ -1,10 +1,11 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Question } from "@/lib/types";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 
 interface QuestionFormProps {
   questions: Question[];
@@ -47,9 +48,48 @@ const MOCK_QUESTIONS: Question[] = [
   },
 ];
 
-const QuestionForm = ({ questions = MOCK_QUESTIONS, onComplete }: QuestionFormProps) => {
+const QuestionForm = ({ questions: initialQuestions, onComplete }: QuestionFormProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [responses, setResponses] = useState<Record<string, any>>({});
+  const [questions, setQuestions] = useState<Question[]>(initialQuestions.length ? initialQuestions : MOCK_QUESTIONS);
+  const [loading, setLoading] = useState(initialQuestions.length === 0);
+  
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      if (initialQuestions.length === 0) {
+        try {
+          const { data, error } = await supabase
+            .from('questions')
+            .select('*')
+            .eq('is_active', true);
+          
+          if (error) {
+            console.error("Error fetching questions:", error);
+            setQuestions(MOCK_QUESTIONS);
+          } else if (data && data.length > 0) {
+            const formattedQuestions: Question[] = data.map(q => ({
+              id: q.id,
+              type: q.type as 'text' | 'choice' | 'color',
+              question_text: q.question_text,
+              options: q.options as string[] | undefined,
+              is_active: q.is_active === true
+            }));
+            
+            setQuestions(formattedQuestions);
+          } else {
+            setQuestions(MOCK_QUESTIONS);
+          }
+        } catch (err) {
+          console.error("Failed to fetch questions:", err);
+          setQuestions(MOCK_QUESTIONS);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    
+    fetchQuestions();
+  }, [initialQuestions]);
   
   const activeQuestions = questions.filter(q => q.is_active);
   const currentQuestion = activeQuestions[currentStep];
@@ -69,7 +109,6 @@ const QuestionForm = ({ questions = MOCK_QUESTIONS, onComplete }: QuestionFormPr
   };
   
   const handleNext = () => {
-    // Simple validation
     if (!responses[currentQuestion.id]) {
       return;
     }
@@ -77,7 +116,6 @@ const QuestionForm = ({ questions = MOCK_QUESTIONS, onComplete }: QuestionFormPr
     if (currentStep < activeQuestions.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Last question - complete the form
       onComplete(responses);
     }
   };
@@ -88,8 +126,17 @@ const QuestionForm = ({ questions = MOCK_QUESTIONS, onComplete }: QuestionFormPr
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-green" />
+        <span className="ml-2 text-lg">Loading questions...</span>
+      </div>
+    );
+  }
+
   if (!currentQuestion) {
-    return <div>No questions available</div>;
+    return <div className="p-6 text-center">No questions available. Please try again later.</div>;
   }
   
   return (
