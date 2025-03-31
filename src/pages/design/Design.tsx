@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -35,13 +34,11 @@ const DesignPage = () => {
   };
 
   const handleSaveDesign = () => {
-    // In a real implementation, this would save to the backend
     setIsDesignComplete(true);
     toast.success("Design saved successfully!");
   };
 
   const handleAddToCart = () => {
-    // In a real implementation, this would add the item to cart
     toast.success("Added to cart successfully!");
   };
 
@@ -138,7 +135,10 @@ const DesignPage = () => {
                 Answer a few questions to help us understand what kind of t-shirt design you're looking for.
               </p>
               
-              <QuestionForm onComplete={handleQuestionsComplete} />
+              <QuestionForm 
+                questions={[]} // We pass an empty array to use the default mock questions defined in the component
+                onComplete={handleQuestionsComplete} 
+              />
             </div>
           </div>
         </TabsContent>
@@ -177,7 +177,7 @@ const DesignPage = () => {
               </div>
             </div>
             
-            <div className="bg-white shadow-md rounded-lg overflow-hidden h-fit">
+            <div className="bg-white shadow-md rounded-lg overflow-hidden">
               <div className="p-6">
                 <h3 className="text-lg font-semibold mb-4">Your Preferences</h3>
                 <div className="space-y-2">
