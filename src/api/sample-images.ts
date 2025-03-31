@@ -1,11 +1,10 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { SampleImage } from "@/types/sample-images";
-import { Database } from "@/types/database.types";
 
 export async function fetchSampleImages() {
   const { data, error } = await supabase
-    .from<"sample_images", Database["public"]["Tables"]["sample_images"]["Row"]>("sample_images")
+    .from("sample_images")
     .select("*")
     .order("created_at", { ascending: false });
     
@@ -19,7 +18,7 @@ export async function fetchSampleImages() {
 
 export async function fetchFeaturedSampleImages() {
   const { data, error } = await supabase
-    .from<"sample_images", Database["public"]["Tables"]["sample_images"]["Row"]>("sample_images")
+    .from("sample_images")
     .select("*")
     .eq("is_featured", true)
     .order("created_at", { ascending: false });
@@ -34,7 +33,7 @@ export async function fetchFeaturedSampleImages() {
 
 export async function fetchSampleImagesByCategory(category: string) {
   const { data, error } = await supabase
-    .from<"sample_images", Database["public"]["Tables"]["sample_images"]["Row"]>("sample_images")
+    .from("sample_images")
     .select("*")
     .eq("category", category)
     .order("created_at", { ascending: false });

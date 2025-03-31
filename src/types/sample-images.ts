@@ -5,6 +5,6 @@ export interface SampleImage {
   description: string | null;
   image_url: string;
   category: string | null;
-  is_featured: boolean;
-  created_at: string;
+  is_featured: boolean | null;
+  created_at: string | null;
 }

@@ -2,21 +2,20 @@
 import { SampleImage } from "@/types/sample-images";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Database } from "@/types/database.types";
 
 export function useDesigns() {
   return useQuery({
     queryKey: ['designs'],
     queryFn: async (): Promise<SampleImage[]> => {
       const { data, error } = await supabase
-        .from<"sample_images", Database["public"]["Tables"]["sample_images"]["Row"]>('sample_images')
+        .from('sample_images')
         .select('*');
       
       if (error) {
         throw new Error(`Error fetching designs: ${error.message}`);
       }
       
-      return data || [];
+      return data as SampleImage[] || [];
     }
   });
 }
@@ -26,7 +25,7 @@ export function useFeaturedDesigns() {
     queryKey: ['designs', 'featured'],
     queryFn: async (): Promise<SampleImage[]> => {
       const { data, error } = await supabase
-        .from<"sample_images", Database["public"]["Tables"]["sample_images"]["Row"]>('sample_images')
+        .from('sample_images')
         .select('*')
         .eq('is_featured', true);
       
@@ -34,7 +33,7 @@ export function useFeaturedDesigns() {
         throw new Error(`Error fetching featured designs: ${error.message}`);
       }
       
-      return data || [];
+      return data as SampleImage[] || [];
     }
   });
 }
@@ -44,7 +43,7 @@ export function useDesignsByCategory(category: string) {
     queryKey: ['designs', 'category', category],
     queryFn: async (): Promise<SampleImage[]> => {
       const { data, error } = await supabase
-        .from<"sample_images", Database["public"]["Tables"]["sample_images"]["Row"]>('sample_images')
+        .from('sample_images')
         .select('*')
         .eq('category', category);
       
@@ -52,7 +51,7 @@ export function useDesignsByCategory(category: string) {
         throw new Error(`Error fetching designs by category: ${error.message}`);
       }
       
-      return data || [];
+      return data as SampleImage[] || [];
     },
     enabled: !!category,
   });
