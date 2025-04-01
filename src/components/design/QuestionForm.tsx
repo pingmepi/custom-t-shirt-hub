@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,9 +5,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Question } from "@/lib/types";
-import { ChevronLeft, Loader2 } from "lucide-react";
+import { ChevronLeft, ArrowLeft, ArrowRight, Loader2, CheckCircle } from "lucide-react";
 import { fetchThemeBasedQuestions, incrementQuestionUsage } from "@/services/questionsService";
 import { toast } from "@/hooks/use-toast";
+import { Progress } from "@/components/ui/progress";
 
 interface QuestionFormProps {
   selectedThemes: string[];
@@ -24,6 +24,9 @@ const QuestionForm = ({
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [attemptedSubmit, setAttemptedSubmit] = useState<Record<string, boolean>>({});
+  const [showConfirmation, setShowConfirmation] = useState(false);
   
   // Fetch questions based on selected themes
   useEffect(() => {
@@ -34,12 +37,34 @@ const QuestionForm = ({
         const fetchedQuestions = await fetchThemeBasedQuestions(selectedThemes);
         setQuestions(fetchedQuestions);
         
-        // Initialize answers
+        // Initialize answers with appropriate defaults for each question type
         const initialAnswers: Record<string, any> = {};
         fetchedQuestions.forEach(q => {
-          initialAnswers[q.id] = q.type === 'choice' && q.options?.length ? q.options[0] : '';
+          switch (q.type) {
+            case 'choice':
+              // Use first option as default for choice questions
+              initialAnswers[q.id] = q.options?.length ? q.options[0] : '';
+              break;
+            case 'color':
+              // Default color is black
+              initialAnswers[q.id] = '#000000';
+              break;
+            case 'text':
+            case 'textarea':
+            default:
+              // Text fields start empty but won't be validated until form submission
+              initialAnswers[q.id] = '';
+              break;
+          }
         });
         setAnswers(initialAnswers);
+        
+        // Initialize attemptedSubmit tracking object
+        const initialAttemptedSubmit: Record<string, boolean> = {};
+        fetchedQuestions.forEach(q => {
+          initialAttemptedSubmit[q.id] = false;
+        });
+        setAttemptedSubmit(initialAttemptedSubmit);
       } catch (error) {
         console.error("Error loading questions:", error);
         toast({
@@ -62,29 +87,84 @@ const QuestionForm = ({
     }));
   };
   
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Validate only if the user has attempted to submit this question
+  const validateCurrentQuestion = (questionId: string): boolean => {
+    if (!attemptedSubmit[questionId]) return true;
     
-    // Check if all questions are answered
-    const isValid = Object.values(answers).every(
-      value => value !== undefined && value !== ''
-    );
-    
-    if (!isValid) {
+    const currentAnswer = answers[questionId];
+    if (currentAnswer === undefined || currentAnswer === '') {
       toast({
-        title: "Please answer all questions",
-        description: "All questions require an answer before proceeding.",
+        title: "Please answer this question",
+        description: "An answer is required before proceeding.",
         variant: "destructive"
       });
+      return false;
+    }
+    return true;
+  };
+  
+  const handleNextQuestion = () => {
+    const currentQuestion = questions[currentQuestionIndex];
+    
+    // Mark this question as attempted
+    setAttemptedSubmit(prev => ({
+      ...prev,
+      [currentQuestion.id]: true
+    }));
+    
+    // Validate current question answer
+    if (!validateCurrentQuestion(currentQuestion.id)) {
       return;
     }
     
-    // Increment usage count for each question
-    for (const questionId of Object.keys(answers)) {
-      await incrementQuestionUsage(questionId);
+    // Move to next question
+    setCurrentQuestionIndex(prev => prev + 1);
+  };
+  
+  const handlePreviousQuestion = () => {
+    setCurrentQuestionIndex(prev => Math.max(0, prev - 1));
+  };
+  
+  // Modified to show confirmation instead of submitting right away
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Get the current (last) question
+    const currentQuestion = questions[currentQuestionIndex];
+    
+    // Mark this question as attempted
+    setAttemptedSubmit(prev => ({
+      ...prev,
+      [currentQuestion.id]: true
+    }));
+    
+    // Validate the current question
+    if (!validateCurrentQuestion(currentQuestion.id)) {
+      return;
     }
     
-    onQuestionsComplete(answers);
+    // Show confirmation instead of submitting right away
+    setShowConfirmation(true);
+  };
+  
+  // New function to handle final submission after user confirmation
+  const handleFinalSubmit = async () => {
+    try {
+      // Increment usage count for each question
+      for (const questionId of Object.keys(answers)) {
+        await incrementQuestionUsage(questionId);
+      }
+      
+      // Complete the questions process
+      onQuestionsComplete(answers);
+    } catch (error) {
+      console.error("Error submitting questions:", error);
+      toast({
+        title: "Error",
+        description: "Failed to submit your answers. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
   
   if (isLoading) {
@@ -96,81 +176,202 @@ const QuestionForm = ({
     );
   }
   
+  // If there are no questions, show a message
+  if (questions.length === 0) {
+    return (
+      <div className="text-center py-6">
+        <p>No questions available for the selected themes.</p>
+        <Button 
+          onClick={onBackToThemes}
+          variant="outline"
+          className="mt-4"
+        >
+          <ChevronLeft className="mr-2 h-4 w-4" /> Back to Themes
+        </Button>
+      </div>
+    );
+  }
+  
+  // Get current question
+  const currentQuestion = questions[currentQuestionIndex];
+  const isLastQuestion = currentQuestionIndex === questions.length - 1;
+  const progressPercentage = ((currentQuestionIndex + 1) / questions.length) * 100;
+  
+  // Show confirmation UI if needed
+  if (showConfirmation) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-6 bg-white rounded-lg shadow-sm">
+        <div className="space-y-6">
+          <div className="text-center">
+            <CheckCircle className="mx-auto h-12 w-12 text-brand-green mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Review Your Answers</h3>
+            <p className="text-gray-600">
+              Please review your answers before submitting. Once submitted, you'll move to the design step.
+            </p>
+          </div>
+
+          <div className="border rounded-md p-4 max-h-60 overflow-y-auto">
+            {Object.entries(answers).map(([questionId, answer], idx) => {
+              const question = questions.find(q => q.id === questionId);
+              if (!question) return null;
+              
+              return (
+                <div key={questionId} className="mb-3 pb-3 border-b border-gray-100 last:border-0">
+                  <p className="font-medium">{question.question_text}</p>
+                  <p className="text-gray-700 mt-1">{
+                    typeof answer === 'string' && answer.startsWith('#') 
+                      ? <span className="flex items-center">
+                          <span className="h-4 w-4 rounded-full mr-2" style={{ backgroundColor: answer }}></span>
+                          {answer}
+                        </span>
+                      : answer
+                  }</p>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center justify-between pt-4">
+            <Button 
+              type="button"
+              variant="outline"
+              onClick={() => setShowConfirmation(false)}
+            >
+              Back to Questions
+            </Button>
+            
+            <Button 
+              type="button"
+              className="bg-brand-green hover:bg-brand-darkGreen"
+              onClick={handleFinalSubmit}
+            >
+              Confirm & Continue
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      {questions.map((question) => (
-        <div key={question.id} className="space-y-3">
-          <Label htmlFor={question.id} className="text-lg font-medium">
-            {question.question_text}
+    <div className="mx-auto max-w-2xl px-4 py-6 bg-white rounded-lg shadow-sm">
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Progress indicator */}
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm text-gray-500">
+            <span>Question {currentQuestionIndex + 1} of {questions.length}</span>
+            <span>{Math.round(progressPercentage)}% Complete</span>
+          </div>
+          <Progress value={progressPercentage} className="h-2" />
+        </div>
+        
+        {/* Current question */}
+        <div className="space-y-4 min-h-[200px] px-2">
+          <Label htmlFor={currentQuestion.id} className="text-lg font-medium block mb-4">
+            {currentQuestion.question_text}
           </Label>
           
-          {question.type === 'text' && (
+          {currentQuestion.type === 'text' && (
             <Input
-              id={question.id}
-              value={answers[question.id] || ''}
-              onChange={(e) => handleChange(question.id, e.target.value)}
+              id={currentQuestion.id}
+              value={answers[currentQuestion.id] || ''}
+              onChange={(e) => handleChange(currentQuestion.id, e.target.value)}
               className="w-full"
               placeholder="Type your answer here..."
             />
           )}
           
-          {question.type === 'textarea' && (
+          {currentQuestion.type === 'textarea' && (
             <Textarea
-              id={question.id}
-              value={answers[question.id] || ''}
-              onChange={(e) => handleChange(question.id, e.target.value)}
+              id={currentQuestion.id}
+              value={answers[currentQuestion.id] || ''}
+              onChange={(e) => handleChange(currentQuestion.id, e.target.value)}
               className="w-full min-h-[100px]"
               placeholder="Type your answer here..."
             />
           )}
           
-          {question.type === 'choice' && question.options && (
+          {currentQuestion.type === 'choice' && currentQuestion.options && (
             <RadioGroup
-              value={answers[question.id] || ''}
-              onValueChange={(value) => handleChange(question.id, value)}
-              className="space-y-2"
+              value={answers[currentQuestion.id] || ''}
+              onValueChange={(value) => handleChange(currentQuestion.id, value)}
+              className="space-y-3 py-2"
             >
-              {question.options.map((option) => (
-                <div key={option} className="flex items-center space-x-2">
-                  <RadioGroupItem id={`${question.id}-${option}`} value={option} />
-                  <Label htmlFor={`${question.id}-${option}`}>{option}</Label>
+              {currentQuestion.options.map((option) => (
+                <div 
+                  key={option} 
+                  className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded-md cursor-pointer"
+                  onClick={() => handleChange(currentQuestion.id, option)}
+                >
+                  <RadioGroupItem id={`${currentQuestion.id}-${option}`} value={option} />
+                  <Label 
+                    htmlFor={`${currentQuestion.id}-${option}`}
+                    className="cursor-pointer flex-grow"
+                  >
+                    {option}
+                  </Label>
                 </div>
               ))}
             </RadioGroup>
           )}
           
-          {question.type === 'color' && (
-            <div className="flex items-center space-x-2">
+          {currentQuestion.type === 'color' && (
+            <div className="flex items-center space-x-2 py-2">
               <Input
-                id={`${question.id}-color`}
+                id={`${currentQuestion.id}-color`}
                 type="color"
-                value={answers[question.id] || '#000000'}
-                onChange={(e) => handleChange(question.id, e.target.value)}
+                value={answers[currentQuestion.id] || '#000000'}
+                onChange={(e) => handleChange(currentQuestion.id, e.target.value)}
                 className="w-16 h-10 cursor-pointer"
               />
-              <span className="text-sm">{answers[question.id] || '#000000'}</span>
+              <span className="text-sm">{answers[currentQuestion.id] || '#000000'}</span>
             </div>
           )}
         </div>
-      ))}
-      
-      <div className="flex items-center justify-between pt-4">
-        <Button 
-          type="button" 
-          variant="outline"
-          onClick={onBackToThemes}
-        >
-          <ChevronLeft className="mr-2 h-4 w-4" /> Back to Themes
-        </Button>
         
-        <Button 
-          type="submit"
-          className="bg-brand-green hover:bg-brand-darkGreen"
-        >
-          Continue
-        </Button>
-      </div>
-    </form>
+        {/* Navigation buttons */}
+        <div className="flex items-center justify-between pt-6 px-2 border-t border-gray-100">
+          <div>
+            {currentQuestionIndex === 0 ? (
+              <Button 
+                type="button" 
+                variant="outline"
+                onClick={onBackToThemes}
+              >
+                <ChevronLeft className="mr-2 h-4 w-4" /> Back to Themes
+              </Button>
+            ) : (
+              <Button 
+                type="button" 
+                variant="outline"
+                onClick={handlePreviousQuestion}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" /> Previous
+              </Button>
+            )}
+          </div>
+          
+          <div>
+            {isLastQuestion ? (
+              <Button 
+                type="submit"
+                className="bg-brand-green hover:bg-brand-darkGreen"
+              >
+                Review Answers
+              </Button>
+            ) : (
+              <Button 
+                type="button"
+                className="bg-brand-green hover:bg-brand-darkGreen"
+                onClick={handleNextQuestion}
+              >
+                Next <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+      </form>
+    </div>
   );
 };
 

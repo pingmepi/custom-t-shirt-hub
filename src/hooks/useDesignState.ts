@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { TShirtOptions as TShirtOptionsType } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,21 +18,15 @@ export function useDesignState(user: any) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Added by lovable: Validate that data is not empty
+  // Validate responses only after user submits them
   const validateResponses = (responses: Record<string, any>): boolean => {
     if (!responses || Object.keys(responses).length === 0) {
-      toast.error("Please answer all questions before proceeding");
+      // This is handled by the QuestionForm component's own validation
       return false;
     }
     
-    // Check if any response is empty
-    for (const [_, value] of Object.entries(responses)) {
-      if (!value || (typeof value === 'string' && value.trim() === '')) {
-        toast.error("Please provide answers to all questions");
-        return false;
-      }
-    }
-    
+    // Only check for empty required fields if explicitly needed
+    // The QuestionForm component already handles individual field validation
     return true;
   };
 

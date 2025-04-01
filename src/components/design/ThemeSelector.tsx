@@ -15,6 +15,7 @@ interface ThemeSelectorProps {
 const ThemeSelector = ({ onThemesSelected }: ThemeSelectorProps) => {
   const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
   const [themes, setThemes] = useState<Theme[]>([]);
+  const [allThemes, setAllThemes] = useState<Theme[]>([]); // Store all themes for the "All" category
   const [categories, setCategories] = useState<string[]>(['All']);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,12 +36,14 @@ const ThemeSelector = ({ onThemesSelected }: ThemeSelectorProps) => {
         
         setCategories(fetchedCategories);
         setThemes(fetchedThemes);
+        setAllThemes(fetchedThemes); // Store all themes for reference
         setError(null);
       } catch (err) {
         console.error("Error loading themes or categories:", err);
         setError("Failed to load themes. Please try again.");
         // Use fallback themes if loading fails
         setThemes(FALLBACK_THEMES);
+        setAllThemes(FALLBACK_THEMES);
         
         toast({
           title: "Error loading themes",
@@ -58,26 +61,36 @@ const ThemeSelector = ({ onThemesSelected }: ThemeSelectorProps) => {
   // When category changes, load filtered themes
   useEffect(() => {
     const loadFilteredThemes = async () => {
-      if (activeCategory === 'All') {
-        // If "All" is selected, we can use the themes we already have
-        return;
-      }
+      setLoading(true);
       
       try {
-        setLoading(true);
-        const fetchedThemes = await fetchThemes(activeCategory);
-        setThemes(fetchedThemes);
+        if (activeCategory === 'All') {
+          // If "All" is selected, use the stored allThemes
+          setThemes(allThemes);
+        } else {
+          // Otherwise fetch themes for the selected category
+          const fetchedThemes = await fetchThemes(activeCategory);
+          setThemes(fetchedThemes);
+        }
         setError(null);
       } catch (err) {
         console.error(`Error loading themes for category ${activeCategory}:`, err);
-        // Keep existing themes instead of showing an error
+        // If there's an error when fetching a specific category, 
+        // and we're not in the "All" category, show an error toast
+        if (activeCategory !== 'All') {
+          toast({
+            title: "Error loading themes",
+            description: `Failed to load themes for ${activeCategory} category.`,
+            variant: "destructive"
+          });
+        }
       } finally {
         setLoading(false);
       }
     };
 
     loadFilteredThemes();
-  }, [activeCategory]);
+  }, [activeCategory, allThemes, toast]);
 
   const toggleTheme = (themeId: string) => {
     setSelectedThemes(prev => {
@@ -131,8 +144,6 @@ const ThemeSelector = ({ onThemesSelected }: ThemeSelectorProps) => {
       });
     }
   };
-
-  // Filter themes by category - this is now handled by the backend
 
   if (loading) {
     return (
