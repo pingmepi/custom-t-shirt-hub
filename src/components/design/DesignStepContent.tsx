@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import DesignCanvas from "@/components/design/DesignCanvas";
+import { useToast } from "@/components/ui/use-toast";
 
 interface DesignStepContentProps {
   questionResponses: Record<string, any>;
@@ -16,11 +17,48 @@ const DesignStepContent = ({
   onNavigateStep
 }: DesignStepContentProps) => {
   const [designData, setDesignData] = useState<any>(null);
+  const { toast } = useToast();
 
   const handleDesignUpdated = (data: any) => {
     setDesignData(data);
     onDesignUpdated(data);
+    
+    toast({
+      title: "Design updated",
+      description: "Your design has been updated successfully.",
+    });
   };
+
+  // Create a nicely formatted display of question responses
+  const formatResponses = () => {
+    return Object.entries(questionResponses).map(([questionId, answer]) => {
+      // Try to determine what the question was about based on the answer
+      let questionLabel = `Question ${questionId.replace("q", "")}`;
+      
+      if (typeof answer === 'string' && answer.startsWith('#')) {
+        questionLabel = 'Color choice';
+      } else if (
+        typeof answer === 'string' && 
+        ['Minimal', 'Vintage', 'Bold', 'Artistic', 'Funny'].includes(answer)
+      ) {
+        questionLabel = 'Style preference';
+      } else if (questionId === 'q1') {
+        questionLabel = 'Main message';
+      } else if (questionId === 'q5') {
+        questionLabel = 'Additional details';
+      } else if (questionId === 'q4') {
+        questionLabel = 'Occasion';
+      }
+      
+      return { 
+        id: questionId,
+        label: questionLabel,
+        answer: answer 
+      };
+    });
+  };
+
+  const formattedResponses = formatResponses();
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr,300px] lg:gap-8">
@@ -59,13 +97,24 @@ const DesignStepContent = ({
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <div className="p-6">
           <h3 className="text-lg font-semibold mb-4">Your Preferences</h3>
-          <div className="space-y-2">
-            {Object.entries(questionResponses).map(([questionId, answer]) => (
-              <div key={questionId} className="flex flex-col">
-                <span className="text-sm font-medium text-gray-500">
-                  Question {questionId.replace("q", "")}:
+          <div className="space-y-3">
+            {formattedResponses.map(({ id, label, answer }) => (
+              <div key={id} className="flex flex-col">
+                <span className="text-sm font-medium text-gray-600">
+                  {label}:
                 </span>
-                <span className="text-sm">{answer}</span>
+                
+                {typeof answer === 'string' && answer.startsWith('#') ? (
+                  <div className="flex items-center mt-1">
+                    <div 
+                      className="h-4 w-4 rounded-full mr-2" 
+                      style={{ backgroundColor: answer }}
+                    ></div>
+                    <span className="text-sm">{answer}</span>
+                  </div>
+                ) : (
+                  <span className="text-sm font-medium mt-1">{answer}</span>
+                )}
               </div>
             ))}
           </div>

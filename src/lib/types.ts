@@ -1,3 +1,4 @@
+
 export interface Question {
   id: string;
   type: 'text' | 'choice' | 'color' | 'textarea';
@@ -56,6 +57,9 @@ export interface Theme {
   name: string;
   description?: string;
   image_url?: string;
+  primary_color?: string;
+  secondary_color?: string;
+  category?: string;
 }
 
 export interface UserProfile {
