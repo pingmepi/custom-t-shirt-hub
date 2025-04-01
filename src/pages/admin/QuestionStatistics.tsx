@@ -1,7 +1,9 @@
+
 import React, { useEffect, useState } from "react";
 import QuestionStats from "../../components/design/QuestionStats";
 import { Button } from "../../components/ui/button";
 import { supabase } from "../../integrations/supabase/client";
+
 import { Loader2 } from "lucide-react";
 
 const QuestionStatisticsPage = () => {
@@ -19,12 +21,13 @@ const QuestionStatisticsPage = () => {
           return;
         }
 
+
         // For now, let's assume the admin check is done client-side
         // You should implement proper admin validation based on your system
         // This is a placeholder - in production, use secure server-side validation
         const adminEmails = ['admin@example.com']; // Replace with your admin email
-        setIsAdmin(adminEmails.includes(user.email || ''));
-        
+        setIsAdmin(adminEmails.includes(user.email || ''));   
+
       } catch (err) {
         console.error("Failed to verify admin access:", err);
         setIsAdmin(false);
@@ -87,5 +90,6 @@ const QuestionStatisticsPage = () => {
     </div>
   );
 };
+
 
 export default QuestionStatisticsPage;

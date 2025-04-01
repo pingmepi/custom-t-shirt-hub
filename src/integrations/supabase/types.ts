@@ -155,18 +155,21 @@ export type Database = {
           full_name: string | null
           id: string
           phone_number: string | null
+          role: string | null
         }
         Insert: {
           created_at?: string | null
           full_name?: string | null
           id: string
           phone_number?: string | null
+          role?: string | null
         }
         Update: {
           created_at?: string | null
           full_name?: string | null
           id?: string
           phone_number?: string | null
+          role?: string | null
         }
         Relationships: []
       }
@@ -178,6 +181,7 @@ export type Database = {
           options: Json | null
           question_text: string
           type: string
+          usage_count: number | null
         }
         Insert: {
           created_at?: string | null
@@ -186,6 +190,7 @@ export type Database = {
           options?: Json | null
           question_text: string
           type: string
+          usage_count?: number | null
         }
         Update: {
           created_at?: string | null
@@ -194,6 +199,7 @@ export type Database = {
           options?: Json | null
           question_text?: string
           type?: string
+          usage_count?: number | null
         }
         Relationships: []
       }

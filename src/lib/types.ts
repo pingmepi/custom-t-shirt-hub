@@ -43,3 +43,25 @@ export interface ShippingAddress {
   country: string;
   phone_number: string;
 }
+
+export interface User {
+  id: string;
+  email: string;
+  role: string;
+  created_at: string;
+}
+
+export interface Theme {
+  id: string;
+  name: string;
+  description?: string;
+  image_url?: string;
+}
+
+export interface UserProfile {
+  id: string;
+  full_name?: string;
+  phone_number?: string;
+  role: 'user' | 'admin';
+  created_at?: string;
+}

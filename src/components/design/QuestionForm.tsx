@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +29,7 @@ const MOCK_QUESTIONS: Question[] = [
   },
   {
     id: "q3",
-    type: "text", // Changed from color to text to fix the missing text input issue
+    type: "color", 
     question_text: "What's your preferred color palette?",
     is_active: true,
   },
@@ -73,7 +72,8 @@ const QuestionForm = ({ questions: initialQuestions, onComplete }: QuestionFormP
               type: q.type as 'text' | 'choice' | 'color' | 'textarea',
               question_text: q.question_text,
               options: q.options as string[] | undefined,
-              is_active: q.is_active === true
+              is_active: q.is_active === true,
+              usage_count: q.usage_count || 0
             }));
             
             setQuestions(formattedQuestions);
@@ -108,15 +108,70 @@ const QuestionForm = ({ questions: initialQuestions, onComplete }: QuestionFormP
       [questionId]: value,
     }));
   };
+
+  const handleColorChange = (questionId: string, value: string) => {
+    setResponses(prev => ({
+      ...prev,
+      [questionId]: value,
+    }));
+  };
   
+  const updateQuestionUsageCount = async (questionId: string) => {
+    try {
+      const { data: questionData, error: fetchError } = await supabase
+        .from('questions')
+        .select('usage_count')
+        .eq('id', questionId)
+        .single();
+        
+      if (fetchError) {
+        console.error(`Error fetching question ${questionId}:`, fetchError);
+        return;
+      }
+      
+      const currentCount = questionData?.usage_count || 0;
+      
+      const { error: updateError } = await supabase
+        .from('questions')
+        .update({ usage_count: currentCount + 1 })
+        .eq('id', questionId);
+        
+      if (updateError) {
+        console.error(`Error updating usage count for question ${questionId}:`, updateError);
+      } else {
+        console.log(`Updated usage count for question ${questionId} to ${currentCount + 1}`);
+      }
+    } catch (err) {
+      console.error(`Failed to update usage count for question ${questionId}:`, err);
+    }
+  };
+
   const handleNext = () => {
     if (!responses[currentQuestion.id]) {
       return;
     }
     
+    console.log(`Completed question ${currentStep + 1}/${activeQuestions.length}:`, {
+      questionId: currentQuestion.id,
+      question: currentQuestion.question_text,
+      response: responses[currentQuestion.id],
+      questionType: activeQuestions.find(q => q.id === currentQuestion.id)?.type
+    });
+    
+    updateQuestionUsageCount(currentQuestion.id);
+    
     if (currentStep < activeQuestions.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
+      console.log("Form completed! All responses:", responses);
+      console.log("Questions answered:", activeQuestions.length);
+      console.log("Response summary:", Object.entries(responses).map(([id, value]) => ({
+        questionId: id,
+        question: activeQuestions.find(q => q.id === id)?.question_text,
+        response: value,
+        questionType: activeQuestions.find(q => q.id === id)?.type
+      })));
+      
       onComplete(responses);
     }
   };
@@ -209,16 +264,30 @@ const QuestionForm = ({ questions: initialQuestions, onComplete }: QuestionFormP
       
       {currentQuestion.type === "color" && (
         <div className="mb-6">
-          <Label htmlFor={currentQuestion.id} className="sr-only">
-            {currentQuestion.question_text}
-          </Label>
-          <Input
-            id={currentQuestion.id}
-            value={responses[currentQuestion.id] || ""}
-            onChange={(e) => handleTextChange(currentQuestion.id, e.target.value)}
-            placeholder="Type your color preference here..."
-            className="w-full"
-          />
+          <div className="flex flex-col space-y-3">
+            <Label htmlFor={`${currentQuestion.id}-color`}>
+              Select a color or enter a color code:
+            </Label>
+            <div className="flex items-center space-x-3">
+              <Input
+                type="color"
+                id={`${currentQuestion.id}-color`}
+                value={responses[currentQuestion.id] || "#000000"}
+                onChange={(e) => handleColorChange(currentQuestion.id, e.target.value)}
+                className="w-12 h-10 p-1"
+              />
+              <Input
+                type="text"
+                value={responses[currentQuestion.id] || ""}
+                onChange={(e) => handleColorChange(currentQuestion.id, e.target.value)}
+                placeholder="e.g. #FF0000 or red"
+                className="w-full"
+              />
+            </div>
+            <div className="text-sm text-gray-500">
+              You can select from the color picker or type colors like "red", "blue", "pastel", etc.
+            </div>
+          </div>
         </div>
       )}
       
