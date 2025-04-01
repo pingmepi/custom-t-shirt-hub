@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import QuestionForm from "@/components/design/QuestionForm";
 import { Question } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
+import { Loader2, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface QuestionsStepContentProps {
   onQuestionsComplete: (responses: Record<string, any>) => void;
@@ -11,22 +13,31 @@ interface QuestionsStepContentProps {
 const QuestionsStepContent = ({ onQuestionsComplete }: QuestionsStepContentProps) => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
+        setLoading(true);
+        setError(null);
+        
         const { data, error } = await supabase
           .from('questions')
           .select('*')
-          .eq('is_active', true);
+          .eq('is_active', true)
+          .order('created_at', { ascending: true });
         
-        if (!error && data) {
+        if (error) {
+          console.error("Error fetching questions:", error);
+          setError("Failed to load questions. Please try again later.");
+        } else if (data && data.length > 0) {
           setQuestions(data as Question[]);
         } else {
-          console.error("Error fetching questions:", error);
+          setError("No active questions found. Please check back later.");
         }
       } catch (err) {
         console.error("Failed to load questions:", err);
+        setError("An unexpected error occurred. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -34,6 +45,32 @@ const QuestionsStepContent = ({ onQuestionsComplete }: QuestionsStepContentProps
     
     fetchQuestions();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="bg-white shadow-md rounded-lg overflow-hidden p-6">
+        <div className="flex justify-center items-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-brand-green mr-2" />
+          <span className="text-lg">Loading questions...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white shadow-md rounded-lg overflow-hidden p-6">
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+        
+        <Button onClick={() => window.location.reload()} className="mt-4">
+          Try Again
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden">
@@ -53,3 +90,4 @@ const QuestionsStepContent = ({ onQuestionsComplete }: QuestionsStepContentProps
 };
 
 export default QuestionsStepContent;
+

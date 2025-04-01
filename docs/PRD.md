@@ -1,3 +1,4 @@
+
 # T-Shirt Design & Ordering Platform - Product Requirements Document
 
 **Date**: 2025-04-01\
@@ -76,7 +77,19 @@ So that I can ensure smooth delivery and customer satisfaction
 
  Basic support section with contact number
 
--
+<!-- added by lovable -->
+ Track question usage statistics for analytics and improvement
+
+ Store comprehensive user style preferences from responses
+
+ Color input type support in question flow
+
+ Proper validation for all user inputs in design flow
+
+ Error handling for all API calls and form submissions
+
+ Responsive layout for all design flow screens
+<!-- end added by lovable -->
 
 ### Nice to Have
 
@@ -86,6 +99,17 @@ So that I can ensure smooth delivery and customer satisfaction
 
  Click-to-customize a prebuilt design from the landing page
  
+<!-- added by lovable -->
+ Dark mode support throughout the application
+
+ Social media sharing of completed designs
+
+ Bulk order discounts for team/group orders
+
+ Design template marketplace where users can sell their designs
+
+ Advanced color customization options with color harmony suggestions
+<!-- end added by lovable -->
 
 ## Technical Requirements
 
@@ -438,6 +462,39 @@ Fetch all available themes to be shown on the theme selection screen.
 }
 ```
 
+<!-- added by lovable -->
+#### `GET /question-stats`
+
+**Response:**
+
+```json
+{
+  "most_used_questions": [
+    {"id": "q1", "text": "What's your favorite color?", "usage_count": 156},
+    {"id": "q3", "text": "What style are you looking for?", "usage_count": 142}
+  ],
+  "most_common_responses": {
+    "q1": {"Blue": 45, "Black": 32, "Red": 29},
+    "q3": {"Minimal": 67, "Bold": 42, "Vintage": 33}
+  }
+}
+```
+
+#### `GET /user-preferences/:userId`
+
+**Response:**
+
+```json
+{
+  "color_preferences": ["blue", "pastel", "muted"],
+  "style_preferences": ["minimal", "elegant"],
+  "most_recent_design_id": "design-789",
+  "total_designs": 4,
+  "total_orders": 2
+}
+```
+<!-- end added by lovable -->
+
 - `POST /generate-questions`
 
   - Input: List of selected themes
@@ -504,6 +561,14 @@ Fetch all available themes to be shown on the theme selection screen.
 - Editor interface post-question flow for design customization
 - Clean dashboard for user profile, saved designs, orders
 
+<!-- added by lovable -->
+- Color picker input with support for both visual selection and text input
+- Clear error messages for failed operations
+- Loading states for all asynchronous operations
+- Responsive layouts for all screen sizes
+- Accessible form controls with proper labels
+<!-- end added by lovable -->
+
 ## Dependencies
 
 - Supabase (Auth, DB, Storage)
@@ -524,7 +589,30 @@ Fetch all available themes to be shown on the theme selection screen.
 - How are designs versioned for edits post-order?
   → All orders are saved in a table with a reference to the specific version of the design used. When the user returns to reorder, designs from their order history are displayed, ensuring consistency and traceability.
 
-- What criteria define 'user style' for personalization? 
+- What criteria define 'user style' for personalization? 
 
 - How will automated vendor APIs be integrated later?
+
+<!-- added by lovable -->
+## Security Considerations
+
+- Row-Level Security (RLS) policies ensure users can only access their own designs and orders
+- Admin roles have controlled access to manage questions and view order statistics
+- Authentication tokens are properly managed with appropriate expiration and refresh
+- User style metadata is stored securely and used only for enhancing personalization
+
+## Performance Optimization
+
+- Questions are cached to reduce database load
+- Question usage statistics are updated asynchronously
+- Design previews are optimized for fast loading
+- Proper error handling prevents system failures during peak loads
+
+## Accessibility Requirements
+
+- All form inputs include proper aria labels
+- Color inputs support both visual selection and text entry
+- Progress indicators use both color and text to show completion status
+- Error messages are clear and provide actionable information
+<!-- end added by lovable -->
 

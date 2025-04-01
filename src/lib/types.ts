@@ -1,3 +1,4 @@
+
 export interface Question {
   id: string;
   type: 'text' | 'choice' | 'color' | 'textarea';
@@ -49,4 +50,21 @@ export interface User {
   email: string;
   role: string;
   created_at: string;
+}
+
+// added by lovable
+export interface Theme {
+  id: string;
+  name: string;
+  description?: string;
+  image_url?: string;
+}
+
+// added by lovable
+export interface UserProfile {
+  id: string;
+  full_name?: string;
+  phone_number?: string;
+  role: 'user' | 'admin';
+  created_at?: string;
 }

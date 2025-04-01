@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +30,7 @@ const MOCK_QUESTIONS: Question[] = [
   },
   {
     id: "q3",
-    type: "text", // Changed from color to text to fix the missing text input issue
+    type: "color", // Now properly handled as color type
     question_text: "What's your preferred color palette?",
     is_active: true,
   },
@@ -103,6 +104,14 @@ const QuestionForm = ({ questions: initialQuestions, onComplete }: QuestionFormP
   };
   
   const handleChoiceChange = (questionId: string, value: string) => {
+    setResponses(prev => ({
+      ...prev,
+      [questionId]: value,
+    }));
+  };
+
+  // Added by lovable: Handle color picker change
+  const handleColorChange = (questionId: string, value: string) => {
     setResponses(prev => ({
       ...prev,
       [questionId]: value,
@@ -260,18 +269,33 @@ const QuestionForm = ({ questions: initialQuestions, onComplete }: QuestionFormP
         </div>
       )}
       
+      {/* Added by lovable: Proper color input handling */}
       {currentQuestion.type === "color" && (
         <div className="mb-6">
-          <Label htmlFor={currentQuestion.id} className="sr-only">
-            {currentQuestion.question_text}
-          </Label>
-          <Input
-            id={currentQuestion.id}
-            value={responses[currentQuestion.id] || ""}
-            onChange={(e) => handleTextChange(currentQuestion.id, e.target.value)}
-            placeholder="Type your color preference here..."
-            className="w-full"
-          />
+          <div className="flex flex-col space-y-3">
+            <Label htmlFor={`${currentQuestion.id}-color`}>
+              Select a color or enter a color code:
+            </Label>
+            <div className="flex items-center space-x-3">
+              <Input
+                type="color"
+                id={`${currentQuestion.id}-color`}
+                value={responses[currentQuestion.id] || "#000000"}
+                onChange={(e) => handleColorChange(currentQuestion.id, e.target.value)}
+                className="w-12 h-10 p-1"
+              />
+              <Input
+                type="text"
+                value={responses[currentQuestion.id] || ""}
+                onChange={(e) => handleColorChange(currentQuestion.id, e.target.value)}
+                placeholder="e.g. #FF0000 or red"
+                className="w-full"
+              />
+            </div>
+            <div className="text-sm text-gray-500">
+              You can select from the color picker or type colors like "red", "blue", "pastel", etc.
+            </div>
+          </div>
         </div>
       )}
       
