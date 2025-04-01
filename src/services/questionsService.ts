@@ -1,6 +1,8 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Question } from "@/lib/types";
+
+// Cache for frequently used data
+const questionCache: Record<string, Question[]> = {};
 
 /**
  * Fetches relevant questions based on selected themes
@@ -10,26 +12,33 @@ import { Question } from "@/lib/types";
  */
 export const fetchThemeBasedQuestions = async (themes: string[], limit: number = 5): Promise<Question[]> => {
   try {
+    const cacheKey = themes.sort().join(",") + `_${limit}`;
+
+    // Check cache first
+    if (questionCache[cacheKey]) {
+      console.log("Returning cached questions for themes:", themes);
+      return questionCache[cacheKey];
+    }
+
     console.log("Fetching questions for themes:", themes);
-    
+
     // Call the database function to get theme-based questions
     const { data, error } = await supabase
       .rpc('get_theme_based_questions', { 
         theme_ids: themes,
         limit_count: limit
       });
-    
+
     if (error) {
       console.error("Error fetching theme-based questions:", error);
       throw new Error("Failed to fetch questions");
     }
-    
+
     if (!data || data.length === 0) {
       console.warn("No theme-based questions found, using default questions");
-      // Fallback to get any active questions if no theme-based questions
       return await fetchDefaultQuestions(limit);
     }
-    
+
     const questions: Question[] = data.map(q => ({
       id: q.id,
       type: q.type as 'text' | 'choice' | 'color' | 'textarea',
@@ -38,7 +47,10 @@ export const fetchThemeBasedQuestions = async (themes: string[], limit: number =
       is_active: q.is_active === true,
       usage_count: q.usage_count || 0
     }));
-    
+
+    // Cache the result
+    questionCache[cacheKey] = questions;
+
     return questions;
   } catch (err) {
     console.error("Error in fetchThemeBasedQuestions:", err);
@@ -53,24 +65,23 @@ export const fetchThemeBasedQuestions = async (themes: string[], limit: number =
  */
 const fetchDefaultQuestions = async (limit: number = 5): Promise<Question[]> => {
   try {
-    // Get active questions from Supabase
     const { data, error } = await supabase
       .from('questions')
       .select('*')
       .eq('is_active', true)
       .order('usage_count', { ascending: false })
       .limit(limit);
-    
+
     if (error) {
       console.error("Error fetching default questions:", error);
       throw new Error("Failed to fetch questions");
     }
-    
+
     if (!data || data.length === 0) {
       console.warn("No questions found in database, using hardcoded defaults");
       return DEFAULT_QUESTIONS;
     }
-    
+
     const questions: Question[] = data.map(q => ({
       id: q.id,
       type: q.type as 'text' | 'choice' | 'color' | 'textarea',
@@ -79,7 +90,7 @@ const fetchDefaultQuestions = async (limit: number = 5): Promise<Question[]> => 
       is_active: q.is_active === true,
       usage_count: q.usage_count || 0
     }));
-    
+
     return questions;
   } catch (err) {
     console.error("Error in fetchDefaultQuestions:", err);
@@ -98,19 +109,19 @@ export const incrementQuestionUsage = async (questionId: string): Promise<void> 
       .select('usage_count')
       .eq('id', questionId)
       .single();
-      
+
     if (fetchError) {
       console.error(`Error fetching question ${questionId}:`, fetchError);
       return;
     }
-    
+
     const currentCount = questionData?.usage_count || 0;
-    
+
     const { error: updateError } = await supabase
       .from('questions')
       .update({ usage_count: currentCount + 1 })
       .eq('id', questionId);
-      
+
     if (updateError) {
       console.error(`Error updating usage count for question ${questionId}:`, updateError);
     } else {

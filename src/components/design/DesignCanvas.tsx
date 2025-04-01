@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { Canvas, loadSVGFromURL } from "fabric";
 import { toast } from "sonner";
@@ -12,6 +11,8 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<Canvas | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [history, setHistory] = useState<any[]>([]);
+  const [redoStack, setRedoStack] = useState<any[]>([]);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -22,10 +23,10 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
       height: 600,
       backgroundColor: "#f9f9f9",
     });
-    
+
     fabricCanvasRef.current = canvas;
-    
-    // Add mock tshirt placeholder
+
+    // Add mock t-shirt placeholder
     const tshirtRect = canvas.addRect({
       width: 300,
       height: 400,
@@ -37,7 +38,7 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
       stroke: "#dddddd",
       strokeWidth: 2,
     });
-    
+
     tshirtRect.set({
       selectable: false,
       evented: false,
@@ -66,6 +67,7 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
         
         canvas.requestRenderAll();
         setIsLoaded(true);
+        saveState();
       });
     } else {
       // Add a placeholder text if no image is provided
@@ -79,6 +81,7 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
         originY: 'center',
       });
       setIsLoaded(true);
+      saveState();
     }
 
     // Setup canvas event listeners
@@ -86,6 +89,7 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
       if (onDesignUpdated) {
         onDesignUpdated(canvas.toJSON());
       }
+      saveState();
     });
 
     return () => {
@@ -93,9 +97,57 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
     };
   }, [initialImageUrl, onDesignUpdated]);
 
+  const saveState = () => {
+    if (!fabricCanvasRef.current) return;
+    setHistory((prev) => [...prev, fabricCanvasRef.current.toJSON()]);
+    setRedoStack([]); // Clear redo stack on new action
+  };
+
+  const undo = () => {
+    if (history.length <= 1) {
+      toast.error("No more actions to undo");
+      return;
+    }
+
+    const newHistory = [...history];
+    const lastState = newHistory.pop();
+    setRedoStack((prev) => [lastState, ...prev]);
+    setHistory(newHistory);
+
+    if (fabricCanvasRef.current) {
+      fabricCanvasRef.current.loadFromJSON(newHistory[newHistory.length - 1], () => {
+        fabricCanvasRef.current?.requestRenderAll();
+        if (onDesignUpdated) {
+          onDesignUpdated(fabricCanvasRef.current.toJSON());
+        }
+      });
+    }
+  };
+
+  const redo = () => {
+    if (redoStack.length === 0) {
+      toast.error("No more actions to redo");
+      return;
+    }
+
+    const newRedoStack = [...redoStack];
+    const nextState = newRedoStack.shift();
+    setRedoStack(newRedoStack);
+    setHistory((prev) => [...prev, nextState]);
+
+    if (fabricCanvasRef.current) {
+      fabricCanvasRef.current.loadFromJSON(nextState, () => {
+        fabricCanvasRef.current?.requestRenderAll();
+        if (onDesignUpdated) {
+          onDesignUpdated(fabricCanvasRef.current.toJSON());
+        }
+      });
+    }
+  };
+
   const addText = () => {
     if (!fabricCanvasRef.current) return;
-    
+
     const text = fabricCanvasRef.current.addText('New Text', {
       left: 300,
       top: 300,
@@ -105,14 +157,15 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
       originX: 'center',
       originY: 'center',
     });
-    
+
     fabricCanvasRef.current.setActiveObject(text);
     fabricCanvasRef.current.requestRenderAll();
-    
+
     if (onDesignUpdated) {
       onDesignUpdated(fabricCanvasRef.current.toJSON());
     }
-    
+
+    saveState();
     toast.success('Text added successfully');
   };
 
@@ -150,22 +203,24 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
       onDesignUpdated(fabricCanvasRef.current.toJSON());
     }
     
+    saveState();
     toast.success(`${shape === 'circle' ? 'Circle' : 'Rectangle'} added successfully`);
   };
 
   const deleteSelectedObject = () => {
     if (!fabricCanvasRef.current) return;
-    
+
     const activeObject = fabricCanvasRef.current.getActiveObject();
-    
+
     if (activeObject) {
       fabricCanvasRef.current.remove(activeObject);
       fabricCanvasRef.current.requestRenderAll();
-      
+
       if (onDesignUpdated) {
         onDesignUpdated(fabricCanvasRef.current.toJSON());
       }
-      
+
+      saveState();
       toast.success('Object deleted');
     } else {
       toast.error('No object selected');
@@ -184,6 +239,8 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
       if (onDesignUpdated) {
         onDesignUpdated(fabricCanvasRef.current.toJSON());
       }
+      
+      saveState();
     } else {
       toast.error('No object selected');
     }
@@ -223,6 +280,18 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
           className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
         >
           Delete Selected
+        </button>
+        <button 
+          onClick={undo}
+          className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+        >
+          Undo
+        </button>
+        <button 
+          onClick={redo}
+          className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+        >
+          Redo
         </button>
         <div className="flex items-center gap-2">
           <span>Color:</span>

@@ -27,39 +27,29 @@ const QuestionForm = ({
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [attemptedSubmit, setAttemptedSubmit] = useState<Record<string, boolean>>({});
   const [showConfirmation, setShowConfirmation] = useState(false);
-  
-  // Fetch questions based on selected themes
+
   useEffect(() => {
     const loadQuestions = async () => {
       try {
         setIsLoading(true);
-        console.log("Fetching questions for themes:", selectedThemes);
         const fetchedQuestions = await fetchThemeBasedQuestions(selectedThemes);
         setQuestions(fetchedQuestions);
-        
-        // Initialize answers with appropriate defaults for each question type
+
         const initialAnswers: Record<string, any> = {};
         fetchedQuestions.forEach(q => {
           switch (q.type) {
             case 'choice':
-              // Use first option as default for choice questions
-              initialAnswers[q.id] = q.options?.length ? q.options[0] : '';
+              initialAnswers[q.id] = q.options?.[0] || '';
               break;
             case 'color':
-              // Default color is black
               initialAnswers[q.id] = '#000000';
               break;
-            case 'text':
-            case 'textarea':
             default:
-              // Text fields start empty but won't be validated until form submission
               initialAnswers[q.id] = '';
-              break;
           }
         });
         setAnswers(initialAnswers);
-        
-        // Initialize attemptedSubmit tracking object
+
         const initialAttemptedSubmit: Record<string, boolean> = {};
         fetchedQuestions.forEach(q => {
           initialAttemptedSubmit[q.id] = false;
@@ -76,97 +66,68 @@ const QuestionForm = ({
         setIsLoading(false);
       }
     };
-    
+
     loadQuestions();
   }, [selectedThemes]);
-  
+
   const handleChange = (questionId: string, value: any) => {
     setAnswers(prev => ({
       ...prev,
       [questionId]: value
     }));
   };
-  
-  // Validate only if the user has attempted to submit this question
+
   const validateCurrentQuestion = (questionId: string): boolean => {
-    if (!attemptedSubmit[questionId]) return true;
-    
     const currentAnswer = answers[questionId];
-    if (currentAnswer === undefined || currentAnswer === '') {
+    if (!currentAnswer) {
       toast({
-        title: "Please answer this question",
-        description: "An answer is required before proceeding.",
+        title: "Validation Error",
+        description: "Please provide an answer before proceeding.",
         variant: "destructive"
       });
       return false;
     }
     return true;
   };
-  
+
   const handleNextQuestion = () => {
     const currentQuestion = questions[currentQuestionIndex];
-    
-    // Mark this question as attempted
     setAttemptedSubmit(prev => ({
       ...prev,
       [currentQuestion.id]: true
     }));
-    
-    // Validate current question answer
+
     if (!validateCurrentQuestion(currentQuestion.id)) {
       return;
     }
-    
-    // Move to next question
-    setCurrentQuestionIndex(prev => prev + 1);
+
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    } else {
+      setShowConfirmation(true);
+    }
   };
-  
+
   const handlePreviousQuestion = () => {
     setCurrentQuestionIndex(prev => Math.max(0, prev - 1));
   };
-  
-  // Modified to show confirmation instead of submitting right away
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Get the current (last) question
-    const currentQuestion = questions[currentQuestionIndex];
-    
-    // Mark this question as attempted
-    setAttemptedSubmit(prev => ({
-      ...prev,
-      [currentQuestion.id]: true
-    }));
-    
-    // Validate the current question
-    if (!validateCurrentQuestion(currentQuestion.id)) {
-      return;
-    }
-    
-    // Show confirmation instead of submitting right away
-    setShowConfirmation(true);
-  };
-  
-  // New function to handle final submission after user confirmation
+
   const handleFinalSubmit = async () => {
     try {
-      // Increment usage count for each question
       for (const questionId of Object.keys(answers)) {
         await incrementQuestionUsage(questionId);
       }
-      
-      // Complete the questions process
       onQuestionsComplete(answers);
     } catch (error) {
       console.error("Error submitting questions:", error);
       toast({
-        title: "Error",
+        title: "Submission Error",
         description: "Failed to submit your answers. Please try again.",
         variant: "destructive"
       });
     }
   };
-  
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -175,29 +136,7 @@ const QuestionForm = ({
       </div>
     );
   }
-  
-  // If there are no questions, show a message
-  if (questions.length === 0) {
-    return (
-      <div className="text-center py-6">
-        <p>No questions available for the selected themes.</p>
-        <Button 
-          onClick={onBackToThemes}
-          variant="outline"
-          className="mt-4"
-        >
-          <ChevronLeft className="mr-2 h-4 w-4" /> Back to Themes
-        </Button>
-      </div>
-    );
-  }
-  
-  // Get current question
-  const currentQuestion = questions[currentQuestionIndex];
-  const isLastQuestion = currentQuestionIndex === questions.length - 1;
-  const progressPercentage = ((currentQuestionIndex + 1) / questions.length) * 100;
-  
-  // Show confirmation UI if needed
+
   if (showConfirmation) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-6 bg-white rounded-lg shadow-sm">
@@ -211,10 +150,10 @@ const QuestionForm = ({
           </div>
 
           <div className="border rounded-md p-4 max-h-60 overflow-y-auto">
-            {Object.entries(answers).map(([questionId, answer], idx) => {
+            {Object.entries(answers).map(([questionId, answer]) => {
               const question = questions.find(q => q.id === questionId);
               if (!question) return null;
-              
+
               return (
                 <div key={questionId} className="mb-3 pb-3 border-b border-gray-100 last:border-0">
                   <p className="font-medium">{question.question_text}</p>
@@ -252,11 +191,13 @@ const QuestionForm = ({
       </div>
     );
   }
-  
+
+  const currentQuestion = questions[currentQuestionIndex];
+  const progressPercentage = ((currentQuestionIndex + 1) / questions.length) * 100;
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 bg-white rounded-lg shadow-sm">
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Progress indicator */}
+      <form className="space-y-8">
         <div className="space-y-2">
           <div className="flex justify-between text-sm text-gray-500">
             <span>Question {currentQuestionIndex + 1} of {questions.length}</span>
@@ -264,13 +205,12 @@ const QuestionForm = ({
           </div>
           <Progress value={progressPercentage} className="h-2" />
         </div>
-        
-        {/* Current question */}
+
         <div className="space-y-4 min-h-[200px] px-2">
           <Label htmlFor={currentQuestion.id} className="text-lg font-medium block mb-4">
             {currentQuestion.question_text}
           </Label>
-          
+
           {currentQuestion.type === 'text' && (
             <Input
               id={currentQuestion.id}
@@ -280,7 +220,7 @@ const QuestionForm = ({
               placeholder="Type your answer here..."
             />
           )}
-          
+
           {currentQuestion.type === 'textarea' && (
             <Textarea
               id={currentQuestion.id}
@@ -290,7 +230,7 @@ const QuestionForm = ({
               placeholder="Type your answer here..."
             />
           )}
-          
+
           {currentQuestion.type === 'choice' && currentQuestion.options && (
             <RadioGroup
               value={answers[currentQuestion.id] || ''}
@@ -314,7 +254,7 @@ const QuestionForm = ({
               ))}
             </RadioGroup>
           )}
-          
+
           {currentQuestion.type === 'color' && (
             <div className="flex items-center space-x-2 py-2">
               <Input
@@ -328,8 +268,7 @@ const QuestionForm = ({
             </div>
           )}
         </div>
-        
-        {/* Navigation buttons */}
+
         <div className="flex items-center justify-between pt-6 px-2 border-t border-gray-100">
           <div>
             {currentQuestionIndex === 0 ? (
@@ -350,12 +289,13 @@ const QuestionForm = ({
               </Button>
             )}
           </div>
-          
+
           <div>
-            {isLastQuestion ? (
+            {currentQuestionIndex === questions.length - 1 ? (
               <Button 
-                type="submit"
+                type="button"
                 className="bg-brand-green hover:bg-brand-darkGreen"
+                onClick={handleNextQuestion}
               >
                 Review Answers
               </Button>

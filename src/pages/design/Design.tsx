@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LoginRequired from "@/components/design/LoginRequired";
@@ -12,7 +11,8 @@ import { useDesignState } from "@/hooks/useDesignState";
 const DesignPage = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  
+
+  // Centralized state management using useDesignState hook
   const {
     activeStep,
     questionResponses,
@@ -25,26 +25,28 @@ const DesignPage = () => {
     handleSaveDesign,
     handleAddToCart,
     handleNavigateToStep,
-    redirectToLogin
+    redirectToLogin,
   } = useDesignState(user);
 
   // Check authentication status
   useEffect(() => {
     const fetchUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       setUser(session?.user || null);
       setLoading(false);
     };
-    
+
     fetchUser();
-    
+
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user || null);
-      }
-    );
-    
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+    });
+
     return () => subscription.unsubscribe();
   }, []);
 
@@ -67,13 +69,15 @@ const DesignPage = () => {
         </p>
       </div>
 
-      <DesignStepper 
+      {/* Stepper Component */}
+      <DesignStepper
         activeStep={activeStep}
         questionResponses={questionResponses}
         designData={designData}
         isDesignComplete={isDesignComplete}
       />
 
+      {/* Conditional Rendering for Login and Tabs */}
       {!user && (activeStep === "design" || activeStep === "options") ? (
         <LoginRequired redirectToLogin={redirectToLogin} />
       ) : (
@@ -83,19 +87,22 @@ const DesignPage = () => {
             <TabsTrigger value="design">Design Editor</TabsTrigger>
             <TabsTrigger value="options">Options</TabsTrigger>
           </TabsList>
-          
+
+          {/* Questions Step */}
           <TabsContent value="questions" className="mt-6">
             <QuestionsStepContent onQuestionsComplete={handleQuestionsComplete} />
           </TabsContent>
-          
+
+          {/* Design Step */}
           <TabsContent value="design" className="mt-6">
-            <DesignStepContent 
+            <DesignStepContent
               questionResponses={questionResponses}
               onDesignUpdated={handleDesignUpdated}
               onNavigateStep={handleNavigateToStep}
             />
           </TabsContent>
-          
+
+          {/* Options Step */}
           <TabsContent value="options" className="mt-6">
             <OptionsStepContent
               tshirtOptions={tshirtOptions}
