@@ -5,6 +5,7 @@ import { Question } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button"; // Added missing import
 
 interface QuestionsStepContentProps {
   onQuestionsComplete: (responses: Record<string, any>) => void;
