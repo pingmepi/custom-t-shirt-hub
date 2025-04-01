@@ -51,7 +51,6 @@ export interface User {
   created_at: string;
 }
 
-// added by lovable
 export interface Theme {
   id: string;
   name: string;
@@ -59,7 +58,6 @@ export interface Theme {
   image_url?: string;
 }
 
-// added by lovable
 export interface UserProfile {
   id: string;
   full_name?: string;
