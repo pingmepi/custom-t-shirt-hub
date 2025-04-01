@@ -1,188 +1,93 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { Question } from "@/lib/types";
-import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { ChevronLeft, Loader2 } from "lucide-react";
+import { fetchThemeBasedQuestions, incrementQuestionUsage } from "@/services/questionsService";
+import { toast } from "@/hooks/use-toast";
 
 interface QuestionFormProps {
-  questions: Question[];
-  onComplete: (responses: Record<string, any>) => void;
+  selectedThemes: string[];
+  onQuestionsComplete: (answers: Record<string, any>) => void;
+  onBackToThemes: () => void;
 }
 
-const MOCK_QUESTIONS: Question[] = [
-  {
-    id: "q1",
-    type: "text",
-    question_text: "What's the main message you want on your t-shirt?",
-    is_active: true,
-  },
-  {
-    id: "q2",
-    type: "choice",
-    question_text: "What style are you looking for?",
-    options: ["Minimal", "Vintage", "Bold", "Artistic", "Funny"],
-    is_active: true,
-  },
-  {
-    id: "q3",
-    type: "color", 
-    question_text: "What's your preferred color palette?",
-    is_active: true,
-  },
-  {
-    id: "q4",
-    type: "choice",
-    question_text: "What's the occasion for this t-shirt?",
-    options: ["Casual wear", "Special event", "Gift", "Team/Group", "Other"],
-    is_active: true,
-  },
-  {
-    id: "q5",
-    type: "textarea",
-    question_text: "Any additional details you'd like to include in your design?",
-    is_active: true,
-  },
-];
-
-const QuestionForm = ({ questions: initialQuestions, onComplete }: QuestionFormProps) => {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [responses, setResponses] = useState<Record<string, any>>({});
-  const [questions, setQuestions] = useState<Question[]>(initialQuestions.length ? initialQuestions : MOCK_QUESTIONS);
-  const [loading, setLoading] = useState(initialQuestions.length === 0);
+const QuestionForm = ({ 
+  selectedThemes, 
+  onQuestionsComplete, 
+  onBackToThemes 
+}: QuestionFormProps) => {
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [isLoading, setIsLoading] = useState(true);
   
+  // Fetch questions based on selected themes
   useEffect(() => {
-    const fetchQuestions = async () => {
-      if (initialQuestions.length === 0) {
-        try {
-          const { data, error } = await supabase
-            .from('questions')
-            .select('*')
-            .eq('is_active', true);
-          
-          if (error) {
-            console.error("Error fetching questions:", error);
-            setQuestions(MOCK_QUESTIONS);
-          } else if (data && data.length > 0) {
-            const formattedQuestions: Question[] = data.map(q => ({
-              id: q.id,
-              type: q.type as 'text' | 'choice' | 'color' | 'textarea',
-              question_text: q.question_text,
-              options: q.options as string[] | undefined,
-              is_active: q.is_active === true,
-              usage_count: q.usage_count || 0
-            }));
-            
-            setQuestions(formattedQuestions);
-          } else {
-            setQuestions(MOCK_QUESTIONS);
-          }
-        } catch (err) {
-          console.error("Failed to fetch questions:", err);
-          setQuestions(MOCK_QUESTIONS);
-        } finally {
-          setLoading(false);
-        }
+    const loadQuestions = async () => {
+      try {
+        setIsLoading(true);
+        console.log("Fetching questions for themes:", selectedThemes);
+        const fetchedQuestions = await fetchThemeBasedQuestions(selectedThemes);
+        setQuestions(fetchedQuestions);
+        
+        // Initialize answers
+        const initialAnswers: Record<string, any> = {};
+        fetchedQuestions.forEach(q => {
+          initialAnswers[q.id] = q.type === 'choice' && q.options?.length ? q.options[0] : '';
+        });
+        setAnswers(initialAnswers);
+      } catch (error) {
+        console.error("Error loading questions:", error);
+        toast({
+          title: "Error loading questions",
+          description: "Failed to load questions. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
       }
     };
     
-    fetchQuestions();
-  }, [initialQuestions]);
+    loadQuestions();
+  }, [selectedThemes]);
   
-  const activeQuestions = questions.filter(q => q.is_active);
-  const currentQuestion = activeQuestions[currentStep];
-  
-  const handleTextChange = (questionId: string, value: string) => {
-    setResponses(prev => ({
+  const handleChange = (questionId: string, value: any) => {
+    setAnswers(prev => ({
       ...prev,
-      [questionId]: value,
+      [questionId]: value
     }));
   };
   
-  const handleChoiceChange = (questionId: string, value: string) => {
-    setResponses(prev => ({
-      ...prev,
-      [questionId]: value,
-    }));
-  };
-
-  const handleColorChange = (questionId: string, value: string) => {
-    setResponses(prev => ({
-      ...prev,
-      [questionId]: value,
-    }));
-  };
-  
-  const updateQuestionUsageCount = async (questionId: string) => {
-    try {
-      const { data: questionData, error: fetchError } = await supabase
-        .from('questions')
-        .select('usage_count')
-        .eq('id', questionId)
-        .single();
-        
-      if (fetchError) {
-        console.error(`Error fetching question ${questionId}:`, fetchError);
-        return;
-      }
-      
-      const currentCount = questionData?.usage_count || 0;
-      
-      const { error: updateError } = await supabase
-        .from('questions')
-        .update({ usage_count: currentCount + 1 })
-        .eq('id', questionId);
-        
-      if (updateError) {
-        console.error(`Error updating usage count for question ${questionId}:`, updateError);
-      } else {
-        console.log(`Updated usage count for question ${questionId} to ${currentCount + 1}`);
-      }
-    } catch (err) {
-      console.error(`Failed to update usage count for question ${questionId}:`, err);
-    }
-  };
-
-  const handleNext = () => {
-    if (!responses[currentQuestion.id]) {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Check if all questions are answered
+    const isValid = Object.values(answers).every(
+      value => value !== undefined && value !== ''
+    );
+    
+    if (!isValid) {
+      toast({
+        title: "Please answer all questions",
+        description: "All questions require an answer before proceeding.",
+        variant: "destructive"
+      });
       return;
     }
     
-    console.log(`Completed question ${currentStep + 1}/${activeQuestions.length}:`, {
-      questionId: currentQuestion.id,
-      question: currentQuestion.question_text,
-      response: responses[currentQuestion.id],
-      questionType: activeQuestions.find(q => q.id === currentQuestion.id)?.type
-    });
-    
-    updateQuestionUsageCount(currentQuestion.id);
-    
-    if (currentStep < activeQuestions.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      console.log("Form completed! All responses:", responses);
-      console.log("Questions answered:", activeQuestions.length);
-      console.log("Response summary:", Object.entries(responses).map(([id, value]) => ({
-        questionId: id,
-        question: activeQuestions.find(q => q.id === id)?.question_text,
-        response: value,
-        questionType: activeQuestions.find(q => q.id === id)?.type
-      })));
-      
-      onComplete(responses);
+    // Increment usage count for each question
+    for (const questionId of Object.keys(answers)) {
+      await incrementQuestionUsage(questionId);
     }
+    
+    onQuestionsComplete(answers);
   };
   
-  const handleBack = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-brand-green" />
@@ -190,126 +95,82 @@ const QuestionForm = ({ questions: initialQuestions, onComplete }: QuestionFormP
       </div>
     );
   }
-
-  if (!currentQuestion) {
-    return <div className="p-6 text-center">No questions available. Please try again later.</div>;
-  }
   
   return (
-    <div className="max-w-lg mx-auto p-6 bg-white rounded-lg shadow-md">
-      <div className="mb-6">
-        <div className="flex justify-between mb-2">
-          <span className="text-sm font-medium text-brand-green">
-            Question {currentStep + 1} of {activeQuestions.length}
-          </span>
-          <span className="text-sm text-gray-500">
-            {Math.round(((currentStep + 1) / activeQuestions.length) * 100)}% complete
-          </span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div 
-            className="bg-brand-green h-2 rounded-full transition-all duration-300" 
-            style={{ width: `${((currentStep + 1) / activeQuestions.length) * 100}%` }}
-          ></div>
-        </div>
-      </div>
-      
-      <h2 className="text-xl font-semibold mb-4">{currentQuestion.question_text}</h2>
-      
-      {currentQuestion.type === "text" && (
-        <div className="mb-6">
-          <Label htmlFor={currentQuestion.id} className="sr-only">
-            {currentQuestion.question_text}
+    <form onSubmit={handleSubmit} className="space-y-8">
+      {questions.map((question) => (
+        <div key={question.id} className="space-y-3">
+          <Label htmlFor={question.id} className="text-lg font-medium">
+            {question.question_text}
           </Label>
-          <Input
-            id={currentQuestion.id}
-            value={responses[currentQuestion.id] || ""}
-            onChange={(e) => handleTextChange(currentQuestion.id, e.target.value)}
-            placeholder="Type your answer here..."
-            className="w-full"
-          />
-        </div>
-      )}
-      
-      {currentQuestion.type === "textarea" && (
-        <div className="mb-6">
-          <Label htmlFor={currentQuestion.id} className="sr-only">
-            {currentQuestion.question_text}
-          </Label>
-          <Textarea
-            id={currentQuestion.id}
-            value={responses[currentQuestion.id] || ""}
-            onChange={(e) => handleTextChange(currentQuestion.id, e.target.value)}
-            placeholder="Type your detailed answer here..."
-            className="w-full min-h-[100px]"
-          />
-        </div>
-      )}
-      
-      {currentQuestion.type === "choice" && currentQuestion.options && (
-        <div className="mb-6 space-y-2">
-          <RadioGroup
-            value={responses[currentQuestion.id] || ""}
-            onValueChange={(value) => handleChoiceChange(currentQuestion.id, value)}
-          >
-            {currentQuestion.options.map((option) => (
-              <div key={option} className="flex items-center space-x-2">
-                <RadioGroupItem value={option} id={`${currentQuestion.id}-${option}`} />
-                <Label htmlFor={`${currentQuestion.id}-${option}`}>{option}</Label>
-              </div>
-            ))}
-          </RadioGroup>
-        </div>
-      )}
-      
-      {currentQuestion.type === "color" && (
-        <div className="mb-6">
-          <div className="flex flex-col space-y-3">
-            <Label htmlFor={`${currentQuestion.id}-color`}>
-              Select a color or enter a color code:
-            </Label>
-            <div className="flex items-center space-x-3">
+          
+          {question.type === 'text' && (
+            <Input
+              id={question.id}
+              value={answers[question.id] || ''}
+              onChange={(e) => handleChange(question.id, e.target.value)}
+              className="w-full"
+              placeholder="Type your answer here..."
+            />
+          )}
+          
+          {question.type === 'textarea' && (
+            <Textarea
+              id={question.id}
+              value={answers[question.id] || ''}
+              onChange={(e) => handleChange(question.id, e.target.value)}
+              className="w-full min-h-[100px]"
+              placeholder="Type your answer here..."
+            />
+          )}
+          
+          {question.type === 'choice' && question.options && (
+            <RadioGroup
+              value={answers[question.id] || ''}
+              onValueChange={(value) => handleChange(question.id, value)}
+              className="space-y-2"
+            >
+              {question.options.map((option) => (
+                <div key={option} className="flex items-center space-x-2">
+                  <RadioGroupItem id={`${question.id}-${option}`} value={option} />
+                  <Label htmlFor={`${question.id}-${option}`}>{option}</Label>
+                </div>
+              ))}
+            </RadioGroup>
+          )}
+          
+          {question.type === 'color' && (
+            <div className="flex items-center space-x-2">
               <Input
+                id={`${question.id}-color`}
                 type="color"
-                id={`${currentQuestion.id}-color`}
-                value={responses[currentQuestion.id] || "#000000"}
-                onChange={(e) => handleColorChange(currentQuestion.id, e.target.value)}
-                className="w-12 h-10 p-1"
+                value={answers[question.id] || '#000000'}
+                onChange={(e) => handleChange(question.id, e.target.value)}
+                className="w-16 h-10 cursor-pointer"
               />
-              <Input
-                type="text"
-                value={responses[currentQuestion.id] || ""}
-                onChange={(e) => handleColorChange(currentQuestion.id, e.target.value)}
-                placeholder="e.g. #FF0000 or red"
-                className="w-full"
-              />
+              <span className="text-sm">{answers[question.id] || '#000000'}</span>
             </div>
-            <div className="text-sm text-gray-500">
-              You can select from the color picker or type colors like "red", "blue", "pastel", etc.
-            </div>
-          </div>
+          )}
         </div>
-      )}
+      ))}
       
-      <div className="flex justify-between mt-8">
-        <Button
-          type="button"
+      <div className="flex items-center justify-between pt-4">
+        <Button 
+          type="button" 
           variant="outline"
-          onClick={handleBack}
-          disabled={currentStep === 0}
+          onClick={onBackToThemes}
         >
-          Back
+          <ChevronLeft className="mr-2 h-4 w-4" /> Back to Themes
         </Button>
-        <Button
-          type="button"
-          onClick={handleNext}
-          disabled={!responses[currentQuestion.id]}
+        
+        <Button 
+          type="submit"
           className="bg-brand-green hover:bg-brand-darkGreen"
         >
-          {currentStep < activeQuestions.length - 1 ? "Next" : "Complete"}
+          Continue
         </Button>
       </div>
-    </div>
+    </form>
   );
 };
 

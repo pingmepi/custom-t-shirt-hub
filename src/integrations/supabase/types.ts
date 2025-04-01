@@ -233,12 +233,141 @@ export type Database = {
         }
         Relationships: []
       }
+      theme_questions: {
+        Row: {
+          created_at: string | null
+          id: string
+          question_id: string
+          relevance_score: number | null
+          theme_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          question_id: string
+          relevance_score?: number | null
+          theme_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          question_id?: string
+          relevance_score?: number | null
+          theme_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "theme_questions_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "theme_questions_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "themes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      themes: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          primary_color: string | null
+          secondary_color: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          primary_color?: string | null
+          secondary_color?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          primary_color?: string | null
+          secondary_color?: string | null
+        }
+        Relationships: []
+      }
+      user_theme_selections: {
+        Row: {
+          created_at: string | null
+          design_session_id: string | null
+          id: string
+          theme_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          design_session_id?: string | null
+          id?: string
+          theme_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          design_session_id?: string | null
+          id?: string
+          theme_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_theme_selections_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "themes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_theme_based_questions: {
+        Args: {
+          theme_ids: string[]
+          limit_count?: number
+        }
+        Returns: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          options: Json | null
+          question_text: string
+          type: string
+          usage_count: number | null
+        }[]
+      }
+      track_theme_selection: {
+        Args: {
+          p_user_id: string
+          p_theme_ids: string[]
+          p_design_session_id?: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

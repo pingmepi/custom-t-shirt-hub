@@ -50,11 +50,14 @@ export const fetchThemeCategories = async (): Promise<string[]> => {
     }
 
     // Extract unique categories
-    const categories = Array.from(
-      new Set(data.map(item => item.category).filter(Boolean))
-    );
+    const categoriesSet = new Set<string>();
+    data.forEach(item => {
+      if (item.category) {
+        categoriesSet.add(item.category);
+      }
+    });
     
-    return ['All', ...categories] as string[];
+    return ['All', ...Array.from(categoriesSet)];
   } catch (err) {
     console.error("Error in fetchThemeCategories:", err);
     return ['All'];
@@ -71,7 +74,16 @@ export const trackThemeSelections = async (
   designSessionId?: string
 ): Promise<void> => {
   try {
+    // Make sure user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.log("User not authenticated, skipping theme selection tracking");
+      return;
+    }
+
     const { error } = await supabase.rpc('track_theme_selection', {
+      p_user_id: user.id,
       p_theme_ids: themeIds,
       p_design_session_id: designSessionId
     });
