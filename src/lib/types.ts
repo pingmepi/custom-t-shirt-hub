@@ -1,10 +1,10 @@
-
 export interface Question {
   id: string;
   type: 'text' | 'choice' | 'color' | 'textarea';
   question_text: string;
   options?: string[];
   is_active: boolean;
+  usage_count?: number;
 }
 
 export interface TShirtDesign {
@@ -42,4 +42,11 @@ export interface ShippingAddress {
   postal_code: string;
   country: string;
   phone_number: string;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  role: string;
+  created_at: string;
 }
