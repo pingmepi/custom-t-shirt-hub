@@ -5,6 +5,7 @@ import QuestionForm from "@/components/design/QuestionForm";
 import ThemeSelector from "@/components/design/ThemeSelector";
 import { fetchThemeBasedQuestions } from "@/services/questionsService";
 import { Question } from "@/lib/types";
+import { useToast } from "@/components/ui/use-toast";
 
 interface QuestionsStepContentProps {
   onQuestionsComplete: (responses: Record<string, any>) => void;
@@ -16,6 +17,7 @@ const QuestionsStepContent = ({ onQuestionsComplete }: QuestionsStepContentProps
   const [loading, setLoading] = useState(false);
   const [themeSelectionComplete, setThemeSelectionComplete] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     // When themes are selected, fetch relevant questions
@@ -26,6 +28,11 @@ const QuestionsStepContent = ({ onQuestionsComplete }: QuestionsStepContentProps
           const fetchedQuestions = await fetchThemeBasedQuestions(selectedThemes);
           setQuestions(fetchedQuestions);
           setError(null);
+          
+          toast({
+            title: "Questions loaded",
+            description: `${fetchedQuestions.length} personalized questions based on your themes.`,
+          });
         } catch (err) {
           console.error("Failed to fetch questions:", err);
           setError("We couldn't load questions based on your themes. Please try again.");
@@ -38,7 +45,7 @@ const QuestionsStepContent = ({ onQuestionsComplete }: QuestionsStepContentProps
     if (selectedThemes.length > 0) {
       loadQuestions();
     }
-  }, [selectedThemes]);
+  }, [selectedThemes, toast]);
 
   const handleThemesSelected = (themes: string[]) => {
     console.log("Selected themes:", themes);

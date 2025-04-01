@@ -5,30 +5,29 @@ import { Question } from "@/lib/types";
 /**
  * Fetches relevant questions based on selected themes
  * @param themes Array of theme IDs to base questions on
+ * @param limit Number of questions to fetch (default: 5)
  * @returns Array of questions
  */
-export const fetchThemeBasedQuestions = async (themes: string[]): Promise<Question[]> => {
+export const fetchThemeBasedQuestions = async (themes: string[], limit: number = 5): Promise<Question[]> => {
   try {
-    // For now, this is a simplified implementation
-    // In a real app, we would query the backend based on themes
     console.log("Fetching questions for themes:", themes);
     
-    // Get active questions from Supabase
+    // Call the database function to get theme-based questions
     const { data, error } = await supabase
-      .from('questions')
-      .select('*')
-      .eq('is_active', true)
-      .order('usage_count', { ascending: false })
-      .limit(5);
+      .rpc('get_theme_based_questions', { 
+        theme_ids: themes,
+        limit_count: limit
+      });
     
     if (error) {
-      console.error("Error fetching questions:", error);
+      console.error("Error fetching theme-based questions:", error);
       throw new Error("Failed to fetch questions");
     }
     
     if (!data || data.length === 0) {
-      console.warn("No questions found, using default questions");
-      return DEFAULT_QUESTIONS;
+      console.warn("No theme-based questions found, using default questions");
+      // Fallback to get any active questions if no theme-based questions
+      return await fetchDefaultQuestions(limit);
     }
     
     const questions: Question[] = data.map(q => ({
@@ -43,6 +42,47 @@ export const fetchThemeBasedQuestions = async (themes: string[]): Promise<Questi
     return questions;
   } catch (err) {
     console.error("Error in fetchThemeBasedQuestions:", err);
+    return await fetchDefaultQuestions(limit);
+  }
+};
+
+/**
+ * Fetches default set of questions when theme-based questions fail
+ * @param limit Number of questions to fetch
+ * @returns Array of questions
+ */
+const fetchDefaultQuestions = async (limit: number = 5): Promise<Question[]> => {
+  try {
+    // Get active questions from Supabase
+    const { data, error } = await supabase
+      .from('questions')
+      .select('*')
+      .eq('is_active', true)
+      .order('usage_count', { ascending: false })
+      .limit(limit);
+    
+    if (error) {
+      console.error("Error fetching default questions:", error);
+      throw new Error("Failed to fetch questions");
+    }
+    
+    if (!data || data.length === 0) {
+      console.warn("No questions found in database, using hardcoded defaults");
+      return DEFAULT_QUESTIONS;
+    }
+    
+    const questions: Question[] = data.map(q => ({
+      id: q.id,
+      type: q.type as 'text' | 'choice' | 'color' | 'textarea',
+      question_text: q.question_text,
+      options: q.options as string[] | undefined,
+      is_active: q.is_active === true,
+      usage_count: q.usage_count || 0
+    }));
+    
+    return questions;
+  } catch (err) {
+    console.error("Error in fetchDefaultQuestions:", err);
     return DEFAULT_QUESTIONS;
   }
 };

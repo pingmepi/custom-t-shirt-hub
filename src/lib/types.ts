@@ -60,6 +60,7 @@ export interface Theme {
   primary_color?: string;
   secondary_color?: string;
   category?: string;
+  is_active?: boolean;
 }
 
 export interface UserProfile {
@@ -68,4 +69,28 @@ export interface UserProfile {
   phone_number?: string;
   role: 'user' | 'admin';
   created_at?: string;
+}
+
+export interface ThemeQuestion {
+  id: string;
+  theme_id: string;
+  question_id: string;
+  relevance_score: number;
+}
+
+export interface UserThemeSelection {
+  id: string;
+  user_id: string;
+  theme_id: string;
+  design_session_id?: string;
+  created_at: string;
+}
+
+export interface DesignSession {
+  id: string;
+  user_id: string;
+  selected_themes: string[];
+  current_step: number;
+  is_complete: boolean;
+  created_at: string;
 }

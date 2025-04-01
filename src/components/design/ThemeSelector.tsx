@@ -1,22 +1,12 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Theme } from "@/lib/types";
 import { Check, Palette, AlertCircle, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-
-// Array of theme categories for filtering
-const THEME_CATEGORIES = [
-  "All",
-  "Abstract",
-  "Nature",
-  "Typography",
-  "Artistic",
-  "Minimal"
-];
+import { fetchThemes, fetchThemeCategories, trackThemeSelections } from "@/services/themesService";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ThemeSelectorProps {
   onThemesSelected: (themes: string[]) => void;
@@ -25,40 +15,69 @@ interface ThemeSelectorProps {
 const ThemeSelector = ({ onThemesSelected }: ThemeSelectorProps) => {
   const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
   const [themes, setThemes] = useState<Theme[]>([]);
+  const [categories, setCategories] = useState<string[]>(['All']);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState("All");
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
-    const fetchThemes = async () => {
+    const loadThemesAndCategories = async () => {
       try {
-        // In a real implementation, we would fetch from Supabase
-        // For now, we're using the enhanced sample data
-        const response = await new Promise<Theme[]>((resolve) => {
-          setTimeout(() => {
-            resolve(ENHANCED_THEMES);
-          }, 500);
-        });
+        setLoading(true);
         
-        setThemes(response);
-        setLoading(false);
+        // Load categories and themes in parallel
+        const [fetchedCategories, fetchedThemes] = await Promise.all([
+          fetchThemeCategories(),
+          fetchThemes()
+        ]);
+        
+        setCategories(fetchedCategories);
+        setThemes(fetchedThemes);
+        setError(null);
       } catch (err) {
-        console.error("Error fetching themes:", err);
+        console.error("Error loading themes or categories:", err);
         setError("Failed to load themes. Please try again.");
-        setThemes(ENHANCED_THEMES); // Fallback to sample data
-        setLoading(false);
+        // Use fallback themes if loading fails
+        setThemes(FALLBACK_THEMES);
         
         toast({
           title: "Error loading themes",
           description: "Using fallback themes instead.",
           variant: "destructive"
         });
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchThemes();
+    loadThemesAndCategories();
   }, [toast]);
+
+  // When category changes, load filtered themes
+  useEffect(() => {
+    const loadFilteredThemes = async () => {
+      if (activeCategory === 'All') {
+        // If "All" is selected, we can use the themes we already have
+        return;
+      }
+      
+      try {
+        setLoading(true);
+        const fetchedThemes = await fetchThemes(activeCategory);
+        setThemes(fetchedThemes);
+        setError(null);
+      } catch (err) {
+        console.error(`Error loading themes for category ${activeCategory}:`, err);
+        // Keep existing themes instead of showing an error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadFilteredThemes();
+  }, [activeCategory]);
 
   const toggleTheme = (themeId: string) => {
     setSelectedThemes(prev => {
@@ -79,14 +98,32 @@ const ThemeSelector = ({ onThemesSelected }: ThemeSelectorProps) => {
     });
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (selectedThemes.length === 0) {
       toast({
         title: "No theme selected",
         description: "Using default minimal theme instead.",
       });
-      onThemesSelected(["minimal"]);
+      
+      // Use minimal theme as default if available
+      const minimalTheme = themes.find(t => t.name.toLowerCase() === "minimal");
+      const defaultThemeId = minimalTheme ? minimalTheme.id : themes[0]?.id;
+      
+      if (defaultThemeId) {
+        // Track theme selection if user is logged in
+        if (user) {
+          await trackThemeSelections([defaultThemeId]);
+        }
+        onThemesSelected([defaultThemeId]);
+      } else {
+        onThemesSelected(["minimal"]);
+      }
     } else {
+      // Track theme selection if user is logged in
+      if (user) {
+        await trackThemeSelections(selectedThemes);
+      }
+      
       onThemesSelected(selectedThemes);
       toast({
         title: "Themes selected",
@@ -95,10 +132,7 @@ const ThemeSelector = ({ onThemesSelected }: ThemeSelectorProps) => {
     }
   };
 
-  // Filter themes by category
-  const filteredThemes = themes.filter(theme => 
-    activeCategory === "All" || theme.category?.toLowerCase() === activeCategory.toLowerCase()
-  );
+  // Filter themes by category - this is now handled by the backend
 
   if (loading) {
     return (
@@ -143,7 +177,7 @@ const ThemeSelector = ({ onThemesSelected }: ThemeSelectorProps) => {
         <div className="mb-6">
           <h3 className="text-sm font-medium text-gray-500 mb-2">FILTER BY CATEGORY</h3>
           <ToggleGroup type="single" value={activeCategory} onValueChange={(value) => value && setActiveCategory(value)}>
-            {THEME_CATEGORIES.map(category => (
+            {categories.map(category => (
               <ToggleGroupItem 
                 key={category} 
                 value={category}
@@ -157,7 +191,7 @@ const ThemeSelector = ({ onThemesSelected }: ThemeSelectorProps) => {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8">
-          {filteredThemes.map((theme) => (
+          {themes.map((theme) => (
             <Card 
               key={theme.id}
               className={`cursor-pointer transition-all ${
@@ -225,8 +259,8 @@ const ThemeSelector = ({ onThemesSelected }: ThemeSelectorProps) => {
   );
 };
 
-// Enhanced sample themes with additional metadata
-const ENHANCED_THEMES: Theme[] = [
+// Fallback themes in case the API fails
+const FALLBACK_THEMES: Theme[] = [
   { 
     id: "travel", 
     name: "Travel", 
