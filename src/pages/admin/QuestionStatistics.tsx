@@ -21,7 +21,7 @@ const QuestionStatisticsPage = () => {
 
         // Check if user has admin role in your database
         const { data, error } = await supabase
-          .from('users')
+          .from('profiles')
           .select('role')
           .eq('id', user.id)
           .single();

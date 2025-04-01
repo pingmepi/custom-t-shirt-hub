@@ -1,4 +1,3 @@
-
 export interface Question {
   id: string;
   type: 'text' | 'choice' | 'color' | 'textarea';

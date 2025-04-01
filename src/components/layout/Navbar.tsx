@@ -26,7 +26,7 @@ const Navbar = () => {
       // If user is logged in, check if they are an admin
       if (user) {
         const { data, error } = await supabase
-          .from('users')
+          .from('profiles')
           .select('role')
           .eq('id', user.id)
           .single();

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +29,7 @@ const MOCK_QUESTIONS: Question[] = [
   },
   {
     id: "q3",
-    type: "color", // Now properly handled as color type
+    type: "color", 
     question_text: "What's your preferred color palette?",
     is_active: true,
   },
@@ -110,7 +109,6 @@ const QuestionForm = ({ questions: initialQuestions, onComplete }: QuestionFormP
     }));
   };
 
-  // Added by lovable: Handle color picker change
   const handleColorChange = (questionId: string, value: string) => {
     setResponses(prev => ({
       ...prev,
@@ -120,7 +118,6 @@ const QuestionForm = ({ questions: initialQuestions, onComplete }: QuestionFormP
   
   const updateQuestionUsageCount = async (questionId: string) => {
     try {
-      // First get the current question to get its usage count
       const { data: questionData, error: fetchError } = await supabase
         .from('questions')
         .select('usage_count')
@@ -134,7 +131,6 @@ const QuestionForm = ({ questions: initialQuestions, onComplete }: QuestionFormP
       
       const currentCount = questionData?.usage_count || 0;
       
-      // Update the usage count
       const { error: updateError } = await supabase
         .from('questions')
         .update({ usage_count: currentCount + 1 })
@@ -155,7 +151,6 @@ const QuestionForm = ({ questions: initialQuestions, onComplete }: QuestionFormP
       return;
     }
     
-    // Log current question completion
     console.log(`Completed question ${currentStep + 1}/${activeQuestions.length}:`, {
       questionId: currentQuestion.id,
       question: currentQuestion.question_text,
@@ -163,13 +158,11 @@ const QuestionForm = ({ questions: initialQuestions, onComplete }: QuestionFormP
       questionType: activeQuestions.find(q => q.id === currentQuestion.id)?.type
     });
     
-    // Update the usage count for the current question
     updateQuestionUsageCount(currentQuestion.id);
     
     if (currentStep < activeQuestions.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Log all responses before submitting
       console.log("Form completed! All responses:", responses);
       console.log("Questions answered:", activeQuestions.length);
       console.log("Response summary:", Object.entries(responses).map(([id, value]) => ({
@@ -269,7 +262,6 @@ const QuestionForm = ({ questions: initialQuestions, onComplete }: QuestionFormP
         </div>
       )}
       
-      {/* Added by lovable: Proper color input handling */}
       {currentQuestion.type === "color" && (
         <div className="mb-6">
           <div className="flex flex-col space-y-3">

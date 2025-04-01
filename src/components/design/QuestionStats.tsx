@@ -52,10 +52,8 @@ const QuestionStats = () => {
 
   const handleSort = (column: "usage_count" | "question_text") => {
     if (sortBy === column) {
-      // Toggle order if clicking on the same column
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
-      // Default to descending for usage count, ascending for text
       setSortBy(column);
       setSortOrder(column === "usage_count" ? "desc" : "asc");
     }
