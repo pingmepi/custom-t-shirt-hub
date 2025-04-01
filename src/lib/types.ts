@@ -43,3 +43,10 @@ export interface ShippingAddress {
   country: string;
   phone_number: string;
 }
+
+export interface User {
+  id: string;
+  email: string;
+  role: string;
+  created_at: string;
+}

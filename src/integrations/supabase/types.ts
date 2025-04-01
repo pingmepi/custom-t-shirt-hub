@@ -178,6 +178,7 @@ export type Database = {
           options: Json | null
           question_text: string
           type: string
+          usage_count: number | null
         }
         Insert: {
           created_at?: string | null
@@ -186,6 +187,7 @@ export type Database = {
           options?: Json | null
           question_text: string
           type: string
+          usage_count?: number | null
         }
         Update: {
           created_at?: string | null
@@ -194,6 +196,7 @@ export type Database = {
           options?: Json | null
           question_text?: string
           type?: string
+          usage_count?: number | null
         }
         Relationships: []
       }
@@ -224,6 +227,27 @@ export type Database = {
           image_url?: string
           is_featured?: boolean | null
           title?: string
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          id: string
+          email: string
+          role: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          email: string
+          role?: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          email?: string
+          role?: string
+          created_at?: string | null
         }
         Relationships: []
       }
