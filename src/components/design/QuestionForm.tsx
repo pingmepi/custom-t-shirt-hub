@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,7 +72,8 @@ const QuestionForm = ({ questions: initialQuestions, onComplete }: QuestionFormP
               type: q.type as 'text' | 'choice' | 'color' | 'textarea',
               question_text: q.question_text,
               options: q.options as string[] | undefined,
-              is_active: q.is_active === true
+              is_active: q.is_active === true,
+              usage_count: q.usage_count || 0
             }));
             
             setQuestions(formattedQuestions);
@@ -109,14 +109,67 @@ const QuestionForm = ({ questions: initialQuestions, onComplete }: QuestionFormP
     }));
   };
   
+  const updateQuestionUsageCount = async (questionId: string) => {
+    try {
+      // First get the current question to get its usage count
+      const { data: questionData, error: fetchError } = await supabase
+        .from('questions')
+        .select('usage_count')
+        .eq('id', questionId)
+        .single();
+        
+      if (fetchError) {
+        console.error(`Error fetching question ${questionId}:`, fetchError);
+        return;
+      }
+      
+      const currentCount = questionData?.usage_count || 0;
+      
+      // Update the usage count
+      const { error: updateError } = await supabase
+        .from('questions')
+        .update({ usage_count: currentCount + 1 })
+        .eq('id', questionId);
+        
+      if (updateError) {
+        console.error(`Error updating usage count for question ${questionId}:`, updateError);
+      } else {
+        console.log(`Updated usage count for question ${questionId} to ${currentCount + 1}`);
+      }
+    } catch (err) {
+      console.error(`Failed to update usage count for question ${questionId}:`, err);
+    }
+  };
+
   const handleNext = () => {
     if (!responses[currentQuestion.id]) {
       return;
     }
     
+    // Log current question completion
+    console.log(`Completed question ${currentStep + 1}/${activeQuestions.length}:`, {
+      questionId: currentQuestion.id,
+      question: currentQuestion.question_text,
+      response: responses[currentQuestion.id],
+      questionType: activeQuestions.find(q => q.id === currentQuestion.id)?.type
+    });
+    
+    // Update the usage count for the current question
+    updateQuestionUsageCount(currentQuestion.id);
+    
     if (currentStep < activeQuestions.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
+      // Log all responses before submitting
+      console.log("Form completed! All responses:", responses);
+      console.log("Questions answered:", activeQuestions.length);
+      console.log("Response summary:", Object.entries(responses).map(([id, value]) => ({
+        questionId: id,
+        question: activeQuestions.find(q => q.id === id)?.question_text,
+        response: value,
+        questionType: activeQuestions.find(q => q.id === id)?.type
+      })));
+      
       onComplete(responses);
     }
   };

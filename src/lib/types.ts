@@ -1,10 +1,10 @@
-
 export interface Question {
   id: string;
   type: 'text' | 'choice' | 'color' | 'textarea';
   question_text: string;
   options?: string[];
   is_active: boolean;
+  usage_count?: number;
 }
 
 export interface TShirtDesign {
