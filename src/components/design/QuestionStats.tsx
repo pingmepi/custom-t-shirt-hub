@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
-import { Question } from "@/lib/types";
-import { supabase } from "@/integrations/supabase/client";
+
+import React, { useState, useEffect } from "react";
+import { Question } from "../../lib/types";
+import { supabase } from "../../integrations/supabase/client";
+
 import { Loader2, ArrowUpDown, Info } from "lucide-react";
 import {
   Table,
@@ -9,9 +11,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+} from "../../components/ui/table";
+import { Button } from "../../components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../components/ui/tooltip";
+
+
 
 const QuestionStats = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -33,14 +38,21 @@ const QuestionStats = () => {
       if (error) {
         console.error("Error fetching questions:", error);
       } else if (data) {
-        const formattedQuestions: Question[] = data.map(q => ({
-          id: q.id,
-          type: q.type as 'text' | 'choice' | 'color' | 'textarea',
-          question_text: q.question_text,
-          options: q.options as string[] | undefined,
-          is_active: q.is_active === true,
-          usage_count: q.usage_count || 0
-        }));
+
+        const formattedQuestions: Question[] = data.map(q => {
+          // Use a type assertion to tell TypeScript that the database row can have additional fields
+          const dbRow = q as any;
+          
+          return {
+            id: dbRow.id,
+            type: dbRow.type as 'text' | 'choice' | 'color' | 'textarea',
+            question_text: dbRow.question_text,
+            options: dbRow.options as string[] | undefined,
+            is_active: dbRow.is_active === true,
+            usage_count: typeof dbRow.usage_count === 'number' ? dbRow.usage_count : 0
+          };
+        });
+
         setQuestions(formattedQuestions);
       }
     } catch (err) {
@@ -52,8 +64,12 @@ const QuestionStats = () => {
 
   const handleSort = (column: "usage_count" | "question_text") => {
     if (sortBy === column) {
+
+      // Toggle order if clicking on the same column
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
+      // Default to descending for usage count, ascending for text
+
       setSortBy(column);
       setSortOrder(column === "usage_count" ? "desc" : "asc");
     }
@@ -206,4 +222,6 @@ const QuestionStats = () => {
   );
 };
 
+
 export default QuestionStats;
+
