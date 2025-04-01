@@ -2,7 +2,7 @@
 # T-Shirt Design & Ordering Platform - Product Requirements Document
 
 **Date**: 2025-04-01\
-**Author**: [Your Name]\
+**Author**: Karan\
 **Status**: Draft
 
 ## Overview
