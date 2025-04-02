@@ -11,6 +11,8 @@ import LoginPage from "./pages/auth/Login";
 import SignupPage from "./pages/auth/Signup";
 import DesignPage from "./pages/design/Design";
 import DesignsListPage from "./pages/design/DesignsList";
+import UserDashboard from "./pages/user/Dashboard";
+import ProfilePage from "./pages/user/Profile";
 import PricingPage from "./pages/Pricing";
 import HowItWorksPage from "./pages/HowItWorks";
 import NotFound from "./pages/NotFound";
@@ -35,6 +37,8 @@ const App = () => (
                 <Route path="/signup" element={<SignupPage />} />
                 <Route path="/design" element={<DesignPage />} />
                 <Route path="/designs" element={<DesignsListPage />} />
+                <Route path="/dashboard" element={<UserDashboard />} />
+                <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/pricing" element={<PricingPage />} />
                 <Route path="/how-it-works" element={<HowItWorksPage />} />
                 <Route path="/admin/question-statistics" element={<QuestionStatisticsPage />} />

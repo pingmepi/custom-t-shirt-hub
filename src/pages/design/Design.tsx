@@ -1,23 +1,20 @@
-import { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import LoginRequired from "@/components/design/LoginRequired";
+
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import DesignStepper from "@/components/design/DesignStepper";
 import QuestionsStepContent from "@/components/design/QuestionsStepContent";
 import DesignStepContent from "@/components/design/DesignStepContent";
 import OptionsStepContent from "@/components/design/OptionsStepContent";
-import { supabase } from "@/integrations/supabase/client";
-import { useDesignState } from "@/hooks/useDesignState";
+import { useDesignState } from "@/hooks/useDesignState"; 
+import { useAuth } from "@/context/AuthContext"; 
+import LoginRequired from "@/components/design/LoginRequired";
 
 const DesignPage = () => {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  
   const {
     activeStep,
     questionResponses,
     designData,
     tshirtOptions,
-    isDesignComplete,
     handleQuestionsComplete,
     handleDesignUpdated,
     handleOptionsChange,
@@ -26,86 +23,66 @@ const DesignPage = () => {
     handleNavigateToStep,
     redirectToLogin
   } = useDesignState();
+  
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  
+  const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
 
-  // Check authentication status
-  useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user || null);
-      setLoading(false);
-    };
-    
-    fetchUser();
-    
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user || null);
-      }
-    );
-    
-    return () => subscription.unsubscribe();
-  }, []);
+  const handleThemeSelect = (themes: string[]) => {
+    setSelectedThemes(themes);
+  };
 
-  if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-green"></div>
-        </div>
-      </div>
-    );
-  }
+  const renderStepContent = () => {
+    // For some design steps, we require authentication
+    if (activeStep === "design" && !isAuthenticated) {
+      return <LoginRequired redirectToLogin={redirectToLogin} />;
+    }
+
+    switch (activeStep) {
+      case "themes":
+        return (
+          <div className="p-6 bg-white rounded-lg shadow">
+            <h2 className="text-2xl font-bold mb-6">Select Themes</h2>
+            {/* Theme selection component would go here */}
+          </div>
+        );
+      case "questions":
+        return (
+          <QuestionsStepContent
+            selectedThemes={selectedThemes}
+            onComplete={handleQuestionsComplete}
+          />
+        );
+      case "design":
+        return (
+          <DesignStepContent
+            questionResponses={questionResponses}
+            onDesignUpdate={handleDesignUpdated}
+            onSaveDesign={handleSaveDesign}
+          />
+        );
+      case "options":
+        return (
+          <OptionsStepContent
+            tshirtOptions={tshirtOptions}
+            onOptionsChange={handleOptionsChange}
+            onAddToCart={handleAddToCart}
+          />
+        );
+      default:
+        return <div>Unknown step</div>;
+    }
+  };
 
   return (
-    <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-      <div className="mb-10">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Create Your Custom T-Shirt</h1>
-        <p className="text-lg text-gray-600">
-          Follow these steps to design a t-shirt that's uniquely yours.
-        </p>
-      </div>
-
-      <DesignStepper 
+    <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <h1 className="text-3xl font-bold text-center mb-8">Design Your T-Shirt</h1>
+      <DesignStepper
         activeStep={activeStep}
-        questionResponses={questionResponses}
-        designData={designData}
-        isDesignComplete={isDesignComplete}
+        onStepClick={handleNavigateToStep}
       />
-
-      {!user && (activeStep === "design" || activeStep === "options") ? (
-        <LoginRequired redirectToLogin={redirectToLogin} />
-      ) : (
-        <Tabs value={activeStep} onValueChange={handleNavigateToStep}>
-          <TabsList className="hidden">
-            <TabsTrigger value="questions">Questions</TabsTrigger>
-            <TabsTrigger value="design">Design Editor</TabsTrigger>
-            <TabsTrigger value="options">Options</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="questions" className="mt-6">
-            <QuestionsStepContent onQuestionsComplete={handleQuestionsComplete} />
-          </TabsContent>
-          
-          <TabsContent value="design" className="mt-6">
-            <DesignStepContent 
-              questionResponses={questionResponses}
-              onDesignUpdated={handleDesignUpdated}
-              onNavigateStep={handleNavigateToStep}
-            />
-          </TabsContent>
-          
-          <TabsContent value="options" className="mt-6">
-            <OptionsStepContent
-              tshirtOptions={tshirtOptions}
-              onOptionsChange={handleOptionsChange}
-              onSaveDesign={handleSaveDesign}
-              onAddToCart={handleAddToCart}
-              onNavigateStep={handleNavigateToStep}
-            />
-          </TabsContent>
-        </Tabs>
-      )}
+      <div className="mt-8">{renderStepContent()}</div>
     </div>
   );
 };
