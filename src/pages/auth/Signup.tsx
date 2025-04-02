@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -29,6 +30,8 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 const SignupPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
   
   const { register, handleSubmit, formState: { errors } } = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -41,11 +44,31 @@ const SignupPage = () => {
     }
   });
 
-  const onSubmit = (data: SignupFormValues) => {
-    console.log("Signup data:", data);
-    // In a real implementation, this would make an API call
-    toast.success("Account created successfully!");
-    // Redirect user after successful signup
+  const onSubmit = async (data: SignupFormValues) => {
+    try {
+      setIsLoading(true);
+      
+      const { error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            full_name: data.name,
+          }
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast.success("Account created successfully! Please check your email to verify your account.");
+      navigate("/login");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create account. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -166,14 +189,18 @@ const SignupPage = () => {
                   privacy policy
                 </a>
               </Label>
-              {errors.agreeTerms && (
-                <p className="mt-1 text-sm text-red-600">{errors.agreeTerms.message}</p>
-              )}
             </div>
+            {errors.agreeTerms && (
+              <p className="text-sm text-red-600">{errors.agreeTerms.message}</p>
+            )}
 
             <div>
-              <Button type="submit" className="w-full bg-brand-green hover:bg-brand-darkGreen">
-                Create account
+              <Button 
+                type="submit" 
+                className="w-full bg-brand-green hover:bg-brand-darkGreen"
+                disabled={isLoading}
+              >
+                {isLoading ? "Creating account..." : "Create account"}
               </Button>
             </div>
           </form>

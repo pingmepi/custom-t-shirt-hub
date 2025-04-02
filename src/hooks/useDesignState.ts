@@ -1,12 +1,14 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { TShirtOptions as TShirtOptionsType } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
-export function useDesignState(user: any) {
+export function useDesignState() {
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const [activeStep, setActiveStep] = useState<string>("questions");
   const [questionResponses, setQuestionResponses] = useState<Record<string, any>>({});
   const [designData, setDesignData] = useState<any>(null);
@@ -61,7 +63,7 @@ export function useDesignState(user: any) {
   };
 
   const handleSaveDesign = async () => {
-    if (!user) {
+    if (!isAuthenticated) {
       toast.error("Please login or sign up to save your design");
       navigate("/login");
       return;
@@ -85,7 +87,7 @@ export function useDesignState(user: any) {
       const { data, error } = await supabase
         .from("designs")
         .insert({
-          user_id: user.id,
+          user_id: user?.id,
           question_responses: questionResponses,
           design_data: designData,
           preview_url: "/design-flow.png", // This would be replaced with an actual preview in a real implementation
@@ -163,7 +165,7 @@ export function useDesignState(user: any) {
   };
 
   const handleAddToCart = () => {
-    if (!user) {
+    if (!isAuthenticated) {
       toast.error("Please login or sign up to add to cart");
       navigate("/login");
       return;

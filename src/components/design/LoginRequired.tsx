@@ -1,12 +1,15 @@
 
 import { Button } from "@/components/ui/button";
 import { LogIn } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-interface LoginRequiredProps {
-  redirectToLogin: () => void;
-}
-
-const LoginRequired = ({ redirectToLogin }: LoginRequiredProps) => {
+const LoginRequired = () => {
+  const navigate = useNavigate();
+  
+  const redirectToLogin = () => {
+    navigate("/login");
+  };
+  
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden p-6 text-center">
       <h2 className="text-xl font-semibold mb-4">Login Required</h2>

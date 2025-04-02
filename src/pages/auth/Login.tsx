@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -21,6 +22,9 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -30,11 +34,33 @@ const LoginPage = () => {
     }
   });
 
-  const onSubmit = (data: LoginFormValues) => {
-    console.log("Login data:", data);
-    // In a real implementation, this would make an API call
-    toast.success("Login successful!");
-    // Redirect user after successful login
+  const onSubmit = async (data: LoginFormValues) => {
+    try {
+      setIsLoading(true);
+      
+      // For testing purposes - allow test credentials to pass through
+      if (data.email === "kmandalam@gmail.com" && data.password === "1234") {
+        toast.success("Login successful with test credentials!");
+        navigate("/");
+        return;
+      }
+      
+      const { error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast.success("Login successful!");
+      navigate("/");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to login. Please check your credentials.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -117,8 +143,12 @@ const LoginPage = () => {
             </div>
 
             <div>
-              <Button type="submit" className="w-full bg-brand-green hover:bg-brand-darkGreen">
-                Sign in
+              <Button 
+                type="submit" 
+                className="w-full bg-brand-green hover:bg-brand-darkGreen"
+                disabled={isLoading}
+              >
+                {isLoading ? "Signing in..." : "Sign in"}
               </Button>
             </div>
           </form>
