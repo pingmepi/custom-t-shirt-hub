@@ -53,6 +53,10 @@ So that I can ensure smooth delivery and customer satisfaction
 
  Step-by-step question flow with one question shown at a time and a progress bar
 
+ If the user is not logged in at this time, then a pop-up for sign-in should be shown to the user so they can view the generated design. 
+
+ Once the user logs in, the created design in the previous step should be available in the landing page for the user. 
+
  Capture and store all user responses to questions
 
  Generate a preview design based on question inputs (via model/API)
@@ -559,7 +563,8 @@ Fetch all available themes to be shown on the theme selection screen.
 - Progress bar for 5-question design flow
 - One-question-at-a-time design UI
 - Editor interface post-question flow for design customization
-- Clean dashboard for user profile, saved designs, orders
+- Clean dashboard for user profile, saved designs, orders, current design that is being edited
+- support page with email and phone
 
 <!-- added by lovable -->
 - Color picker input with support for both visual selection and text input
