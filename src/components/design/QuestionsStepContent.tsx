@@ -6,16 +6,15 @@ import ThemeSelector from "@/components/design/ThemeSelector";
 import { fetchThemeBasedQuestions } from "@/services/questionsService";
 
 interface QuestionsStepContentProps {
+  selectedThemes: string[];
   onQuestionsComplete: (answers: Record<string, any>) => void;
 }
 
-const QuestionsStepContent = ({ onQuestionsComplete }: QuestionsStepContentProps) => {
+const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: QuestionsStepContentProps) => {
   const [step, setStep] = useState<'themes' | 'questions'>('themes');
-  const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
   const handleThemesSelected = (themeIds: string[]) => {
-    setSelectedThemes(themeIds);
     setStep('questions');
   };
   

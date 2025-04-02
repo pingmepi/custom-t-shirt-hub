@@ -15,6 +15,7 @@ const DesignPage = () => {
     questionResponses,
     designData,
     tshirtOptions,
+    isDesignComplete,
     handleQuestionsComplete,
     handleDesignUpdated,
     handleOptionsChange,
@@ -51,15 +52,15 @@ const DesignPage = () => {
         return (
           <QuestionsStepContent
             selectedThemes={selectedThemes}
-            onComplete={handleQuestionsComplete}
+            onQuestionsComplete={handleQuestionsComplete}
           />
         );
       case "design":
         return (
           <DesignStepContent
             questionResponses={questionResponses}
-            onDesignUpdate={handleDesignUpdated}
-            onSaveDesign={handleSaveDesign}
+            onDesignUpdated={handleDesignUpdated}
+            onNavigateStep={handleNavigateToStep}
           />
         );
       case "options":
@@ -67,7 +68,9 @@ const DesignPage = () => {
           <OptionsStepContent
             tshirtOptions={tshirtOptions}
             onOptionsChange={handleOptionsChange}
+            onSaveDesign={handleSaveDesign}
             onAddToCart={handleAddToCart}
+            onNavigateStep={handleNavigateToStep}
           />
         );
       default:
@@ -80,7 +83,9 @@ const DesignPage = () => {
       <h1 className="text-3xl font-bold text-center mb-8">Design Your T-Shirt</h1>
       <DesignStepper
         activeStep={activeStep}
-        onStepClick={handleNavigateToStep}
+        questionResponses={questionResponses}
+        designData={designData}
+        isDesignComplete={isDesignComplete}
       />
       <div className="mt-8">{renderStepContent()}</div>
     </div>
