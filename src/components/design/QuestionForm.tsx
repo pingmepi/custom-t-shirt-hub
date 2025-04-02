@@ -42,7 +42,7 @@ const QuestionForm = ({
               initialAnswers[q.id] = q.options?.[0] || '';
               break;
             case 'color':
-              initialAnswers[q.id] = '#000000';
+              initialAnswers[q.id] = '#ffffff';
               break;
             default:
               initialAnswers[q.id] = '';
@@ -241,7 +241,6 @@ const QuestionForm = ({
                 <div 
                   key={option} 
                   className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded-md cursor-pointer"
-                  onClick={() => handleChange(currentQuestion.id, option)}
                 >
                   <RadioGroupItem id={`${currentQuestion.id}-${option}`} value={option} />
                   <Label 
