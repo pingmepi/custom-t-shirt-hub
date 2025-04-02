@@ -4,6 +4,16 @@ import { Button } from "@/components/ui/button";
 import QuestionForm from "@/components/design/QuestionForm";
 import ThemeSelector from "@/components/design/ThemeSelector";
 import { fetchThemeBasedQuestions } from "@/services/questionsService";
+import { Progress } from "@/components/ui/progress";
+import { Question } from "@/lib/types";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 interface QuestionsStepContentProps {
   selectedThemes: string[];
@@ -13,6 +23,38 @@ interface QuestionsStepContentProps {
 const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: QuestionsStepContentProps) => {
   const [step, setStep] = useState<'themes' | 'questions'>('themes');
   const [isLoading, setIsLoading] = useState(false);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [answers, setAnswers] = useState<Record<string, any>>({});
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  
+  // Fetch questions based on selected themes
+  useEffect(() => {
+    if (step === 'questions') {
+      const loadQuestions = async () => {
+        try {
+          setIsLoading(true);
+          const fetchedQuestions = await fetchThemeBasedQuestions(selectedThemes);
+          setQuestions(fetchedQuestions);
+          
+          // Initialize answers
+          const initialAnswers: Record<string, any> = {};
+          fetchedQuestions.forEach(q => {
+            initialAnswers[q.id] = q.type === 'choice' && q.options?.length ? q.options[0] : '';
+          });
+          setAnswers(initialAnswers);
+        } catch (error) {
+          console.error("Error loading questions:", error);
+          toast.error("Failed to load questions. Please try again.");
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      
+      loadQuestions();
+    }
+  }, [step, selectedThemes]);
   
   const handleThemesSelected = (themeIds: string[]) => {
     setStep('questions');
@@ -20,6 +62,108 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: Questions
   
   const handleBackToThemes = () => {
     setStep('themes');
+  };
+
+  const handleAnswerChange = (value: any) => {
+    if (questions.length === 0) return;
+    
+    const currentQuestion = questions[currentQuestionIndex];
+    setAnswers(prev => ({
+      ...prev,
+      [currentQuestion.id]: value
+    }));
+  };
+
+  const handleNextQuestion = () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    } else {
+      // If final question and not authenticated, redirect to login
+      if (!isAuthenticated) {
+        // Store answers in session storage for retrieval after login
+        sessionStorage.setItem('designAnswers', JSON.stringify(answers));
+        navigate("/login", { state: { from: "/design" } });
+      } else {
+        // Submit answers if user is already authenticated
+        onQuestionsComplete(answers);
+      }
+    }
+  };
+
+  const handlePrevQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
+    }
+  };
+
+  // Calculate progress percentage
+  const progress = questions.length > 0 
+    ? ((currentQuestionIndex + 1) / questions.length) * 100 
+    : 0;
+
+  // Render current question
+  const renderCurrentQuestion = () => {
+    if (isLoading || questions.length === 0) {
+      return (
+        <div className="flex justify-center items-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-brand-green" />
+          <span className="ml-2 text-lg">Loading questions...</span>
+        </div>
+      );
+    }
+
+    const currentQuestion = questions[currentQuestionIndex];
+    
+    return (
+      <div className="space-y-6">
+        <h3 className="text-xl font-medium">{currentQuestion.question_text}</h3>
+        
+        {currentQuestion.type === 'text' && (
+          <Input
+            value={answers[currentQuestion.id] || ''}
+            onChange={(e) => handleAnswerChange(e.target.value)}
+            className="w-full"
+            placeholder="Type your answer here..."
+          />
+        )}
+        
+        {currentQuestion.type === 'textarea' && (
+          <Textarea
+            value={answers[currentQuestion.id] || ''}
+            onChange={(e) => handleAnswerChange(e.target.value)}
+            className="w-full min-h-[100px]"
+            placeholder="Type your answer here..."
+          />
+        )}
+        
+        {currentQuestion.type === 'choice' && currentQuestion.options && (
+          <RadioGroup
+            value={answers[currentQuestion.id] || ''}
+            onValueChange={handleAnswerChange}
+            className="space-y-2"
+          >
+            {currentQuestion.options.map((option) => (
+              <div key={option} className="flex items-center space-x-2">
+                <RadioGroupItem id={`${currentQuestion.id}-${option}`} value={option} />
+                <Label htmlFor={`${currentQuestion.id}-${option}`}>{option}</Label>
+              </div>
+            ))}
+          </RadioGroup>
+        )}
+        
+        {currentQuestion.type === 'color' && (
+          <div className="flex items-center space-x-2">
+            <Input
+              type="color"
+              value={answers[currentQuestion.id] || '#000000'}
+              onChange={(e) => handleAnswerChange(e.target.value)}
+              className="w-16 h-10 cursor-pointer"
+            />
+            <span className="text-sm">{answers[currentQuestion.id] || '#000000'}</span>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -31,15 +175,32 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: Questions
           <div className="p-6">
             <h2 className="text-xl font-semibold mb-4">Create Your T-Shirt Design</h2>
             <p className="text-gray-600 mb-6">
-              Answer these questions to help us understand what you're looking for.
-              We'll use your responses to create a customized design experience.
+              Question {currentQuestionIndex + 1} of {questions.length}
             </p>
             
-            <QuestionForm 
-              selectedThemes={selectedThemes}
-              onQuestionsComplete={onQuestionsComplete} 
-              onBackToThemes={handleBackToThemes}
-            />
+            <Progress value={progress} className="mb-6" />
+            
+            {renderCurrentQuestion()}
+            
+            <div className="flex items-center justify-between mt-8">
+              <Button 
+                type="button" 
+                variant="outline"
+                onClick={currentQuestionIndex === 0 ? handleBackToThemes : handlePrevQuestion}
+              >
+                <ChevronLeft className="mr-2 h-4 w-4" /> 
+                {currentQuestionIndex === 0 ? "Back to Themes" : "Previous"}
+              </Button>
+              
+              <Button 
+                type="button"
+                onClick={handleNextQuestion}
+                className="bg-brand-green hover:bg-brand-darkGreen"
+              >
+                {currentQuestionIndex === questions.length - 1 ? "Submit" : "Next"}
+                {currentQuestionIndex < questions.length - 1 && <ChevronRight className="ml-2 h-4 w-4" />}
+              </Button>
+            </div>
           </div>
         </div>
       )}

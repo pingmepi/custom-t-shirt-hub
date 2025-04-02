@@ -1,5 +1,5 @@
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useEffect } from "react-router-dom";
 import { useState } from "react";
 import DesignStepper from "@/components/design/DesignStepper";
 import QuestionsStepContent from "@/components/design/QuestionsStepContent";
@@ -34,6 +34,19 @@ const DesignPage = () => {
     setSelectedThemes(themes);
   };
 
+  // Check for saved answers in sessionStorage after login
+  useEffect(() => {
+    if (isAuthenticated) {
+      const savedAnswers = sessionStorage.getItem('designAnswers');
+      if (savedAnswers) {
+        // Process the saved answers
+        handleQuestionsComplete(JSON.parse(savedAnswers));
+        // Remove from session storage
+        sessionStorage.removeItem('designAnswers');
+      }
+    }
+  }, [isAuthenticated]);
+
   const renderStepContent = () => {
     // For some design steps, we require authentication
     if (activeStep === "design" && !isAuthenticated) {
@@ -41,13 +54,6 @@ const DesignPage = () => {
     }
 
     switch (activeStep) {
-      case "themes":
-        return (
-          <div className="p-6 bg-white rounded-lg shadow">
-            <h2 className="text-2xl font-bold mb-6">Select Themes</h2>
-            {/* Theme selection component would go here */}
-          </div>
-        );
       case "questions":
         return (
           <QuestionsStepContent
