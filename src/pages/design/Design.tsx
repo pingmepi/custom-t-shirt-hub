@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LoginRequired from "@/components/design/LoginRequired";
@@ -26,7 +25,7 @@ const DesignPage = () => {
     handleAddToCart,
     handleNavigateToStep,
     redirectToLogin
-  } = useDesignState(user);
+  } = useDesignState();
 
   // Check authentication status
   useEffect(() => {
