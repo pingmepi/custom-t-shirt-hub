@@ -39,7 +39,7 @@ const LoginPage = () => {
       setIsLoading(true);
       
       // For testing purposes - allow test credentials to pass through
-      if (data.email === "kmandalam@gmail.com" && data.password === "1234") {
+      if (data.email === "kmandalam@gmail.com" && data.password === "12345678") {
         toast.success("Login successful with test credentials!");
         navigate("/");
         return;
