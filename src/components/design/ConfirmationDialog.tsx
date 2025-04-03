@@ -14,6 +14,7 @@ interface ConfirmationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   questionResponses: Record<string, any>;
+  questions: Array<{ id: string, question_text: string, type: string }>;
   onConfirm: () => void;
   onEdit: () => void;
 }
@@ -22,40 +23,40 @@ const ConfirmationDialog = ({
   open,
   onOpenChange,
   questionResponses,
+  questions,
   onConfirm,
   onEdit,
 }: ConfirmationDialogProps) => {
   const formatResponses = () => {
     return Object.entries(questionResponses).map(([questionId, answer]) => {
-      let questionLabel = "";
+      // Find the actual question text based on question ID
+      const questionObj = questions.find(q => q.id === questionId);
+      let questionLabel = questionObj?.question_text || 'Question';
       
-      // Handle special case formatting based on answer content
+      // Special case formatting for certain answer types
       if (typeof answer === 'string' && answer.startsWith('#')) {
-        questionLabel = 'Color choice';
+        return { 
+          id: questionId,
+          label: 'Color choice',
+          question: questionLabel,
+          answer: answer 
+        };
       } else if (
         typeof answer === 'string' && 
         ['Minimal', 'Vintage', 'Bold', 'Artistic', 'Funny', 'Minimalist'].includes(answer)
       ) {
-        questionLabel = 'Style preference';
-      } else if (questionId === 'q1') {
-        questionLabel = 'Main message';
-      } else if (questionId === 'q5') {
-        questionLabel = 'Additional details';
-      } else if (questionId === 'q4') {
-        questionLabel = 'Occasion';
-      } else if (questionId === 'q3') {
-        questionLabel = 'Color choice';
-      } else if (questionId === 'q2') {
-        questionLabel = 'Style preference';
-      } else {
-        // For database UUIDs, create a better human-readable label
-        const shortId = questionId.substring(0, 6);
-        questionLabel = `Question ${shortId}`;
+        return { 
+          id: questionId,
+          label: 'Style preference',
+          question: questionLabel,
+          answer: answer 
+        };
       }
       
       return { 
         id: questionId,
         label: questionLabel,
+        question: questionLabel,
         answer: answer 
       };
     });
@@ -75,9 +76,9 @@ const ConfirmationDialog = ({
         
         <ScrollArea className="max-h-[60vh] pr-4">
           <div className="space-y-4 py-2">
-            {formattedResponses.map(({ id, label, answer }) => (
+            {formattedResponses.map(({ id, question, answer }) => (
               <div key={id} className="space-y-1">
-                <h4 className="font-medium text-sm text-gray-700">{label}</h4>
+                <h4 className="font-medium text-sm text-gray-700">{question}</h4>
                 {typeof answer === 'string' && answer.startsWith('#') ? (
                   <div className="flex items-center gap-2">
                     <div 

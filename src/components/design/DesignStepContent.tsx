@@ -60,52 +60,62 @@ const DesignStepContent = ({
     return <LoginRequired redirectToLogin={redirectToLogin} />;
   }
 
-  // Get nicely formatted question labels and responses for display
-  const formatResponses = () => {
+  // Get question text mappings for display
+  const getDisplayResponses = () => {
+    // Process each question response for display
     return Object.entries(questionResponses).map(([questionId, answer]) => {
-      // First handle special case formatting
+      // Determine question label based on answer content and question ID patterns
+      let questionText = '';
+      
+      if (questionId.startsWith('q')) {
+        // Handle hardcoded questions
+        if (questionId === 'q1') {
+          questionText = 'Main message';
+        } else if (questionId === 'q5') {
+          questionText = 'Additional details';
+        } else if (questionId === 'q4') {
+          questionText = 'Occasion';
+        } else if (questionId === 'q3') {
+          questionText = 'Color preference';
+        } else if (questionId === 'q2') {
+          questionText = 'Style preference';
+        }
+      } else {
+        // For database questions, use the first 20 characters of the answer as context
+        const shortAnswer = typeof answer === 'string' 
+          ? (answer.length > 20 ? answer.substring(0, 20) + '...' : answer)
+          : 'Your answer';
+          
+        questionText = `Response: ${shortAnswer}`;
+      }
+
+      // Special case formatting
       if (typeof answer === 'string' && answer.startsWith('#')) {
         return {
           id: questionId,
           label: 'Color choice',
-          answer: answer
+          answer
         };
-      } 
-      
-      if (typeof answer === 'string' && 
-          ['Minimal', 'Vintage', 'Bold', 'Artistic', 'Funny', 'Minimalist'].includes(answer)) {
+      } else if (
+        typeof answer === 'string' && 
+        ['Minimal', 'Vintage', 'Bold', 'Artistic', 'Funny', 'Minimalist'].includes(answer)
+      ) {
         return {
           id: questionId,
           label: 'Style preference',
-          answer: answer
+          answer
         };
       }
       
-      // For backward compatibility with hardcoded question IDs
-      if (questionId === 'q1') {
-        return { id: questionId, label: 'Main message', answer };
-      } else if (questionId === 'q5') {
-        return { id: questionId, label: 'Additional details', answer };
-      } else if (questionId === 'q4') {
-        return { id: questionId, label: 'Occasion', answer };
-      } else if (questionId === 'q3') {
-        return { id: questionId, label: 'Color choice', answer };
-      } else if (questionId === 'q2') {
-        return { id: questionId, label: 'Style preference', answer };
-      }
-      
-      // For database-generated UUIDs, create a human-readable question name
-      // by extracting just a small part of the UUID to identify the question uniquely
-      const shortId = questionId.substring(0, 6);
       return {
         id: questionId,
-        label: `Question ${shortId}`,
+        label: questionText,
         answer
       };
     });
   };
 
-  const formattedResponses = formatResponses();
+  const displayResponses = getDisplayResponses();
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr,300px] lg:gap-8">
@@ -145,7 +155,7 @@ const DesignStepContent = ({
         <div className="p-6">
           <h3 className="text-lg font-semibold mb-4">Your Preferences</h3>
           <div className="space-y-3">
-            {formattedResponses.map(({ id, label, answer }) => (
+            {displayResponses.map(({ id, label, answer }) => (
               <div key={id} className="flex flex-col">
                 <span className="text-sm font-medium text-gray-600">
                   {label}:

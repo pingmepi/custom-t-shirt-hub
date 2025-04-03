@@ -123,6 +123,9 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: Questions
   const handlePrevQuestion = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
+    } else {
+      // Only go back to themes if we're at the first question
+      handleBackToThemes();
     }
   };
 
@@ -216,10 +219,10 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: Questions
               <Button 
                 type="button" 
                 variant="outline"
-                onClick={currentQuestionIndex === 0 ? handleBackToThemes : handlePrevQuestion}
+                onClick={handlePrevQuestion}
               >
                 <ChevronLeft className="mr-2 h-4 w-4" /> 
-                {currentQuestionIndex === 0 ? "Back to Themes" : "Previous"}
+                {currentQuestionIndex === 0 ? "Back to Themes" : "Previous Question"}
               </Button>
               
               <Button 
@@ -231,7 +234,7 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: Questions
                   answers[questions[currentQuestionIndex].id] === ''
                 }
               >
-                {currentQuestionIndex === questions.length - 1 ? "Submit" : "Next"}
+                {currentQuestionIndex === questions.length - 1 ? "Submit" : "Next Question"}
                 {currentQuestionIndex < questions.length - 1 && <ChevronRight className="ml-2 h-4 w-4" />}
               </Button>
             </div>
@@ -243,6 +246,7 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: Questions
         open={showConfirmation}
         onOpenChange={setShowConfirmation}
         questionResponses={answers}
+        questions={questions}
         onConfirm={handleConfirmAnswers}
         onEdit={() => setShowConfirmation(false)}
       />
