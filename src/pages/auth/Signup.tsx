@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,8 @@ const SignupPage = () => {
           data: {
             full_name: data.name,
           },
+          // Skip email verification for faster testing
+          emailRedirectTo: window.location.origin + "/dashboard",
         },
       });
 
@@ -65,8 +68,19 @@ const SignupPage = () => {
         // Check if we have design data stored
         const hasDesignData = sessionStorage.getItem('designAnswers');
         toast.success("Account created successfully! Please login to continue.");
-        // Pass the state to maintain the return path
-        navigate("/login", { state: { from: hasDesignData ? "/design" : "/dashboard" } });
+        
+        // For test purposes, sign in immediately after signup to skip email verification
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: data.email,
+          password: data.password
+        });
+        
+        if (!signInError) {
+          navigate(hasDesignData ? "/design" : "/dashboard");
+        } else {
+          // If auto-signin fails, redirect to login
+          navigate("/login", { state: { from: hasDesignData ? "/design" : "/dashboard" } });
+        }
       } else {
         toast.error("Failed to create account. Please try again.");
       }
@@ -219,13 +233,6 @@ const SignupPage = () => {
               </Button>
             </div>
           </form>
-
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, X, UserCircle, LogOut } from "lucide-react";
+import { Menu, X, user, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
@@ -80,7 +80,7 @@ const Navbar = () => {
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
                 <Link to="/profile" className="flex items-center space-x-1 text-sm text-gray-700 hover:text-brand-green">
-                  <UserCircle className="h-5 w-5" />
+                  <user className="h-5 w-5" />
                   <span>{user?.email}</span>
                 </Link>
                 <Button 

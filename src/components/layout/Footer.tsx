@@ -1,6 +1,5 @@
 
 import { Link } from "react-router-dom";
-import { Facebook, Instagram, Twitter } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -12,17 +11,6 @@ const Footer = () => {
             <p className="text-gray-600">
               Create your perfect custom t-shirt design with our easy-to-use platform.
             </p>
-            <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-brand-green">
-                <Facebook size={20} />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-brand-green">
-                <Instagram size={20} />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-brand-green">
-                <Twitter size={20} />
-              </a>
-            </div>
           </div>
           
           <div>

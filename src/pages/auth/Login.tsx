@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import * as z from "zod";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -24,6 +26,7 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { signIn } = useAuth();
   
   // Extract the redirect path from the location state
   const redirectTo = location.state?.from || "/dashboard";
@@ -41,27 +44,7 @@ const LoginPage = () => {
     try {
       setIsLoading(true);
       
-      // For testing purposes - allow test credentials to pass through
-      if (data.email === "kmandalam@gmail.com" && data.password === "12345678") {
-        toast.success("Login successful with test credentials!");
-        // Check for stored design data
-        const savedAnswers = sessionStorage.getItem('designAnswers');
-        if (savedAnswers) {
-          navigate('/design');
-        } else {
-          navigate(redirectTo);
-        }
-        return;
-      }
-      
-      const { error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
-      });
-
-      if (error) {
-        throw error;
-      }
+      await signIn(data.email, data.password);
 
       toast.success("Login successful!");
       // Check for stored design data
@@ -167,26 +150,6 @@ const LoginPage = () => {
               </Button>
             </div>
           </form>
-
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
-              </div>
-            </div>
-
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <Button variant="outline" className="w-full">
-                Google
-              </Button>
-              <Button variant="outline" className="w-full">
-                Facebook
-              </Button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
