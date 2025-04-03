@@ -1,5 +1,6 @@
+
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react"; // Fixed: import useEffect from react, not react-router-dom
 import DesignStepper from "@/components/design/DesignStepper";
 import QuestionsStepContent from "@/components/design/QuestionsStepContent";
 import DesignStepContent from "@/components/design/DesignStepContent";
