@@ -1,6 +1,6 @@
 
 import { useEffect, useRef, useState } from "react";
-import { Canvas, loadSVGFromURL } from "fabric";
+import { fabric } from "fabric";
 import { toast } from "sonner";
 
 interface DesignCanvasProps {
@@ -10,14 +10,14 @@ interface DesignCanvasProps {
 
 const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fabricCanvasRef = useRef<Canvas | null>(null);
+  const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    // Initialize the canvas
-    const canvas = new Canvas(canvasRef.current, {
+    // Initialize the canvas using the correct fabric.js syntax
+    const canvas = new fabric.Canvas(canvasRef.current, {
       width: 600,
       height: 600,
       backgroundColor: "#f9f9f9",
@@ -26,7 +26,7 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
     fabricCanvasRef.current = canvas;
     
     // Add mock tshirt placeholder
-    const tshirtRect = canvas.addRect({
+    const tshirtRect = new fabric.Rect({
       width: 300,
       height: 400,
       fill: "#ffffff",
@@ -36,40 +36,40 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
       ry: 10,
       stroke: "#dddddd",
       strokeWidth: 2,
-    });
-    
-    tshirtRect.set({
       selectable: false,
       evented: false,
     });
+    
+    canvas.add(tshirtRect);
 
     // Add t-shirt mockup guide lines
-    const mockupLine = canvas.addLine([150, 100, 450, 100], {
+    const mockupLine = new fabric.Line([150, 100, 450, 100], {
       stroke: '#dddddd',
       strokeDashArray: [5, 5],
       selectable: false,
       evented: false,
     });
+    
+    canvas.add(mockupLine);
 
     // Load initial image if provided
     if (initialImageUrl) {
-      loadSVGFromURL(initialImageUrl, (objects, options) => {
-        const loadedObject = canvas.add({ 
-          type: 'group', 
-          objects,
-          ...options,
+      fabric.loadSVGFromURL(initialImageUrl, (objects, options) => {
+        const loadedObject = fabric.util.groupSVGElements(objects, options);
+        loadedObject.set({
           left: 300,
           top: 300,
           scaleX: 0.5,
           scaleY: 0.5,
         });
         
-        canvas.requestRenderAll();
+        canvas.add(loadedObject);
+        canvas.renderAll();
         setIsLoaded(true);
       });
     } else {
       // Add a placeholder text if no image is provided
-      canvas.addText('Your Design Here', {
+      const text = new fabric.Text('Your Design Here', {
         fontSize: 24,
         fontFamily: 'Arial',
         left: 300,
@@ -78,6 +78,8 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
         originX: 'center',
         originY: 'center',
       });
+      
+      canvas.add(text);
       setIsLoaded(true);
     }
 
@@ -96,7 +98,7 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
   const addText = () => {
     if (!fabricCanvasRef.current) return;
     
-    const text = fabricCanvasRef.current.addText('New Text', {
+    const text = new fabric.Text('New Text', {
       left: 300,
       top: 300,
       fontSize: 20,
@@ -106,8 +108,9 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
       originY: 'center',
     });
     
+    fabricCanvasRef.current.add(text);
     fabricCanvasRef.current.setActiveObject(text);
-    fabricCanvasRef.current.requestRenderAll();
+    fabricCanvasRef.current.renderAll();
     
     if (onDesignUpdated) {
       onDesignUpdated(fabricCanvasRef.current.toJSON());
@@ -120,7 +123,7 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
     if (!fabricCanvasRef.current) return;
     
     if (shape === 'circle') {
-      const circle = fabricCanvasRef.current.addCircle({
+      const circle = new fabric.Circle({
         left: 300,
         top: 300,
         radius: 50,
@@ -129,9 +132,10 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
         originY: 'center',
       });
       
+      fabricCanvasRef.current.add(circle);
       fabricCanvasRef.current.setActiveObject(circle);
     } else {
-      const rect = fabricCanvasRef.current.addRect({
+      const rect = new fabric.Rect({
         left: 300,
         top: 300,
         width: 100,
@@ -141,10 +145,11 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
         originY: 'center',
       });
       
+      fabricCanvasRef.current.add(rect);
       fabricCanvasRef.current.setActiveObject(rect);
     }
     
-    fabricCanvasRef.current.requestRenderAll();
+    fabricCanvasRef.current.renderAll();
     
     if (onDesignUpdated) {
       onDesignUpdated(fabricCanvasRef.current.toJSON());
@@ -160,7 +165,7 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
     
     if (activeObject) {
       fabricCanvasRef.current.remove(activeObject);
-      fabricCanvasRef.current.requestRenderAll();
+      fabricCanvasRef.current.renderAll();
       
       if (onDesignUpdated) {
         onDesignUpdated(fabricCanvasRef.current.toJSON());
@@ -179,7 +184,7 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
     
     if (activeObject) {
       activeObject.set('fill', color);
-      fabricCanvasRef.current.requestRenderAll();
+      fabricCanvasRef.current.renderAll();
       
       if (onDesignUpdated) {
         onDesignUpdated(fabricCanvasRef.current.toJSON());
