@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import DesignCanvas from "@/components/design/DesignCanvas";
@@ -8,33 +8,35 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import LoginRequired from "./LoginRequired";
 
+import { DesignData, QuestionResponse } from "@/lib/types";
+
 interface DesignStepContentProps {
-  questionResponses: Record<string, any>;
-  onDesignUpdated: (data: any) => void;
+  questionResponses: Record<string, QuestionResponse | string>;
+  onDesignUpdated: (data: DesignData) => void;
   onNavigateStep: (step: string) => void;
-  onQuestionsComplete: (responses: Record<string, any>) => void;
+  onQuestionsComplete: (responses: Record<string, QuestionResponse | string>) => void;
 }
 
-const DesignStepContent = ({ 
-  questionResponses, 
+const DesignStepContent = ({
+  questionResponses,
   onDesignUpdated,
   onNavigateStep,
   onQuestionsComplete
 }: DesignStepContentProps) => {
-  const [designData, setDesignData] = useState<any>(null);
+  const [designData, setDesignData] = useState<DesignData | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
 
-  const handleDesignUpdated = (data: any) => {
+  const handleDesignUpdated = useCallback((data: DesignData) => {
     setDesignData(data);
     onDesignUpdated(data);
-    
+
     toast({
       title: "Design updated",
       description: "Your design has been updated successfully.",
     });
-  };
+  }, [onDesignUpdated, toast]);
 
   const redirectToLogin = () => {
     sessionStorage.setItem('currentDesignState', JSON.stringify({
@@ -54,7 +56,7 @@ const DesignStepContent = ({
         sessionStorage.removeItem('currentDesignState');
       }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, onQuestionsComplete, handleDesignUpdated]);
 
   if (!isAuthenticated) {
     return <LoginRequired redirectToLogin={redirectToLogin} />;
@@ -66,7 +68,7 @@ const DesignStepContent = ({
     return Object.entries(questionResponses).map(([questionId, answer]) => {
       // Determine question label based on answer content and question ID patterns
       let questionText = '';
-      
+
       if (questionId.startsWith('q')) {
         // Handle hardcoded questions
         if (questionId === 'q1') {
@@ -82,10 +84,10 @@ const DesignStepContent = ({
         }
       } else {
         // For database questions, use the first 20 characters of the answer as context
-        const shortAnswer = typeof answer === 'string' 
+        const shortAnswer = typeof answer === 'string'
           ? (answer.length > 20 ? answer.substring(0, 20) + '...' : answer)
           : 'Your answer';
-          
+
         questionText = `Response: ${shortAnswer}`;
       }
 
@@ -97,7 +99,7 @@ const DesignStepContent = ({
           answer
         };
       } else if (
-        typeof answer === 'string' && 
+        typeof answer === 'string' &&
         ['Minimal', 'Vintage', 'Bold', 'Artistic', 'Funny', 'Minimalist'].includes(answer)
       ) {
         return {
@@ -106,7 +108,7 @@ const DesignStepContent = ({
           answer
         };
       }
-      
+
       return {
         id: questionId,
         label: questionText,
@@ -125,12 +127,12 @@ const DesignStepContent = ({
           <p className="text-gray-600 mb-6">
             Use the editor below to customize your design. Add text, shapes, or upload your own images.
           </p>
-          
-          <DesignCanvas 
+
+          <DesignCanvas
             initialImageUrl="/design-flow.png"
             onDesignUpdated={handleDesignUpdated}
           />
-          
+
           <div className="flex justify-between mt-8">
             <Button
               variant="outline"
@@ -150,7 +152,7 @@ const DesignStepContent = ({
           </div>
         </div>
       </div>
-      
+
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <div className="p-6">
           <h3 className="text-lg font-semibold mb-4">Your Preferences</h3>
@@ -160,17 +162,19 @@ const DesignStepContent = ({
                 <span className="text-sm font-medium text-gray-600">
                   {label}:
                 </span>
-                
+
                 {typeof answer === 'string' && answer.startsWith('#') ? (
                   <div className="flex items-center mt-1">
-                    <div 
-                      className="h-4 w-4 rounded-full mr-2" 
+                    <div
+                      className="h-4 w-4 rounded-full mr-2"
                       style={{ backgroundColor: answer }}
                     ></div>
                     <span className="text-sm">{answer}</span>
                   </div>
-                ) : (
+                ) : typeof answer === 'string' ? (
                   <span className="text-sm font-medium mt-1">{answer}</span>
+                ) : (
+                  <span className="text-sm font-medium mt-1">{typeof answer === 'object' && 'answer' in answer ? String(answer.answer) : 'Complex response'}</span>
                 )}
               </div>
             ))}

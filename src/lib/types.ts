@@ -8,15 +8,57 @@ export interface Question {
   usage_count?: number;
 }
 
+export interface QuestionResponse {
+  id: string;
+  question_text: string;
+  answer: string | number | boolean;
+  type: 'text' | 'choice' | 'color' | 'textarea';
+}
+
+export interface DesignData {
+  canvas_json?: string;
+  elements?: DesignElement[];
+  background_color?: string;
+  width?: number;
+  height?: number;
+  version?: string;
+}
+
+export interface DesignElement {
+  type: 'text' | 'image' | 'shape';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  angle?: number;
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  text?: string;
+  fontFamily?: string;
+  fontSize?: number;
+  src?: string;
+  opacity?: number;
+  scaleX?: number;
+  scaleY?: number;
+}
+
+export interface UserStylePreference {
+  color_scheme?: string[];
+  style_preference?: string;
+  occasion?: string;
+  timestamp?: string;
+}
+
 export interface TShirtDesign {
   id: string;
   user_id?: string;
-  question_responses: Record<string, any>;
-  design_data: any;
+  question_responses: Record<string, QuestionResponse | string>;
+  design_data: DesignData;
   preview_url: string;
   initial_model_image_url?: string;
   final_user_image_url?: string;
-  user_style_metadata?: Record<string, any>;
+  user_style_metadata?: UserStylePreference;
   created_at: string;
 }
 

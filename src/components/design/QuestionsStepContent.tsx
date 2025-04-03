@@ -17,7 +17,7 @@ import ConfirmationDialog from "./ConfirmationDialog";
 
 interface QuestionsStepContentProps {
   selectedThemes: string[];
-  onQuestionsComplete: (answers: Record<string, any>) => void;
+  onQuestionsComplete: (answers: Record<string, string>) => void;
 }
 
 const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: QuestionsStepContentProps) => {
@@ -25,11 +25,11 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: Questions
   const [isLoading, setIsLoading] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showConfirmation, setShowConfirmation] = useState(false);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  
+
   // Fetch questions based on selected themes
   useEffect(() => {
     if (step === 'questions') {
@@ -38,9 +38,9 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: Questions
           setIsLoading(true);
           const fetchedQuestions = await fetchThemeBasedQuestions(selectedThemes);
           setQuestions(fetchedQuestions);
-          
+
           // Initialize answers
-          const initialAnswers: Record<string, any> = {};
+          const initialAnswers: Record<string, string> = {};
           fetchedQuestions.forEach(q => {
             initialAnswers[q.id] = q.type === 'choice' && q.options?.length ? q.options[0] : '';
           });
@@ -52,22 +52,22 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: Questions
           setIsLoading(false);
         }
       };
-      
+
       loadQuestions();
     }
   }, [step, selectedThemes]);
-  
-  const handleThemesSelected = (themeIds: string[]) => {
+
+  const handleThemesSelected = () => {
     setStep('questions');
   };
-  
+
   const handleBackToThemes = () => {
     setStep('themes');
   };
 
-  const handleAnswerChange = (value: any) => {
+  const handleAnswerChange = (value: string) => {
     if (questions.length === 0) return;
-    
+
     const currentQuestion = questions[currentQuestionIndex];
     setAnswers(prev => ({
       ...prev,
@@ -86,7 +86,7 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: Questions
 
   const handleConfirmAnswers = () => {
     setShowConfirmation(false);
-    
+
     // If not authenticated, store answers and redirect to login
     if (!isAuthenticated) {
       // Store current question responses in session storage
@@ -95,7 +95,7 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: Questions
       navigate("/login", { state: { from: "/design" } });
       return;
     }
-    
+
     // If authenticated, proceed with the flow
     onQuestionsComplete(answers);
   };
@@ -105,20 +105,20 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: Questions
     if (isAuthenticated) {
       const savedAnswers = sessionStorage.getItem('designAnswers');
       const savedThemes = sessionStorage.getItem('selectedThemes');
-      
+
       if (savedAnswers && savedThemes) {
         setAnswers(JSON.parse(savedAnswers));
         // Update selected themes if needed
         const parsedThemes = JSON.parse(savedThemes);
         console.log("Restored selected themes:", parsedThemes);
         onQuestionsComplete(JSON.parse(savedAnswers));
-        
+
         // Clear the stored data
         sessionStorage.removeItem('designAnswers');
         sessionStorage.removeItem('selectedThemes');
       }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, onQuestionsComplete]);
 
   const handlePrevQuestion = () => {
     if (currentQuestionIndex > 0) {
@@ -130,8 +130,8 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: Questions
   };
 
   // Calculate progress percentage
-  const progress = questions.length > 0 
-    ? ((currentQuestionIndex + 1) / questions.length) * 100 
+  const progress = questions.length > 0
+    ? ((currentQuestionIndex + 1) / questions.length) * 100
     : 0;
 
   // Render current question
@@ -146,11 +146,11 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: Questions
     }
 
     const currentQuestion = questions[currentQuestionIndex];
-    
+
     return (
       <div className="space-y-6">
         <h3 className="text-xl font-medium">{currentQuestion.question_text}</h3>
-        
+
         {currentQuestion.type === 'text' && (
           <Input
             value={answers[currentQuestion.id] || ''}
@@ -159,7 +159,7 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: Questions
             placeholder="Type your answer here..."
           />
         )}
-        
+
         {currentQuestion.type === 'textarea' && (
           <Textarea
             value={answers[currentQuestion.id] || ''}
@@ -168,7 +168,7 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: Questions
             placeholder="Type your answer here..."
           />
         )}
-        
+
         {currentQuestion.type === 'choice' && currentQuestion.options && (
           <RadioGroup
             value={answers[currentQuestion.id] || ''}
@@ -183,7 +183,7 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: Questions
             ))}
           </RadioGroup>
         )}
-        
+
         {currentQuestion.type === 'color' && (
           <div className="flex items-center space-x-2">
             <Input
@@ -210,27 +210,27 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: Questions
             <p className="text-gray-600 mb-6">
               Question {currentQuestionIndex + 1} of {questions.length}
             </p>
-            
+
             <Progress value={progress} className="mb-6" />
-            
+
             {renderCurrentQuestion()}
-            
+
             <div className="flex items-center justify-between mt-8">
-              <Button 
-                type="button" 
+              <Button
+                type="button"
                 variant="outline"
                 onClick={handlePrevQuestion}
               >
-                <ChevronLeft className="mr-2 h-4 w-4" /> 
+                <ChevronLeft className="mr-2 h-4 w-4" />
                 {currentQuestionIndex === 0 ? "Back to Themes" : "Previous Question"}
               </Button>
-              
-              <Button 
+
+              <Button
                 type="button"
                 onClick={handleNextQuestion}
                 className="bg-brand-green hover:bg-brand-darkGreen"
                 disabled={
-                  questions.length > 0 && 
+                  questions.length > 0 &&
                   answers[questions[currentQuestionIndex].id] === ''
                 }
               >
@@ -241,8 +241,8 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: Questions
           </div>
         </div>
       )}
-      
-      <ConfirmationDialog 
+
+      <ConfirmationDialog
         open={showConfirmation}
         onOpenChange={setShowConfirmation}
         questionResponses={answers}

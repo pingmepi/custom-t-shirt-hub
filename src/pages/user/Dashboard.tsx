@@ -1,11 +1,11 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
-import { TShirtDesign, OrderDetails } from "@/lib/types";
+import { TShirtDesign, OrderDetails, QuestionResponse } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, ShoppingBag, Palette, AlertCircle } from "lucide-react";
@@ -15,16 +15,18 @@ const UserDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("designs");
 
-  // Redirect to login if not authenticated
-  if (!isAuthenticated) {
-    navigate("/login");
-    return null;
-  }
+  // Use useEffect for navigation instead of conditional rendering
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/login");
+    }
+  }, [isAuthenticated, navigate]);
 
-  const { 
-    data: designs, 
-    isLoading: designsLoading, 
-    error: designsError 
+  // Define queries outside of conditional rendering
+  const {
+    data: designs,
+    isLoading: designsLoading,
+    error: designsError
   } = useQuery({
     queryKey: ['userDesigns', user?.id],
     queryFn: async () => {
@@ -34,16 +36,17 @@ const UserDashboard = () => {
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
       return data as TShirtDesign[];
-    }
+    },
+    enabled: !!user && isAuthenticated // Only run query when user is available
   });
 
-  const { 
-    data: orders, 
-    isLoading: ordersLoading, 
-    error: ordersError 
+  const {
+    data: orders,
+    isLoading: ordersLoading,
+    error: ordersError
   } = useQuery({
     queryKey: ['userOrders', user?.id],
     queryFn: async () => {
@@ -51,8 +54,18 @@ const UserDashboard = () => {
       // This is a placeholder for actual order fetching logic
       // In production, this would fetch from a real orders table
       return [] as OrderDetails[];
-    }
+    },
+    enabled: !!user && isAuthenticated // Only run query when user is available
   });
+
+  // If not authenticated, show loading or nothing
+  if (!isAuthenticated) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-green" />
+      </div>
+    );
+  }
 
   const handleCreateNewDesign = () => {
     navigate("/design");
@@ -75,7 +88,7 @@ const UserDashboard = () => {
             Manage your saved designs and track your orders
           </p>
         </div>
-        <Button 
+        <Button
           onClick={handleCreateNewDesign}
           className="mt-4 md:mt-0 bg-brand-green hover:bg-brand-darkGreen"
         >
@@ -89,7 +102,7 @@ const UserDashboard = () => {
           <TabsTrigger value="designs">My Designs</TabsTrigger>
           <TabsTrigger value="orders">My Orders</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="designs">
           {designsLoading ? (
             <div className="flex justify-center py-12">
@@ -107,17 +120,23 @@ const UserDashboard = () => {
               {designs.map((design) => (
                 <Card key={design.id}>
                   <CardHeader>
-                    <CardTitle className="truncate">{design.question_responses.title || "Untitled Design"}</CardTitle>
+                    <CardTitle className="truncate">
+                      {typeof design.question_responses.title === 'string'
+                        ? design.question_responses.title
+                        : typeof design.question_responses.title === 'object' && 'answer' in design.question_responses.title
+                          ? String(design.question_responses.title.answer)
+                          : "Untitled Design"}
+                    </CardTitle>
                     <CardDescription>
                       Created on {new Date(design.created_at).toLocaleDateString()}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="aspect-square rounded-md overflow-hidden bg-gray-100">
-                      <img 
-                        src={design.preview_url || "/placeholder.svg"} 
-                        alt="T-shirt design preview" 
-                        className="w-full h-full object-cover" 
+                      <img
+                        src={design.preview_url || "/placeholder.svg"}
+                        alt="T-shirt design preview"
+                        className="w-full h-full object-cover"
                       />
                     </div>
                   </CardContent>
@@ -143,7 +162,7 @@ const UserDashboard = () => {
             </Card>
           )}
         </TabsContent>
-        
+
         <TabsContent value="orders">
           {ordersLoading ? (
             <div className="flex justify-center py-12">
@@ -194,8 +213,8 @@ const UserDashboard = () => {
             <Card>
               <CardContent className="pt-6 text-center">
                 <p className="mb-6">You haven't placed any orders yet.</p>
-                <Button 
-                  onClick={handleCreateNewDesign} 
+                <Button
+                  onClick={handleCreateNewDesign}
                   className="bg-brand-green hover:bg-brand-darkGreen"
                 >
                   Design & Order Your First T-Shirt

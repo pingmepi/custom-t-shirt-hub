@@ -1,12 +1,12 @@
 
-import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react"; // Fixed: import useEffect from react, not react-router-dom
+
+import { useEffect } from "react";
 import DesignStepper from "@/components/design/DesignStepper";
 import QuestionsStepContent from "@/components/design/QuestionsStepContent";
 import DesignStepContent from "@/components/design/DesignStepContent";
 import OptionsStepContent from "@/components/design/OptionsStepContent";
-import { useDesignState } from "@/hooks/useDesignState"; 
-import { useAuth } from "@/context/AuthContext"; 
+import { useDesignState } from "@/hooks/useDesignState";
+import { useAuth } from "@/context/AuthContext";
 import LoginRequired from "@/components/design/LoginRequired";
 
 const DesignPage = () => {
@@ -24,15 +24,10 @@ const DesignPage = () => {
     handleNavigateToStep,
     redirectToLogin
   } = useDesignState();
-  
-  const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
-  
-  const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
 
-  const handleThemeSelect = (themes: string[]) => {
-    setSelectedThemes(themes);
-  };
+  const { isAuthenticated } = useAuth();
+  // Using a constant array instead of state since it's not being updated
+  const selectedThemes: string[] = [];
 
   // Check for saved answers in sessionStorage after login
   useEffect(() => {
@@ -45,7 +40,7 @@ const DesignPage = () => {
         sessionStorage.removeItem('designAnswers');
       }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, handleQuestionsComplete]);
 
   const renderStepContent = () => {
     // For some design steps, we require authentication
