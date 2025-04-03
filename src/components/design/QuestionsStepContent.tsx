@@ -13,6 +13,7 @@ import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import ConfirmationDialog from "./ConfirmationDialog";
 
 interface QuestionsStepContentProps {
   selectedThemes: string[];
@@ -25,6 +26,7 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: Questions
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   
@@ -77,18 +79,25 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: Questions
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
-      // If final question and not authenticated, show login required
-      if (!isAuthenticated) {
-        // Store current question responses in session storage
-        sessionStorage.setItem('designAnswers', JSON.stringify(answers));
-        sessionStorage.setItem('selectedThemes', JSON.stringify(selectedThemes));
-        navigate("/login", { state: { from: "/design" } });
-        return;
-      }
-      
-      // If authenticated, proceed with the flow
-      onQuestionsComplete(answers);
+      // If final question, show confirmation dialog
+      setShowConfirmation(true);
     }
+  };
+
+  const handleConfirmAnswers = () => {
+    setShowConfirmation(false);
+    
+    // If not authenticated, store answers and redirect to login
+    if (!isAuthenticated) {
+      // Store current question responses in session storage
+      sessionStorage.setItem('designAnswers', JSON.stringify(answers));
+      sessionStorage.setItem('selectedThemes', JSON.stringify(selectedThemes));
+      navigate("/login", { state: { from: "/design" } });
+      return;
+    }
+    
+    // If authenticated, proceed with the flow
+    onQuestionsComplete(answers);
   };
 
   // Restore state after authentication
@@ -217,6 +226,10 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: Questions
                 type="button"
                 onClick={handleNextQuestion}
                 className="bg-brand-green hover:bg-brand-darkGreen"
+                disabled={
+                  questions.length > 0 && 
+                  answers[questions[currentQuestionIndex].id] === ''
+                }
               >
                 {currentQuestionIndex === questions.length - 1 ? "Submit" : "Next"}
                 {currentQuestionIndex < questions.length - 1 && <ChevronRight className="ml-2 h-4 w-4" />}
@@ -225,6 +238,14 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: Questions
           </div>
         </div>
       )}
+      
+      <ConfirmationDialog 
+        open={showConfirmation}
+        onOpenChange={setShowConfirmation}
+        questionResponses={answers}
+        onConfirm={handleConfirmAnswers}
+        onEdit={() => setShowConfirmation(false)}
+      />
     </div>
   );
 };
