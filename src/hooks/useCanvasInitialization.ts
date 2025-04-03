@@ -1,0 +1,158 @@
+import { useEffect, useRef, useState } from "react";
+import { fabric } from "fabric";
+import { DesignData } from "@/lib/types";
+
+interface UseCanvasInitializationProps {
+  canvasRef: React.RefObject<HTMLCanvasElement>;
+  initialImageUrl?: string;
+  onDesignUpdated?: (designData: DesignData) => void;
+}
+
+interface UseCanvasInitializationResult {
+  fabricCanvas: fabric.Canvas | null;
+  isLoaded: boolean;
+  isInitialized: boolean;
+}
+
+/**
+ * Custom hook to handle canvas initialization and image loading
+ */
+export function useCanvasInitialization({
+  canvasRef,
+  initialImageUrl,
+  onDesignUpdated
+}: UseCanvasInitializationProps): UseCanvasInitializationResult {
+  const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Initialize the canvas once on mount with proper performance optimizations
+  useEffect(() => {
+    if (!canvasRef.current || isInitialized) return;
+
+    // Create the canvas immediately to improve perceived performance
+    const canvas = new fabric.Canvas(canvasRef.current, {
+      width: 600,
+      height: 600,
+      backgroundColor: "#f9f9f9",
+      // Add performance optimizations
+      enableRetinaScaling: true,
+      renderOnAddRemove: false,
+      stateful: false
+    });
+    
+    fabricCanvasRef.current = canvas;
+    setIsInitialized(true);
+    
+    // Load t-shirt mockup as background image
+    fabric.Image.fromURL('/tshirt-mockup-1.png', (tshirtImg) => {
+      tshirtImg.scaleToWidth(500);
+      tshirtImg.set({
+        left: 300,
+        top: 300,
+        originX: 'center',
+        originY: 'center',
+        selectable: false,
+        evented: false,
+      });
+      
+      canvas.add(tshirtImg);
+      canvas.sendToBack(tshirtImg);
+      
+      // Create a visible design area/boundary
+      const designArea = new fabric.Rect({
+        width: 250,
+        height: 200,
+        left: 300,
+        top: 225,
+        fill: 'transparent',
+        stroke: '#dddddd',
+        strokeDashArray: [5, 5],
+        strokeWidth: 1,
+        originX: 'center',
+        originY: 'center',
+        selectable: false,
+        evented: false,
+      });
+      
+      canvas.add(designArea);
+      
+      // Once the t-shirt is loaded, conditionally add the initial design or placeholder
+      if (initialImageUrl && initialImageUrl.endsWith('.svg')) {
+        // Handle SVG loading
+        fabric.loadSVGFromURL(initialImageUrl, (objects, options) => {
+          const loadedObject = fabric.util.groupSVGElements(objects, options);
+          loadedObject.set({
+            left: 300,
+            top: 225,
+            scaleX: 0.3,
+            scaleY: 0.3,
+            originX: 'center',
+            originY: 'center',
+          });
+          
+          canvas.add(loadedObject);
+          canvas.renderAll();
+          setIsLoaded(true);
+        });
+      } else if (initialImageUrl) {
+        // Handle other image formats
+        fabric.Image.fromURL(initialImageUrl, (img) => {
+          img.scaleToWidth(200);
+          img.set({
+            left: 300,
+            top: 225,
+            originX: 'center',
+            originY: 'center',
+          });
+          
+          canvas.add(img);
+          canvas.renderAll();
+          setIsLoaded(true);
+        });
+      } else {
+        // Add a placeholder text if no image is provided
+        const text = new fabric.Text('Your Design Here', {
+          fontSize: 24,
+          fontFamily: 'Arial',
+          left: 300,
+          top: 225,
+          fill: '#888888',
+          originX: 'center',
+          originY: 'center',
+        });
+        
+        canvas.add(text);
+        setIsLoaded(true);
+      }
+      
+      canvas.renderAll();
+    });
+
+    // Setup canvas event listeners
+    canvas.on('object:modified', () => {
+      if (onDesignUpdated) {
+        // Convert fabric.js JSON to our DesignData type
+        const canvasJson = canvas.toJSON();
+        const designData: DesignData = {
+          canvas_json: JSON.stringify(canvasJson),
+          width: canvas.width,
+          height: canvas.height,
+          background_color: canvas.backgroundColor as string,
+          version: '1.0'
+        };
+        onDesignUpdated(designData);
+      }
+    });
+
+    return () => {
+      canvas.dispose();
+    };
+  }, [initialImageUrl, onDesignUpdated, isInitialized, canvasRef]);
+
+  return {
+    fabricCanvas: fabricCanvasRef.current,
+    isLoaded,
+    isInitialized
+  };
+}
