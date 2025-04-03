@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchThemes, fetchThemeCategories, trackThemeSelections } from "@/services/themesService";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/context/AuthContext"; // Fixed: import from context instead of hooks
 import { Theme } from "@/lib/types";
 
 import ThemeGrid from "./themes/ThemeGrid";

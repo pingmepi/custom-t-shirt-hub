@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import DesignCanvas from "@/components/design/DesignCanvas";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/context/AuthContext";
 
 interface DesignStepContentProps {
   questionResponses: Record<string, any>;
@@ -22,8 +22,7 @@ const DesignStepContent = ({
   const [designData, setDesignData] = useState<any>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const isAuthenticated = !!user;
+  const { user, isAuthenticated } = useAuth();
 
   const handleDesignUpdated = (data: any) => {
     setDesignData(data);
@@ -36,7 +35,6 @@ const DesignStepContent = ({
   };
 
   const redirectToLogin = () => {
-    // Store current design state in session storage
     sessionStorage.setItem('currentDesignState', JSON.stringify({
       questionResponses,
       designData
@@ -44,7 +42,6 @@ const DesignStepContent = ({
     navigate("/login", { state: { from: "/design" } });
   };
 
-  // Restore design state after login
   useEffect(() => {
     if (isAuthenticated) {
       const savedState = sessionStorage.getItem('currentDesignState');
@@ -57,10 +54,8 @@ const DesignStepContent = ({
     }
   }, [isAuthenticated]);
 
-  // Create a nicely formatted display of question responses
   const formatResponses = () => {
     return Object.entries(questionResponses).map(([questionId, answer]) => {
-      // Try to determine what the question was about based on the answer
       let questionLabel = `Question ${questionId.replace("q", "")}`;
       
       if (typeof answer === 'string' && answer.startsWith('#')) {

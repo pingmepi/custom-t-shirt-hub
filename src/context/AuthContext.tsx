@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
@@ -21,7 +20,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Setup auth state change listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
@@ -30,7 +28,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    // THEN check for existing session
     const checkUser = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -45,16 +42,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     checkUser();
 
-    // Cleanup subscription on unmount
     return () => {
       subscription.unsubscribe();
     };
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    // Check for test credentials first
     if (email === "kmandalam@gmail.com" && password === "1234") {
-      // For test credentials, set a mock user
       const mockUser = {
         id: "test-user-id",
         email: "kmandalam@gmail.com",
@@ -70,16 +64,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { error, data } = await supabase.auth.signInWithPassword({ 
         email, 
-        password,
-        options: {
-          // Skip email verification for testing purposes
-          emailRedirectTo: window.location.origin + "/dashboard",
-        }
+        password
       });
       
       if (error) throw error;
       
-      // Set the user and session state directly to avoid any lag
       if (data?.session) {
         setSession(data.session);
         setUser(data.user);
@@ -92,7 +81,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     try {
-      // Check if it's a test user first
       if (user?.email === "kmandalam@gmail.com") {
         setUser(null);
         setSession(null);
@@ -102,7 +90,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      // Clear state immediately for better UX
       setUser(null);
       setSession(null);
     } catch (error: any) {

@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, X, user, LogOut } from "lucide-react";
+import { Menu, X, User, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
@@ -45,12 +44,10 @@ const Navbar = () => {
     <nav className="bg-white shadow-sm">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
           <Link to="/" className="flex-shrink-0 flex items-center">
             <span className="text-xl font-bold text-brand-green">T-Shirt Designer</span>
           </Link>
 
-          {/* Desktop Navigation */}
           <div className="hidden md:block">
             <div className="ml-10 flex items-center space-x-8">
               {navLinks.map((link) => (
@@ -75,12 +72,11 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Auth Buttons - Desktop */}
           <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
                 <Link to="/profile" className="flex items-center space-x-1 text-sm text-gray-700 hover:text-brand-green">
-                  <user className="h-5 w-5" />
+                  <User className="h-5 w-5" />
                   <span>{user?.email}</span>
                 </Link>
                 <Button 
@@ -109,7 +105,6 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* Mobile Navigation */}
           <div className="md:hidden flex items-center">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
