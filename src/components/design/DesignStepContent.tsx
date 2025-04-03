@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -5,6 +6,7 @@ import DesignCanvas from "@/components/design/DesignCanvas";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import LoginRequired from "./LoginRequired";
 
 interface DesignStepContentProps {
   questionResponses: Record<string, any>;
@@ -53,6 +55,10 @@ const DesignStepContent = ({
       }
     }
   }, [isAuthenticated]);
+
+  if (!isAuthenticated) {
+    return <LoginRequired redirectToLogin={redirectToLogin} />;
+  }
 
   const formatResponses = () => {
     return Object.entries(questionResponses).map(([questionId, answer]) => {

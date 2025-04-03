@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
@@ -8,6 +9,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
   isAuthenticated: boolean;
 }
@@ -48,7 +50,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    if (email === "kmandalam@gmail.com" && password === "1234") {
+    // For test credentials from docs/test_file
+    if (email === "kmandalam@gmail.com" && password === "12345678") {
       const mockUser = {
         id: "test-user-id",
         email: "kmandalam@gmail.com",
@@ -57,7 +60,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       } as unknown as User;
       
+      const mockSession = {
+        access_token: "mock-token",
+        refresh_token: "mock-refresh",
+        user: mockUser
+      } as unknown as Session;
+      
       setUser(mockUser);
+      setSession(mockSession);
       return;
     }
     
@@ -79,8 +89,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const signUp = async (email: string, password: string, fullName: string) => {
+    try {
+      const { error, data } = await supabase.auth.signUp({ 
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName
+          }
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.user) {
+        // For quick testing, auto sign-in after signup
+        await signIn(email, password);
+        return;
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to sign up");
+      throw error;
+    }
+  };
+
   const signOut = async () => {
     try {
+      // For test user
       if (user?.email === "kmandalam@gmail.com") {
         setUser(null);
         setSession(null);
@@ -103,7 +139,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       user, 
       session,
       loading, 
-      signIn, 
+      signIn,
+      signUp, 
       signOut, 
       isAuthenticated: !!user 
     }}>

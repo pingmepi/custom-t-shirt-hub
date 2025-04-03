@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,7 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
 const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -32,6 +31,7 @@ const SignupPage = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { signUp } = useAuth();
   
   const { register, handleSubmit, formState: { errors } } = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -48,41 +48,16 @@ const SignupPage = () => {
     try {
       setIsLoading(true);
 
-      const { data: signUpData, error } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          data: {
-            full_name: data.name,
-          },
-          // Skip email verification for faster testing
-          emailRedirectTo: window.location.origin + "/dashboard",
-        },
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      if (signUpData.user) {
-        // Check if we have design data stored
-        const hasDesignData = sessionStorage.getItem('designAnswers');
-        toast.success("Account created successfully! Please login to continue.");
-        
-        // For test purposes, sign in immediately after signup to skip email verification
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: data.email,
-          password: data.password
-        });
-        
-        if (!signInError) {
-          navigate(hasDesignData ? "/design" : "/dashboard");
-        } else {
-          // If auto-signin fails, redirect to login
-          navigate("/login", { state: { from: hasDesignData ? "/design" : "/dashboard" } });
-        }
+      await signUp(data.email, data.password, data.name);
+      
+      toast.success("Account created successfully! You are now logged in.");
+      
+      // Check if we have design data stored
+      const hasDesignData = sessionStorage.getItem('designAnswers');
+      if (hasDesignData) {
+        navigate('/design');
       } else {
-        toast.error("Failed to create account. Please try again.");
+        navigate('/dashboard');
       }
     } catch (error: any) {
       console.error("Signup error:", error);
