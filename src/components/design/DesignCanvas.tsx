@@ -14,20 +14,25 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // Initialize the canvas once on mount with proper performance optimizations
   useEffect(() => {
     if (!canvasRef.current || isInitialized) return;
 
-    // Initialize the canvas using the correct fabric.js syntax
+    // Create the canvas immediately to improve perceived performance
     const canvas = new fabric.Canvas(canvasRef.current, {
       width: 600,
       height: 600,
       backgroundColor: "#f9f9f9",
+      // Add performance optimizations
+      enableRetinaScaling: true,
+      renderOnAddRemove: false,
+      stateful: false
     });
     
     fabricCanvasRef.current = canvas;
     setIsInitialized(true);
     
-    // Add mock tshirt placeholder
+    // Load t-shirt mockup as background image
     fabric.Image.fromURL('/tshirt-mockup-1.png', (tshirtImg) => {
       tshirtImg.scaleToWidth(500);
       tshirtImg.set({
@@ -40,8 +45,9 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
       });
       
       canvas.add(tshirtImg);
+      canvas.sendToBack(tshirtImg);
       
-      // Create a design area/boundary
+      // Create a visible design area/boundary
       const designArea = new fabric.Rect({
         width: 250,
         height: 200,
@@ -59,8 +65,9 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
       
       canvas.add(designArea);
       
-      // Load initial image or add placeholder text
-      if (initialImageUrl) {
+      // Once the t-shirt is loaded, conditionally add the initial design or placeholder
+      if (initialImageUrl && initialImageUrl.endsWith('.svg')) {
+        // Handle SVG loading
         fabric.loadSVGFromURL(initialImageUrl, (objects, options) => {
           const loadedObject = fabric.util.groupSVGElements(objects, options);
           loadedObject.set({
@@ -73,6 +80,21 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
           });
           
           canvas.add(loadedObject);
+          canvas.renderAll();
+          setIsLoaded(true);
+        });
+      } else if (initialImageUrl) {
+        // Handle other image formats
+        fabric.Image.fromURL(initialImageUrl, (img) => {
+          img.scaleToWidth(200);
+          img.set({
+            left: 300,
+            top: 225,
+            originX: 'center',
+            originY: 'center',
+          });
+          
+          canvas.add(img);
           canvas.renderAll();
           setIsLoaded(true);
         });

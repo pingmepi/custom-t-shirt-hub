@@ -60,29 +60,47 @@ const DesignStepContent = ({
     return <LoginRequired redirectToLogin={redirectToLogin} />;
   }
 
+  // Get nicely formatted question labels and responses for display
   const formatResponses = () => {
     return Object.entries(questionResponses).map(([questionId, answer]) => {
-      let questionLabel = `Question ${questionId.replace("q", "")}`;
-      
+      // First handle special case formatting
       if (typeof answer === 'string' && answer.startsWith('#')) {
-        questionLabel = 'Color choice';
-      } else if (
-        typeof answer === 'string' && 
-        ['Minimal', 'Vintage', 'Bold', 'Artistic', 'Funny'].includes(answer)
-      ) {
-        questionLabel = 'Style preference';
-      } else if (questionId === 'q1') {
-        questionLabel = 'Main message';
-      } else if (questionId === 'q5') {
-        questionLabel = 'Additional details';
-      } else if (questionId === 'q4') {
-        questionLabel = 'Occasion';
+        return {
+          id: questionId,
+          label: 'Color choice',
+          answer: answer
+        };
+      } 
+      
+      if (typeof answer === 'string' && 
+          ['Minimal', 'Vintage', 'Bold', 'Artistic', 'Funny', 'Minimalist'].includes(answer)) {
+        return {
+          id: questionId,
+          label: 'Style preference',
+          answer: answer
+        };
       }
       
-      return { 
+      // For backward compatibility with hardcoded question IDs
+      if (questionId === 'q1') {
+        return { id: questionId, label: 'Main message', answer };
+      } else if (questionId === 'q5') {
+        return { id: questionId, label: 'Additional details', answer };
+      } else if (questionId === 'q4') {
+        return { id: questionId, label: 'Occasion', answer };
+      } else if (questionId === 'q3') {
+        return { id: questionId, label: 'Color choice', answer };
+      } else if (questionId === 'q2') {
+        return { id: questionId, label: 'Style preference', answer };
+      }
+      
+      // For database-generated UUIDs, create a human-readable question name
+      // by extracting just a small part of the UUID to identify the question uniquely
+      const shortId = questionId.substring(0, 6);
+      return {
         id: questionId,
-        label: questionLabel,
-        answer: answer 
+        label: `Question ${shortId}`,
+        answer
       };
     });
   };

@@ -27,8 +27,9 @@ const ConfirmationDialog = ({
 }: ConfirmationDialogProps) => {
   const formatResponses = () => {
     return Object.entries(questionResponses).map(([questionId, answer]) => {
-      let questionLabel = `Question ${questionId.replace("q", "")}`;
+      let questionLabel = "";
       
+      // Handle special case formatting based on answer content
       if (typeof answer === 'string' && answer.startsWith('#')) {
         questionLabel = 'Color choice';
       } else if (
@@ -42,6 +43,14 @@ const ConfirmationDialog = ({
         questionLabel = 'Additional details';
       } else if (questionId === 'q4') {
         questionLabel = 'Occasion';
+      } else if (questionId === 'q3') {
+        questionLabel = 'Color choice';
+      } else if (questionId === 'q2') {
+        questionLabel = 'Style preference';
+      } else {
+        // For database UUIDs, create a better human-readable label
+        const shortId = questionId.substring(0, 6);
+        questionLabel = `Question ${shortId}`;
       }
       
       return { 
