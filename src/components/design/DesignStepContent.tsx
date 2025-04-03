@@ -1,22 +1,29 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import DesignCanvas from "@/components/design/DesignCanvas";
 import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 interface DesignStepContentProps {
   questionResponses: Record<string, any>;
   onDesignUpdated: (data: any) => void;
   onNavigateStep: (step: string) => void;
+  onQuestionsComplete: (responses: Record<string, any>) => void;
 }
 
 const DesignStepContent = ({ 
   questionResponses, 
   onDesignUpdated,
-  onNavigateStep
+  onNavigateStep,
+  onQuestionsComplete
 }: DesignStepContentProps) => {
   const [designData, setDesignData] = useState<any>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
 
   const handleDesignUpdated = (data: any) => {
     setDesignData(data);
@@ -27,6 +34,28 @@ const DesignStepContent = ({
       description: "Your design has been updated successfully.",
     });
   };
+
+  const redirectToLogin = () => {
+    // Store current design state in session storage
+    sessionStorage.setItem('currentDesignState', JSON.stringify({
+      questionResponses,
+      designData
+    }));
+    navigate("/login", { state: { from: "/design" } });
+  };
+
+  // Restore design state after login
+  useEffect(() => {
+    if (isAuthenticated) {
+      const savedState = sessionStorage.getItem('currentDesignState');
+      if (savedState) {
+        const { questionResponses: savedResponses, designData: savedDesign } = JSON.parse(savedState);
+        if (savedResponses) onQuestionsComplete(savedResponses);
+        if (savedDesign) handleDesignUpdated(savedDesign);
+        sessionStorage.removeItem('currentDesignState');
+      }
+    }
+  }, [isAuthenticated]);
 
   // Create a nicely formatted display of question responses
   const formatResponses = () => {

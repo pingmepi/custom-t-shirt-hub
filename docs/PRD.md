@@ -1,4 +1,3 @@
-
 # T-Shirt Design & Ordering Platform - Product Requirements Document
 
 **Date**: 2025-04-01\
@@ -53,7 +52,16 @@ So that I can ensure smooth delivery and customer satisfaction
 
  Step-by-step question flow with one question shown at a time and a progress bar
 
- If the user is not logged in at this time, then a pop-up for sign-in should be shown to the user so they can view the generated design. 
+ If the user is not logged in at this time, then a pop-up for sign-up should be shown.
+
+ as V1, keep the signup/signin flow simpla:
+ - user enters email and password
+ - if the details already exist in the database, the user has successfully logged in
+ - if details do not exist, throw error "incorrect username/password"
+ - highlight "signup instead" button
+ - if the user clicks on signup, reload the page and take user details to create a new user. 
+ - details required in the signup form are name, email, and password 
+ - once the user completes the signup flow, redirect them to login again
 
  Once the user logs in, the created design in the previous step should be available in the landing page for the user. 
 
@@ -95,6 +103,19 @@ So that I can ensure smooth delivery and customer satisfaction
  Responsive layout for all design flow screens
 <!-- end added by lovable -->
 
+Additional Requirements:
+- OAuth integration for Google and Facebook login
+- Remember me functionality for login
+- Password visibility toggle in login/signup forms
+- Forgot password functionality
+- Form validation with proper error messages
+- Redirect handling after login (return to previous page)
+- Test credentials support for development (kmandalam@gmail.com)
+- User session management and persistence
+- Background process handling for long-running operations
+- Proper error handling for all API operations
+- Loading states for async operations
+
 ### Nice to Have
 
  Toggle in user profile to enable/disable style-based design suggestions
@@ -115,7 +136,19 @@ So that I can ensure smooth delivery and customer satisfaction
  Advanced color customization options with color harmony suggestions
 <!-- end added by lovable -->
 
+Additional Nice to Have:
+- Multi-factor authentication
+- OAuth provider expansion (GitHub, Twitter)
+- Session management across devices
+- User activity logging
+- Advanced password policies
+- Account deletion functionality
+- Export design history
+- Batch operations for admin panel
+
 ## Technical Requirements
+
+> **Note**: For a comprehensive list of all APIs (implemented, documented, and planned), including endpoints, payloads, and usage details, refer to [API Documentation](./api_details.md).
 
 ### APIs Required
 
@@ -499,51 +532,30 @@ Fetch all available themes to be shown on the theme selection screen.
 ```
 <!-- end added by lovable -->
 
-- `POST /generate-questions`
+### Authentication Flow
+- Email/Password authentication
+- OAuth providers (Google, Facebook)
+- Session management
+- Remember me functionality
+- Password reset flow
+- Email verification
+- Test credentials handling
 
-  - Input: List of selected themes
-  - Output: 5 dynamically generated questions
+### State Management
+- User session persistence
+- Design state management
+- Form state handling
+- Loading states
+- Error states
+- Background process management
 
-- `POST /submit-responses`
-
-  - Input: User ID, question responses
-  - Output: JSON representation of design intent for preview generation
-
-- `POST /generate-design-preview`
-
-  - Input: Design data (text, style, layout)
-  - Output: URL of the generated preview image
-
-- `POST /save-final-design`
-
-  - Input: Final edited design data + user ID
-  - Output: Design ID, preview image URL, metadata
-  - Metadata includes: timestamp, selected themes, question responses, design configuration (e.g. colors, fonts, layout), editor actions (e.g. text edits, image placement), user style tags (if applicable)
-
-- `POST /create-order`
-
-  - Input: User ID, design ID, shipping info, payment ID
-  - Output: Order ID, status
-
-- `GET /user-orders`
-
-  - Input: User ID
-  - Output: List of past orders including design snapshots
-
-- `GET /admin-orders`
-
-  - Input: (optional filters)
-  - Output: List of all orders with metadata for fulfillment
-
-- `POST /update-order-status`
-
-  - Input: Order ID, new status
-  - Output: Success or error
-
-- `GET /design/:id`
-
-  - Input: Design ID
-  - Output: Full design data including original and edited images
+### Error Handling
+- Form validation errors
+- API error handling
+- Network error handling
+- Session timeout handling
+- Graceful degradation
+- Error logging and monitoring
 
 - Modular component structure allowing services such as vendor APIs, payment processors, or the design editor to be replaced without affecting other parts of the system
 

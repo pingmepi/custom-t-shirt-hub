@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -45,7 +44,13 @@ const LoginPage = () => {
       // For testing purposes - allow test credentials to pass through
       if (data.email === "kmandalam@gmail.com" && data.password === "12345678") {
         toast.success("Login successful with test credentials!");
-        navigate(redirectTo);
+        // Check for stored design data
+        const savedAnswers = sessionStorage.getItem('designAnswers');
+        if (savedAnswers) {
+          navigate('/design');
+        } else {
+          navigate(redirectTo);
+        }
         return;
       }
       
@@ -59,7 +64,13 @@ const LoginPage = () => {
       }
 
       toast.success("Login successful!");
-      navigate(redirectTo);
+      // Check for stored design data
+      const savedAnswers = sessionStorage.getItem('designAnswers');
+      if (savedAnswers) {
+        navigate('/design');
+      } else {
+        navigate(redirectTo);
+      }
     } catch (error: any) {
       toast.error(error.message || "Failed to login. Please check your credentials.");
     } finally {

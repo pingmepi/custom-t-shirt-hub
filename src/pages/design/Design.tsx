@@ -1,6 +1,5 @@
-
-import { useNavigate, useEffect } from "react-router-dom";
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import DesignStepper from "@/components/design/DesignStepper";
 import QuestionsStepContent from "@/components/design/QuestionsStepContent";
 import DesignStepContent from "@/components/design/DesignStepContent";
@@ -67,6 +66,7 @@ const DesignPage = () => {
             questionResponses={questionResponses}
             onDesignUpdated={handleDesignUpdated}
             onNavigateStep={handleNavigateToStep}
+            onQuestionsComplete={handleQuestionsComplete}
           />
         );
       case "options":

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -47,24 +46,32 @@ const SignupPage = () => {
   const onSubmit = async (data: SignupFormValues) => {
     try {
       setIsLoading(true);
-      
-      const { error } = await supabase.auth.signUp({
+
+      const { data: signUpData, error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
           data: {
             full_name: data.name,
-          }
-        }
+          },
+        },
       });
 
       if (error) {
         throw error;
       }
 
-      toast.success("Account created successfully! Please check your email to verify your account.");
-      navigate("/login");
+      if (signUpData.user) {
+        // Check if we have design data stored
+        const hasDesignData = sessionStorage.getItem('designAnswers');
+        toast.success("Account created successfully! Please login to continue.");
+        // Pass the state to maintain the return path
+        navigate("/login", { state: { from: hasDesignData ? "/design" : "/dashboard" } });
+      } else {
+        toast.error("Failed to create account. Please try again.");
+      }
     } catch (error: any) {
+      console.error("Signup error:", error);
       toast.error(error.message || "Failed to create account. Please try again.");
     } finally {
       setIsLoading(false);
@@ -178,6 +185,14 @@ const SignupPage = () => {
               <Checkbox
                 id="agreeTerms"
                 {...register("agreeTerms")}
+                onCheckedChange={(checked) => {
+                  register("agreeTerms").onChange({
+                    target: {
+                      name: "agreeTerms",
+                      value: checked
+                    }
+                  });
+                }}
               />
               <Label htmlFor="agreeTerms" className="ml-2 text-sm text-gray-600">
                 I agree to the{" "}
@@ -208,20 +223,7 @@ const SignupPage = () => {
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
               </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
-              </div>
-            </div>
-
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <Button variant="outline" className="w-full">
-                Google
-              </Button>
-              <Button variant="outline" className="w-full">
-                Facebook
-              </Button>
             </div>
           </div>
         </div>

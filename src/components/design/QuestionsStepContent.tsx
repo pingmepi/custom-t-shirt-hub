@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import QuestionForm from "@/components/design/QuestionForm";
@@ -78,17 +77,39 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: Questions
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
-      // If final question and not authenticated, redirect to login
+      // If final question and not authenticated, show login required
       if (!isAuthenticated) {
-        // Store answers in session storage for retrieval after login
+        // Store current question responses in session storage
         sessionStorage.setItem('designAnswers', JSON.stringify(answers));
+        sessionStorage.setItem('selectedThemes', JSON.stringify(selectedThemes));
         navigate("/login", { state: { from: "/design" } });
-      } else {
-        // Submit answers if user is already authenticated
-        onQuestionsComplete(answers);
+        return;
       }
+      
+      // If authenticated, proceed with the flow
+      onQuestionsComplete(answers);
     }
   };
+
+  // Restore state after authentication
+  useEffect(() => {
+    if (isAuthenticated) {
+      const savedAnswers = sessionStorage.getItem('designAnswers');
+      const savedThemes = sessionStorage.getItem('selectedThemes');
+      
+      if (savedAnswers && savedThemes) {
+        setAnswers(JSON.parse(savedAnswers));
+        // Update selected themes if needed
+        const parsedThemes = JSON.parse(savedThemes);
+        console.log("Restored selected themes:", parsedThemes);
+        onQuestionsComplete(JSON.parse(savedAnswers));
+        
+        // Clear the stored data
+        sessionStorage.removeItem('designAnswers');
+        sessionStorage.removeItem('selectedThemes');
+      }
+    }
+  }, [isAuthenticated]);
 
   const handlePrevQuestion = () => {
     if (currentQuestionIndex > 0) {
