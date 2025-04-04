@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ChevronRight, Sparkle, Paintbrush, ShoppingCart, Truck } from "lucide-react";
-import { tshirtImages, designImages } from "@/images";
+import { tshirtImages, designImages } from "@/assets";
 
 const HowItWorksPage = () => {
   return (

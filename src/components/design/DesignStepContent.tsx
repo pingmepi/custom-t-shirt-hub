@@ -9,7 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import LoginRequired from "./LoginRequired";
 import { useDesignAPI } from "@/hooks/useDesignAPI";
 import { DesignData, QuestionResponse } from "@/lib/types";
-import { designImages } from "@/images";
+import { designImages } from "@/assets";
 
 interface DesignStepContentProps {
   questionResponses: Record<string, QuestionResponse | string>;

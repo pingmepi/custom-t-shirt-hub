@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DesignData, QuestionResponse, UserStylePreference } from "@/lib/types";
 import { extractPreferences } from "@/utils/designTransformation";
-import { designImages } from "@/images";
+import { designImages } from "@/assets";
 
 interface SaveDesignParams {
   userId: string | undefined;

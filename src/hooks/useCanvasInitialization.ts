@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { fabric } from "fabric";
 import { DesignData } from "@/lib/types";
 import { toast } from "sonner";
-import { tshirtImages } from "@/images";
+import { tshirtImages } from "@/assets";
 
 interface UseCanvasInitializationProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;

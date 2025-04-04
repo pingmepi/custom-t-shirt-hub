@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkle, Zap, Truck, Brush, Check } from "lucide-react";
 import FeaturedDesigns from "@/components/FeaturedDesigns";
-import { tshirtImages } from "@/images";
+import { tshirtImages } from "@/assets";
 
 const HomePage = () => {
   return (
