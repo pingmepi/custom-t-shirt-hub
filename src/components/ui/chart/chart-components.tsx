@@ -2,12 +2,14 @@
 import React, { forwardRef } from "react";
 import * as RechartsPrimitive from "recharts";
 import { cn } from "@/lib/utils";
-import { XAxis, YAxis } from "recharts";
+import { ValueType, NameType } from "recharts/types/component/DefaultTooltipContent";
 
 // Tooltip Component
-export interface ChartTooltipProps<TValue, TName> extends React.ComponentPropsWithoutRef<typeof RechartsPrimitive.Tooltip<TValue, TName>> {}
+export interface ChartTooltipProps extends React.ComponentPropsWithoutRef<typeof RechartsPrimitive.Tooltip> {
+  className?: string;
+}
 
-export const ChartTooltip = <TValue, TName>({ className, ...props }: ChartTooltipProps<TValue, TName>) => (
+export const ChartTooltip = ({ className, ...props }: ChartTooltipProps) => (
   <RechartsPrimitive.Tooltip 
     cursor={{ strokeDasharray: "3 3" }} 
     wrapperStyle={{ outline: "none" }}
@@ -17,7 +19,6 @@ export const ChartTooltip = <TValue, TName>({ className, ...props }: ChartToolti
       borderRadius: "var(--radius)",
       boxShadow: "var(--shadow)"
     }}
-    className={cn(className)}
     {...props} 
   />
 );
@@ -209,8 +210,8 @@ export interface ChartContainerProps extends React.ComponentPropsWithoutRef<"div
 
 export const ChartContainer = ({ className, children, ...props }: ChartContainerProps) => (
   <div className={cn("h-80 w-full", className)} {...props}>
-    <ResponsiveContainer width="100%" height="100%">
+    <RechartsPrimitive.ResponsiveContainer width="100%" height="100%">
       {children}
-    </ResponsiveContainer>
+    </RechartsPrimitive.ResponsiveContainer>
   </div>
 );
