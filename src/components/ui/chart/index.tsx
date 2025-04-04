@@ -1,3 +1,4 @@
+
 import { ChartConfig, useChart, THEMES } from "./chart-context"
 import {
   ChartContainer,
@@ -26,9 +27,9 @@ import {
   ScatterChart
 } from "./chart-containers"
 
+// Export components directly
 export {
   // Context
-  ChartConfig,
   useChart,
   THEMES,
   
@@ -58,3 +59,6 @@ export {
   RadialBarChart,
   ScatterChart
 }
+
+// Export types separately
+export type { ChartConfig }
