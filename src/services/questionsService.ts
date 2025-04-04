@@ -12,6 +12,11 @@ export const fetchThemeBasedQuestions = async (themes: string[], limit: number =
   try {
     console.log("Fetching questions for themes:", themes);
     
+    if (!themes.length) {
+      console.warn("No themes selected, using default questions");
+      return await fetchDefaultQuestions(limit);
+    }
+    
     // Call the database function to get theme-based questions
     const { data, error } = await supabase
       .rpc('get_theme_based_questions', { 
@@ -21,8 +26,10 @@ export const fetchThemeBasedQuestions = async (themes: string[], limit: number =
     
     if (error) {
       console.error("Error fetching theme-based questions:", error);
-      throw new Error("Failed to fetch questions");
+      throw new Error(`Failed to fetch questions: ${error.message}`);
     }
+    
+    console.log("Received questions data:", data);
     
     if (!data || data.length === 0) {
       console.warn("No theme-based questions found, using default questions");
@@ -63,8 +70,10 @@ const fetchDefaultQuestions = async (limit: number = 5): Promise<Question[]> => 
     
     if (error) {
       console.error("Error fetching default questions:", error);
-      throw new Error("Failed to fetch questions");
+      throw new Error(`Failed to fetch questions: ${error.message}`);
     }
+    
+    console.log("Received default questions data:", data);
     
     if (!data || data.length === 0) {
       console.warn("No questions found in database, using hardcoded defaults");

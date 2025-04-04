@@ -65,7 +65,7 @@ const DesignStepContent = ({
             description: "Failed to generate your design. Using a default template.",
             variant: "destructive",
           });
-          setGeneratedImageUrl("/design-flow.png"); // Fallback
+          setGeneratedImageUrl("/images/design/design-flow.png"); // Updated path
         } finally {
           setIsGeneratingImage(false);
         }
@@ -164,7 +164,7 @@ const DesignStepContent = ({
             </div>
           ) : (
             <DesignCanvas
-              initialImageUrl={generatedImageUrl || "/design-flow.png"}
+              initialImageUrl={generatedImageUrl || "/images/design/design-flow.png"} // Updated path
               onDesignUpdated={handleDesignUpdated}
             />
           )}

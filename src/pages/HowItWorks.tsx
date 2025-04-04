@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ChevronRight, Sparkle, Paintbrush, ShoppingCart, Truck } from "lucide-react";
@@ -45,7 +44,7 @@ const HowItWorksPage = () => {
         <div className="order-1 md:order-2">
           <div className="bg-white rounded-lg shadow-lg p-4">
             <img 
-              src="/tshirt-mockup-1.png" 
+              src="/images/tshirt/mockup-1.png" 
               alt="Design questionnaire" 
               className="w-full h-auto rounded" 
             />
@@ -58,7 +57,7 @@ const HowItWorksPage = () => {
         <div>
           <div className="bg-white rounded-lg shadow-lg p-4">
             <img 
-              src="/design-flow.png" 
+              src="/images/design/design-flow.png" 
               alt="Design editor" 
               className="w-full h-auto rounded" 
             />
@@ -125,7 +124,7 @@ const HowItWorksPage = () => {
         <div className="order-1 md:order-2">
           <div className="bg-white rounded-lg shadow-lg p-4">
             <img 
-              src="/tshirt-mockup-3.png" 
+              src="/images/tshirt/mockup-3.png" 
               alt="T-shirt options" 
               className="w-full h-auto rounded" 
             />
@@ -138,7 +137,7 @@ const HowItWorksPage = () => {
         <div>
           <div className="bg-white rounded-lg shadow-lg p-4">
             <img 
-              src="/tshirt-mockup-4.png" 
+              src="/images/tshirt/mockup-4.png" 
               alt="Delivery process" 
               className="w-full h-auto rounded" 
             />

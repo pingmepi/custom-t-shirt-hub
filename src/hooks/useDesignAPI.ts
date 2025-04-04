@@ -29,7 +29,7 @@ export function useDesignAPI() {
     userId,
     questionResponses,
     designData,
-    previewUrl = "/design-flow.png" // Default preview
+    previewUrl = "/images/design/design-flow.png" // Updated path
   }: SaveDesignParams): Promise<SaveDesignResult> => {
     if (!userId) {
       setError("User ID is required to save a design");
@@ -110,14 +110,14 @@ export function useDesignAPI() {
       );
       
       // Just for demonstration - map different styles to different placeholder images
-      let placeholderImageUrl = "/design-flow.png"; // default
+      let placeholderImageUrl = "/images/design/design-flow.png"; // updated path
       
       if (stylePreference === "Minimal") {
-        placeholderImageUrl = "/placeholder.svg";
+        placeholderImageUrl = "/images/design/placeholder.svg";
       } else if (stylePreference === "Vintage") {
-        placeholderImageUrl = "/design-flow.png";
+        placeholderImageUrl = "/images/design/design-flow.png";
       } else if (stylePreference === "Bold") {
-        placeholderImageUrl = "/placeholder.svg";
+        placeholderImageUrl = "/images/design/placeholder.svg";
       }
       
       // Simulate API call delay
@@ -131,7 +131,7 @@ export function useDesignAPI() {
       console.error("Error generating base design:", err);
       setError(errorMessage);
       toast.error("Failed to generate design. Using default template.");
-      return "/design-flow.png"; // Fallback to default image
+      return "/images/design/design-flow.png"; // updated path & fallback
     } finally {
       setLoading(false);
     }

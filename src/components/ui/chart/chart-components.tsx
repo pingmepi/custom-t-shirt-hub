@@ -1,274 +1,216 @@
 
-import * as React from "react"
-import * as RechartsPrimitive from "recharts"
+import React, { forwardRef } from "react";
+import * as RechartsPrimitive from "recharts";
+import { cn } from "@/lib/utils";
+import { XAxis, YAxis } from "recharts";
 
-import { cn } from "@/lib/utils"
-import { useChart, ChartConfig, THEMES, ChartProvider } from "./chart-context"
+// Tooltip Component
+export interface ChartTooltipProps<TValue, TName> extends React.ComponentPropsWithoutRef<typeof RechartsPrimitive.Tooltip<TValue, TName>> {}
 
-export const ChartContainer = ({
-  children,
-  config,
-  className,
-  ...props
-}: React.ComponentProps<"div"> & {
-  config: ChartConfig
-}) => {
-  return (
-    <div className={cn("", className)} {...props}>
-      <ChartProvider config={config}>{children}</ChartProvider>
-    </div>
-  )
+export const ChartTooltip = <TValue, TName>({ className, ...props }: ChartTooltipProps<TValue, TName>) => (
+  <RechartsPrimitive.Tooltip 
+    cursor={{ strokeDasharray: "3 3" }} 
+    wrapperStyle={{ outline: "none" }}
+    contentStyle={{ 
+      background: "hsl(var(--popover))",
+      border: "1px solid hsl(var(--border))",
+      borderRadius: "var(--radius)",
+      boxShadow: "var(--shadow)"
+    }}
+    className={cn(className)}
+    {...props} 
+  />
+);
+
+// Legend Component
+export interface ChartLegendProps extends React.ComponentPropsWithoutRef<typeof RechartsPrimitive.Legend> {}
+
+export const ChartLegend = forwardRef<typeof RechartsPrimitive.Legend, ChartLegendProps>(({ className, ...props }, ref) => (
+  <RechartsPrimitive.Legend 
+    iconSize={16}
+    iconType="circle"
+    layout="horizontal"
+    align="center"
+    verticalAlign="bottom"
+    wrapperStyle={{ paddingTop: "16px", outline: "none" }}
+    className={cn(className)}
+    ref={ref as any}
+    {...props} 
+  />
+));
+ChartLegend.displayName = "ChartLegend";
+
+// Cartesian Grid Component
+export interface ChartCartesianGridProps extends React.ComponentPropsWithoutRef<typeof RechartsPrimitive.CartesianGrid> {}
+
+export const ChartCartesianGrid = ({ className, ...props }: ChartCartesianGridProps) => (
+  <RechartsPrimitive.CartesianGrid 
+    strokeDasharray="3 3" 
+    stroke="hsl(var(--border))"
+    className={cn(className)}
+    {...props} 
+  />
+);
+
+// Area Component
+export interface ChartAreaProps extends React.ComponentPropsWithoutRef<typeof RechartsPrimitive.Area> {
+  dataKey: string; 
 }
 
-export const ChartLegend = React.forwardRef<
-  RechartsPrimitive.Legend, 
-  Omit<RechartsPrimitive.LegendProps, "ref">
->(({ className, ...props }, ref) => {
-  return (
-    <RechartsPrimitive.Legend
-      ref={ref as any}
-      iconSize={10}
-      iconType="circle"
-      layout="horizontal"
-      verticalAlign="bottom"
-      align="center"
-      {...props}
-    />
-  )
-})
-ChartLegend.displayName = "ChartLegend"
+export const ChartArea = forwardRef<typeof RechartsPrimitive.Area, ChartAreaProps>(({ className, dataKey, ...props }, ref) => (
+  <RechartsPrimitive.Area 
+    type="monotone" 
+    dataKey={dataKey}
+    stroke="hsl(var(--primary))"
+    fill="hsl(var(--primary)/.2)"
+    strokeWidth={2}
+    activeDot={{ r: 6 }}
+    className={cn(className)}
+    ref={ref as any}
+    {...props} 
+  />
+));
+ChartArea.displayName = "ChartArea";
 
-export const ChartTooltip = React.forwardRef<
-  RechartsPrimitive.Tooltip,
-  Omit<RechartsPrimitive.TooltipProps, "ref" | "className"> & { className?: string }
->(({ className, ...props }, ref) => {
-  return (
-    <RechartsPrimitive.Tooltip
-      ref={ref as any}
-      cursor={{ opacity: 0.5 }}
-      offset={10}
-      wrapperClassName={cn("!outline-none", className)}
-      {...props}
-    />
-  )
-})
-ChartTooltip.displayName = "ChartTooltip"
+// Bar Component
+export interface ChartBarProps extends React.ComponentPropsWithoutRef<typeof RechartsPrimitive.Bar> {
+  dataKey: string;
+}
 
-export const ChartGrid = React.forwardRef<
-  RechartsPrimitive.CartesianGrid,
-  Omit<RechartsPrimitive.CartesianGridProps, "ref">
->(({ className, ...props }, ref) => {
-  return (
-    <RechartsPrimitive.CartesianGrid
-      ref={ref as any}
-      className={cn("", className)}
-      strokeDasharray="3 3"
-      {...props}
-    />
-  )
-})
-ChartGrid.displayName = "ChartGrid"
+export const ChartBar = forwardRef<typeof RechartsPrimitive.Bar, ChartBarProps>(({ className, dataKey, ...props }, ref) => (
+  <RechartsPrimitive.Bar 
+    dataKey={dataKey}
+    fill="hsl(var(--primary))"
+    radius={4}
+    className={cn(className)}
+    ref={ref as any}
+    {...props} 
+  />
+));
+ChartBar.displayName = "ChartBar";
 
-export const ChartArea = React.forwardRef<
-  RechartsPrimitive.Area,
-  Omit<RechartsPrimitive.AreaProps, "ref" | "dataKey"> & {
-    dataKey: string
-  }
->(({ className, dataKey, ...props }, ref) => {
-  const { config } = useChart()
-  const item = config[dataKey]
+// Line Component
+export interface ChartLineProps extends React.ComponentPropsWithoutRef<typeof RechartsPrimitive.Line> {
+  dataKey: string;
+}
 
-  if (!item) {
-    return null
-  }
+export const ChartLine = forwardRef<typeof RechartsPrimitive.Line, ChartLineProps>(({ className, dataKey, ...props }, ref) => (
+  <RechartsPrimitive.Line 
+    type="monotone" 
+    dataKey={dataKey}
+    stroke="hsl(var(--primary))"
+    strokeWidth={2}
+    activeDot={{ r: 6 }}
+    className={cn(className)}
+    ref={ref as any}
+    {...props} 
+  />
+));
+ChartLine.displayName = "ChartLine";
 
-  return (
-    <RechartsPrimitive.Area
-      ref={ref as any}
-      className={cn("", className)}
-      dataKey={dataKey}
-      fill={item.color ? item.color : undefined}
-      stroke={item.color ? item.color : undefined}
-      {...props}
-    />
-  )
-})
-ChartArea.displayName = "ChartArea"
+// X Axis Component
+export interface ChartXAxisProps extends React.ComponentPropsWithoutRef<typeof RechartsPrimitive.XAxis> {}
 
-export const ChartBar = React.forwardRef<
-  RechartsPrimitive.Bar,
-  Omit<RechartsPrimitive.BarProps, "ref" | "dataKey"> & {
-    dataKey: string
-  }
->(({ className, dataKey, ...props }, ref) => {
-  const { config } = useChart()
-  const item = config[dataKey]
+export const ChartXAxis = ({ className, ...props }: ChartXAxisProps) => (
+  <RechartsPrimitive.XAxis 
+    tick={{ fill: "hsl(var(--foreground))" }}
+    tickLine={{ stroke: "hsl(var(--border))" }}
+    axisLine={{ stroke: "hsl(var(--border))" }}
+    className={cn(className)}
+    {...props} 
+  />
+);
 
-  if (!item) {
-    return null
-  }
+// Y Axis Component
+export interface ChartYAxisProps extends React.ComponentPropsWithoutRef<typeof RechartsPrimitive.YAxis> {}
 
-  return (
-    <RechartsPrimitive.Bar
-      ref={ref as any}
-      className={cn("", className)}
-      dataKey={dataKey}
-      fill={item.color ? item.color : undefined}
-      {...props}
-    />
-  )
-})
-ChartBar.displayName = "ChartBar"
+export const ChartYAxis = ({ className, ...props }: ChartYAxisProps) => (
+  <RechartsPrimitive.YAxis 
+    tick={{ fill: "hsl(var(--foreground))" }}
+    tickLine={{ stroke: "hsl(var(--border))" }}
+    axisLine={{ stroke: "hsl(var(--border))" }}
+    className={cn(className)}
+    {...props} 
+  />
+);
 
-export const ChartLine = React.forwardRef<
-  RechartsPrimitive.Line,
-  Omit<RechartsPrimitive.LineProps, "ref" | "dataKey"> & {
-    dataKey: string
-  }
->(({ className, dataKey, ...props }, ref) => {
-  const { config } = useChart()
-  const item = config[dataKey]
+// Pie Component
+export interface ChartPieProps extends React.ComponentPropsWithoutRef<typeof RechartsPrimitive.Pie> {
+  dataKey: string;
+  nameKey: string;
+}
 
-  if (!item) {
-    return null
-  }
+export const ChartPie = forwardRef<typeof RechartsPrimitive.Pie, ChartPieProps>(({ className, dataKey, nameKey, ...props }, ref) => (
+  <RechartsPrimitive.Pie 
+    dataKey={dataKey}
+    nameKey={nameKey}
+    fill="hsl(var(--primary))"
+    stroke="hsl(var(--background))"
+    className={cn(className)}
+    ref={ref as any}
+    {...props} 
+  />
+));
+ChartPie.displayName = "ChartPie";
 
-  return (
-    <RechartsPrimitive.Line
-      ref={ref as any}
-      className={cn("", className)}
-      dataKey={dataKey}
-      stroke={item.color ? item.color : undefined}
-      {...props}
-    />
-  )
-})
-ChartLine.displayName = "ChartLine"
+// Scatter Component
+export interface ChartScatterProps extends React.ComponentPropsWithoutRef<typeof RechartsPrimitive.Scatter> {
+  dataKey: string;
+}
 
-export const ChartXAxis = React.forwardRef<
-  RechartsPrimitive.XAxis,
-  Omit<RechartsPrimitive.XAxisProps, "ref">
->(({ className, ...props }, ref) => {
-  return (
-    <RechartsPrimitive.XAxis
-      ref={ref as any}
-      className={cn("", className)}
-      axisLine={false}
-      tickLine={false}
-      tick={{ transform: "translate(0, 6)" }}
-      {...props}
-    />
-  )
-})
-ChartXAxis.displayName = "ChartXAxis"
+export const ChartScatter = forwardRef<typeof RechartsPrimitive.Scatter, ChartScatterProps>(({ className, dataKey, ...props }, ref) => (
+  <RechartsPrimitive.Scatter 
+    dataKey={dataKey}
+    fill="hsl(var(--primary))"
+    className={cn(className)}
+    ref={ref as any}
+    {...props} 
+  />
+));
+ChartScatter.displayName = "ChartScatter";
 
-export const ChartYAxis = React.forwardRef<
-  RechartsPrimitive.YAxis,
-  Omit<RechartsPrimitive.YAxisProps, "ref">
->(({ className, ...props }, ref) => {
-  return (
-    <RechartsPrimitive.YAxis
-      ref={ref as any}
-      className={cn("", className)}
-      axisLine={false}
-      tickLine={false}
-      width={80}
-      {...props}
-    />
-  )
-})
-ChartYAxis.displayName = "ChartYAxis"
+// Radar Component
+export interface ChartRadarProps extends React.ComponentPropsWithoutRef<typeof RechartsPrimitive.Radar> {
+  dataKey: string;
+}
 
-export const ChartPie = React.forwardRef<
-  RechartsPrimitive.Pie,
-  Omit<RechartsPrimitive.PieProps, "ref" | "dataKey" | "nameKey"> & {
-    dataKey: string
-    nameKey: string
-  }
->(({ className, dataKey, nameKey, ...props }, ref) => {
-  return (
-    <RechartsPrimitive.Pie
-      ref={ref as any}
-      className={cn("", className)}
-      dataKey={dataKey}
-      nameKey={nameKey}
-      {...props}
-    />
-  )
-})
-ChartPie.displayName = "ChartPie"
+export const ChartRadar = forwardRef<typeof RechartsPrimitive.Radar, ChartRadarProps>(({ className, dataKey, ...props }, ref) => (
+  <RechartsPrimitive.Radar 
+    dataKey={dataKey}
+    fill="hsl(var(--primary)/.2)"
+    stroke="hsl(var(--primary))"
+    className={cn(className)}
+    ref={ref as any}
+    {...props} 
+  />
+));
+ChartRadar.displayName = "ChartRadar";
 
-export const ChartScatter = React.forwardRef<
-  RechartsPrimitive.Scatter,
-  Omit<RechartsPrimitive.ScatterProps, "ref" | "dataKey"> & {
-    dataKey: string
-  }
->(({ className, dataKey, ...props }, ref) => {
-  const { config } = useChart()
-  const item = config[dataKey]
+// Radial Bar Component
+export interface ChartRadialBarProps extends React.ComponentPropsWithoutRef<typeof RechartsPrimitive.RadialBar> {
+  dataKey: string;
+}
 
-  if (!item) {
-    return null
-  }
+export const ChartRadialBar = forwardRef<typeof RechartsPrimitive.RadialBar, ChartRadialBarProps>(({ className, dataKey, ...props }, ref) => (
+  <RechartsPrimitive.RadialBar 
+    dataKey={dataKey}
+    fill="hsl(var(--primary))"
+    className={cn(className)}
+    ref={ref as any}
+    {...props} 
+  />
+));
+ChartRadialBar.displayName = "ChartRadialBar";
 
-  return (
-    <RechartsPrimitive.Scatter
-      ref={ref as any}
-      className={cn("", className)}
-      dataKey={dataKey}
-      fill={item.color ? item.color : undefined}
-      {...props}
-    />
-  )
-})
-ChartScatter.displayName = "ChartScatter"
+// Container Component
+export interface ChartContainerProps extends React.ComponentPropsWithoutRef<"div"> {
+  children: React.ReactNode;
+}
 
-export const ChartRadar = React.forwardRef<
-  RechartsPrimitive.Radar,
-  Omit<RechartsPrimitive.RadarProps, "ref" | "dataKey"> & {
-    dataKey: string
-  }
->(({ className, dataKey, ...props }, ref) => {
-  const { config } = useChart()
-  const item = config[dataKey]
-
-  if (!item) {
-    return null
-  }
-
-  return (
-    <RechartsPrimitive.Radar
-      ref={ref as any}
-      className={cn("", className)}
-      dataKey={dataKey}
-      stroke={item.color ? item.color : undefined}
-      fill={item.color ? item.color : undefined}
-      {...props}
-    />
-  )
-})
-ChartRadar.displayName = "ChartRadar"
-
-export const ChartRadialBar = React.forwardRef<
-  RechartsPrimitive.RadialBar,
-  Omit<RechartsPrimitive.RadialBarProps, "ref" | "dataKey"> & {
-    dataKey: string
-  }
->(({ className, dataKey, ...props }, ref) => {
-  const { config } = useChart()
-  const item = config[dataKey]
-
-  if (!item) {
-    return null
-  }
-
-  return (
-    <RechartsPrimitive.RadialBar
-      ref={ref as any}
-      className={cn("", className)}
-      dataKey={dataKey}
-      {...props}
-    />
-  )
-})
-ChartRadialBar.displayName = "ChartRadialBar"
+export const ChartContainer = ({ className, children, ...props }: ChartContainerProps) => (
+  <div className={cn("h-80 w-full", className)} {...props}>
+    <ResponsiveContainer width="100%" height="100%">
+      {children}
+    </ResponsiveContainer>
+  </div>
+);

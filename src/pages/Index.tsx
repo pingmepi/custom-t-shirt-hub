@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkle, Zap, Truck, Brush, Check } from "lucide-react";
@@ -34,7 +35,7 @@ const HomePage = () => {
             </div>
             <div className="relative animate-slide-up">
               <img 
-                src="/tshirt-mockup-5.png" 
+                src="/images/tshirt/mockup-5.png" 
                 alt="T-shirt mockup" 
                 className="w-full h-auto rounded-lg shadow-xl" 
               />

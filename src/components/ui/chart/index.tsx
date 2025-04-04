@@ -1,64 +1,68 @@
 
-import { ChartConfig, useChart, THEMES } from "./chart-context"
-import {
-  ChartContainer,
-  ChartLegend,
-  ChartTooltip,
-  ChartGrid,
-  ChartArea,
-  ChartBar,
-  ChartLine,
-  ChartXAxis,
-  ChartYAxis,
-  ChartPie,
-  ChartScatter,
-  ChartRadar,
-  ChartRadialBar
-} from "./chart-components"
-import {
-  ResponsiveContainer,
-  AreaChart,
-  BarChart,
+import { 
   LineChart,
-  ComposedChart,
+  BarChart,
   PieChart,
+  AreaChart,
   RadarChart,
+  ScatterChart,
   RadialBarChart,
-  ScatterChart
-} from "./chart-containers"
+  ComposedChart,
+  ResponsiveContainer 
+} from "recharts";
 
-// Export components directly
-export {
-  // Context
-  useChart,
-  THEMES,
-  
-  // Components
+import {
   ChartContainer,
-  ChartLegend,
   ChartTooltip,
-  ChartGrid,
+  ChartLegend,
   ChartArea,
   ChartBar,
   ChartLine,
-  ChartXAxis,
-  ChartYAxis,
   ChartPie,
   ChartScatter,
   ChartRadar,
   ChartRadialBar,
-  
-  // Containers
-  ResponsiveContainer,
-  AreaChart,
-  BarChart,
-  LineChart,
-  ComposedChart,
-  PieChart,
-  RadarChart,
-  RadialBarChart,
-  ScatterChart
-}
+  ChartXAxis,
+  ChartYAxis,
+  ChartCartesianGrid
+} from "./chart-components";
 
-// Export types separately
-export type { ChartConfig }
+export type {
+  ChartTooltipProps,
+  ChartLegendProps,
+  ChartAreaProps,
+  ChartBarProps,
+  ChartLineProps,
+  ChartPieProps,
+  ChartScatterProps,
+  ChartRadarProps,
+  ChartRadialBarProps,
+  ChartXAxisProps,
+  ChartYAxisProps,
+  ChartCartesianGridProps
+} from "./chart-components";
+
+export {
+  LineChart,
+  BarChart,
+  PieChart,
+  AreaChart,
+  RadarChart,
+  ScatterChart,
+  RadialBarChart,
+  ComposedChart,
+  ResponsiveContainer,
+  ChartContainer,
+  ChartTooltip,
+  ChartLegend,
+  ChartArea,
+  ChartBar,
+  ChartLine,
+  ChartPie,
+  ChartScatter,
+  ChartRadar,
+  ChartRadialBar,
+  ChartXAxis,
+  ChartYAxis,
+  ChartCartesianGrid
+};

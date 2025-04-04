@@ -52,7 +52,7 @@ export function useCanvasInitialization({
     setIsInitialized(true);
     
     // Load t-shirt mockup as background image
-    fabric.Image.fromURL('/tshirt-mockup-1.png', (tshirtImg) => {
+    fabric.Image.fromURL('/images/tshirt/mockup-1.png', (tshirtImg) => {
       // Apply initial color filter if not white
       if (tshirtColor !== "#ffffff") {
         const filter = new fabric.Image.filters.BlendColor({
