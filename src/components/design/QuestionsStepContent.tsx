@@ -18,9 +18,10 @@ import ConfirmationDialog from "./ConfirmationDialog";
 interface QuestionsStepContentProps {
   selectedThemes: string[];
   onQuestionsComplete: (answers: Record<string, string>) => void;
+  onThemesSelected?: (themes: string[]) => void;
 }
 
-const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: QuestionsStepContentProps) => {
+const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete, onThemesSelected }: QuestionsStepContentProps) => {
   const [step, setStep] = useState<'themes' | 'questions'>('themes');
   const [isLoading, setIsLoading] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -202,7 +203,12 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete }: Questions
   return (
     <div className="space-y-6">
       {step === 'themes' ? (
-        <ThemeSelector onThemesSelected={handleThemesSelected} />
+        <ThemeSelector onThemesSelected={(themes) => {
+          if (onThemesSelected) {
+            onThemesSelected(themes);
+          }
+          handleThemesSelected();
+        }} />
       ) : (
         <div className="bg-white shadow-md rounded-lg overflow-hidden">
           <div className="p-6">

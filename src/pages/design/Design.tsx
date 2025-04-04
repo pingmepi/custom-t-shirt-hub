@@ -1,6 +1,6 @@
 
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import DesignStepper from "@/components/design/DesignStepper";
 import QuestionsStepContent from "@/components/design/QuestionsStepContent";
 import DesignStepContent from "@/components/design/DesignStepContent";
@@ -26,8 +26,8 @@ const DesignPage = () => {
   } = useDesignState();
 
   const { isAuthenticated } = useAuth();
-  // Using a constant array instead of state since it's not being updated
-  const selectedThemes: string[] = [];
+  // Using state to manage selected themes
+  const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
 
   // Check for saved answers in sessionStorage after login
   useEffect(() => {
@@ -54,6 +54,7 @@ const DesignPage = () => {
           <QuestionsStepContent
             selectedThemes={selectedThemes}
             onQuestionsComplete={handleQuestionsComplete}
+            onThemesSelected={setSelectedThemes}
           />
         );
       case "design":
