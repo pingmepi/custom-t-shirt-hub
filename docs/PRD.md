@@ -27,7 +27,7 @@ I want to answer a few simple design questions
 So that I can create a personalized t-shirt that reflects my style
 
 As a customer
-I want the option to edit the generated design through a visual editor
+I want a dashboard that shows a draft of a design (only give one draft option) to edit the generated design through a visual editor
 So that I can personalize the output to match my preferences
 
 As an admin
@@ -43,17 +43,6 @@ So that I can ensure smooth delivery and customer satisfaction
  T-shirt color selector to preview templates on different colors (e.g., black, white, grey)
 
  User authentication with email/password
-
- Role-based access control (Customer, Admin)
-
- Theme selection view with ~15 predefined themes shown as cards/toggles
-
- API integration to fetch 5 context-relevant questions based on selected themes
-
- Step-by-step question flow with one question shown at a time and a progress bar
-
- If the user is not logged in at this time, then a pop-up for sign-up should be shown.
-
  as V1, keep the signup/signin flow simpla:
  - user enters email and password
  - if the details already exist in the database, the user has successfully logged in
@@ -63,7 +52,17 @@ So that I can ensure smooth delivery and customer satisfaction
  - details required in the signup form are name, email, and password 
  - once the user completes the signup flow, redirect them to login again
 
- Once the user logs in, the created design in the previous step should be available in the landing page for the user. 
+ Role-based access control (Customer, Admin)
+
+ Theme selection view with ~15 predefined themes shown as cards/toggles
+
+ API integration to fetch 5 context-relevant questions based on selected themes
+
+ Step-by-step question flow with one question shown at a time and a progress bar
+
+ If the user is not logged in now, then a sign-up pop-up should be shown.
+
+ Once the user logs in, the design created from the previous step should be available on the user's landing page. 
 
  Capture and store all user responses to questions
 
@@ -77,7 +76,7 @@ So that I can ensure smooth delivery and customer satisfaction
 
  Enable design reordering from saved history
 
- Collect shipping details including phone, address, and pin code
+ Collect shipping details including phone, address, and pin code. This can also be edited from the user profile in user dashboard. 
 
  Integrate payments using Razorpay or Stripe
 
@@ -89,28 +88,26 @@ So that I can ensure smooth delivery and customer satisfaction
 
  Basic support section with contact number
 
-<!-- added by lovable -->
  Track question usage statistics for analytics and improvement
 
  Store comprehensive user style preferences from responses
 
- Color input type support in question flow
+ Color input type support in the question flow
 
- Proper validation for all user inputs in design flow
+ Proper validation for all user inputs in the design flow
 
  Error handling for all API calls and form submissions
 
  Responsive layout for all design flow screens
-<!-- end added by lovable -->
+
 
 Additional Requirements:
-- OAuth integration for Google and Facebook login
 - Remember me functionality for login
 - Password visibility toggle in login/signup forms
 - Forgot password functionality
 - Form validation with proper error messages
 - Redirect handling after login (return to previous page)
-- Test credentials support for development (kmandalam@gmail.com)
+- Test credentials support for development (refer to test_file)
 - User session management and persistence
 - Background process handling for long-running operations
 - Proper error handling for all API operations
@@ -123,8 +120,7 @@ Additional Requirements:
  Track user design preferences for personalized suggestions
 
  Click-to-customize a prebuilt design from the landing page
- 
-<!-- added by lovable -->
+
  Dark mode support throughout the application
 
  Social media sharing of completed designs
@@ -134,7 +130,7 @@ Additional Requirements:
  Design template marketplace where users can sell their designs
 
  Advanced color customization options with color harmony suggestions
-<!-- end added by lovable -->
+
 
 Additional Nice to Have:
 - Multi-factor authentication
@@ -499,7 +495,7 @@ Fetch all available themes to be shown on the theme selection screen.
 }
 ```
 
-<!-- added by lovable -->
+
 #### `GET /question-stats`
 
 **Response:**
@@ -530,13 +526,13 @@ Fetch all available themes to be shown on the theme selection screen.
   "total_orders": 2
 }
 ```
-<!-- end added by lovable -->
+
 
 ### Authentication Flow
 - Email/Password authentication
 - OAuth providers (Google, Facebook)
 - Session management
-- Remember me functionality
+- Remember me functionality 
 - Password reset flow
 - Email verification
 - Test credentials handling
@@ -568,23 +564,25 @@ Fetch all available themes to be shown on the theme selection screen.
 - Modular backend to enable future vendor integrations
 
 ## UI/UX Requirements
+- Clean, Flowing UX/UI
 - Landing page with a carousel or grid of already-made designs to inspire users
 - Option for users to preview each design on different t-shirt colors (e.g., white, black, grey)
-
 - Theme selection view with \~15 predefined interest themes displayed as cards or toggles
 - Progress bar for 5-question design flow
 - One-question-at-a-time design UI
-- Editor interface post-question flow for design customization
-- Clean dashboard for user profile, saved designs, orders, current design that is being edited
-- support page with email and phone
-
-<!-- added by lovable -->
+- A DesignCanvas where there is a preloaded shirt image, with options to change the color
+- The DesignCanvas also should give the option to add text, logo, and image on the already selected color tee
+- Users should have an option to move and delete the added elements
+- Clean dashboard for user profile, saved designs, orders, and the current design that is being edited
+- Only one draft can be saved per profile
+- Support page with email and phone
+- If the user has logged in with 'Remember Me' then they should not be asked to login again (till cookies expire)
 - Color picker input with support for both visual selection and text input
 - Clear error messages for failed operations
 - Loading states for all asynchronous operations
 - Responsive layouts for all screen sizes
 - Accessible form controls with proper labels
-<!-- end added by lovable -->
+
 
 ## Dependencies
 
@@ -610,7 +608,7 @@ Fetch all available themes to be shown on the theme selection screen.
 
 - How will automated vendor APIs be integrated later?
 
-<!-- added by lovable -->
+
 ## Security Considerations
 
 - Row-Level Security (RLS) policies ensure users can only access their own designs and orders
@@ -631,5 +629,5 @@ Fetch all available themes to be shown on the theme selection screen.
 - Color inputs support both visual selection and text entry
 - Progress indicators use both color and text to show completion status
 - Error messages are clear and provide actionable information
-<!-- end added by lovable -->
+
 
