@@ -1,3 +1,4 @@
+
 import { fabric } from "fabric";
 import { DesignData } from "@/lib/types";
 
@@ -82,6 +83,67 @@ export const addShapeToCanvas = (
 };
 
 /**
+ * Adds an image to the canvas
+ */
+export const addImageToCanvas = (
+  canvas: fabric.Canvas,
+  imgElement: HTMLImageElement,
+  options: Partial<fabric.IImageOptions> = {}
+): Promise<fabric.Image> => {
+  return new Promise((resolve) => {
+    fabric.Image.fromElement(imgElement as unknown as SVGImageElement, (imgObject) => {
+      // Scale image to fit within design area while maintaining aspect ratio
+      const maxWidth = 200;
+      const maxHeight = 150;
+      
+      if (imgObject.width && imgObject.height) {
+        if (imgObject.width > maxWidth || imgObject.height > maxHeight) {
+          const scaleFactor = Math.min(
+            maxWidth / imgObject.width,
+            maxHeight / imgObject.height
+          );
+          imgObject.scale(scaleFactor);
+        }
+      }
+      
+      imgObject.set({
+        left: 300,
+        top: 225,
+        originX: 'center',
+        originY: 'center',
+        ...options
+      });
+      
+      canvas.add(imgObject);
+      canvas.setActiveObject(imgObject);
+      canvas.renderAll();
+      resolve(imgObject);
+    });
+  });
+};
+
+/**
+ * Changes the t-shirt base color
+ */
+export const changeTshirtColor = (
+  canvas: fabric.Canvas,
+  tshirtImageObject: fabric.Image | undefined,
+  color: string
+): void => {
+  if (tshirtImageObject) {
+    const filter = new fabric.Image.filters.BlendColor({
+      color: color,
+      mode: 'tint',
+      alpha: 1
+    });
+    
+    tshirtImageObject.filters = [filter];
+    tshirtImageObject.applyFilters();
+    canvas.renderAll();
+  }
+};
+
+/**
  * Deletes the currently selected object from the canvas
  */
 export const deleteSelectedObject = (canvas: fabric.Canvas): boolean => {
@@ -109,4 +171,23 @@ export const changeObjectColor = (canvas: fabric.Canvas, color: string): boolean
   }
   
   return false;
+};
+
+/**
+ * Load image from file and return as HTMLImageElement
+ */
+export const loadImageFromFile = (file: File): Promise<HTMLImageElement> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        resolve(img);
+      };
+      img.onerror = reject;
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 };

@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import { fabric } from "fabric";
 import { DesignData } from "@/lib/types";
@@ -6,12 +7,14 @@ interface UseCanvasInitializationProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
   initialImageUrl?: string;
   onDesignUpdated?: (designData: DesignData) => void;
+  tshirtColor?: string;
 }
 
 interface UseCanvasInitializationResult {
   fabricCanvas: fabric.Canvas | null;
   isLoaded: boolean;
   isInitialized: boolean;
+  tshirtImageObject: fabric.Image | undefined;
 }
 
 /**
@@ -20,9 +23,11 @@ interface UseCanvasInitializationResult {
 export function useCanvasInitialization({
   canvasRef,
   initialImageUrl,
-  onDesignUpdated
+  onDesignUpdated,
+  tshirtColor = "#ffffff"
 }: UseCanvasInitializationProps): UseCanvasInitializationResult {
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
+  const tshirtImageRef = useRef<fabric.Image>();
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -46,6 +51,17 @@ export function useCanvasInitialization({
     
     // Load t-shirt mockup as background image
     fabric.Image.fromURL('/tshirt-mockup-1.png', (tshirtImg) => {
+      // Apply initial color filter if not white
+      if (tshirtColor !== "#ffffff") {
+        const filter = new fabric.Image.filters.BlendColor({
+          color: tshirtColor,
+          mode: 'tint',
+          alpha: 1
+        });
+        tshirtImg.filters = [filter];
+        tshirtImg.applyFilters();
+      }
+      
       tshirtImg.scaleToWidth(500);
       tshirtImg.set({
         left: 300,
@@ -55,6 +71,9 @@ export function useCanvasInitialization({
         selectable: false,
         evented: false,
       });
+      
+      // Store reference to tshirt image for color changes
+      tshirtImageRef.current = tshirtImg;
       
       canvas.add(tshirtImg);
       canvas.sendToBack(tshirtImg);
@@ -148,11 +167,46 @@ export function useCanvasInitialization({
     return () => {
       canvas.dispose();
     };
-  }, [initialImageUrl, onDesignUpdated, isInitialized, canvasRef]);
+  }, [initialImageUrl, onDesignUpdated, isInitialized, canvasRef, tshirtColor]);
+
+  // Update tshirt color when it changes
+  useEffect(() => {
+    if (fabricCanvasRef.current && tshirtImageRef.current && isInitialized) {
+      // Update t-shirt color
+      if (tshirtColor === "#ffffff") {
+        // For white, remove all filters
+        tshirtImageRef.current.filters = [];
+      } else {
+        const filter = new fabric.Image.filters.BlendColor({
+          color: tshirtColor,
+          mode: 'tint',
+          alpha: 1
+        });
+        tshirtImageRef.current.filters = [filter];
+      }
+      
+      tshirtImageRef.current.applyFilters();
+      fabricCanvasRef.current.renderAll();
+      
+      // Update design data if callback exists
+      if (onDesignUpdated && fabricCanvasRef.current) {
+        const canvasJson = fabricCanvasRef.current.toJSON();
+        const designData: DesignData = {
+          canvas_json: JSON.stringify(canvasJson),
+          width: fabricCanvasRef.current.width,
+          height: fabricCanvasRef.current.height,
+          background_color: fabricCanvasRef.current.backgroundColor as string,
+          version: '1.0'
+        };
+        onDesignUpdated(designData);
+      }
+    }
+  }, [tshirtColor, onDesignUpdated, isInitialized]);
 
   return {
     fabricCanvas: fabricCanvasRef.current,
     isLoaded,
-    isInitialized
+    isInitialized,
+    tshirtImageObject: tshirtImageRef.current
   };
 }

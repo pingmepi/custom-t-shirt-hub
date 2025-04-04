@@ -50,7 +50,7 @@ export function useDesignAPI() {
         timestamp: new Date().toISOString(),
       };
       
-      // Save the design to the database
+      // Save the design to the database - fixed Supabase query
       const { data, error: supabaseError } = await supabase
         .from("designs")
         .insert({

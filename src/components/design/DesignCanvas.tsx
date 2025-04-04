@@ -1,14 +1,16 @@
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { DesignData } from "@/lib/types";
 import { useCanvasInitialization } from "@/hooks/useCanvasInitialization";
 import {
   addTextToCanvas,
   addShapeToCanvas,
+  addImageToCanvas,
   deleteSelectedObject,
   changeObjectColor,
-  canvasToDesignData
+  canvasToDesignData,
+  loadImageFromFile
 } from "@/utils/canvasOperations";
 import CanvasToolbar from "./CanvasToolbar";
 
@@ -19,12 +21,14 @@ interface DesignCanvasProps {
 
 const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [currentTshirtColor, setCurrentTshirtColor] = useState("#ffffff");
 
   // Use the custom hook for canvas initialization
-  const { fabricCanvas, isLoaded, isInitialized } = useCanvasInitialization({
+  const { fabricCanvas, isLoaded, isInitialized, tshirtImageObject } = useCanvasInitialization({
     canvasRef,
     initialImageUrl,
-    onDesignUpdated
+    onDesignUpdated,
+    tshirtColor: currentTshirtColor
   });
 
   // Handle canvas operations
@@ -50,6 +54,24 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
     }
 
     toast.success(`${shape === 'circle' ? 'Circle' : 'Rectangle'} added successfully`);
+  };
+
+  const handleAddImage = async (file: File) => {
+    if (!fabricCanvas) return;
+    
+    try {
+      const img = await loadImageFromFile(file);
+      await addImageToCanvas(fabricCanvas, img);
+      
+      if (onDesignUpdated) {
+        onDesignUpdated(canvasToDesignData(fabricCanvas));
+      }
+      
+      toast.success('Image added successfully');
+    } catch (error) {
+      console.error('Error adding image:', error);
+      toast.error('Failed to add image. Please try again.');
+    }
   };
 
   const handleDeleteSelectedObject = () => {
@@ -80,6 +102,11 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
       toast.error('No object selected');
     }
   };
+  
+  const handleChangeTshirtColor = (color: string) => {
+    setCurrentTshirtColor(color);
+    toast.success(`T-shirt color updated`);
+  };
 
   return (
     <div className="flex flex-col items-center">
@@ -92,13 +119,16 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
         )}
       </div>
 
-      {/* Use the extracted CanvasToolbar component */}
+      {/* Use the enhanced CanvasToolbar component */}
       <CanvasToolbar
         onAddText={handleAddText}
         onAddCircle={() => handleAddShape('circle')}
         onAddRectangle={() => handleAddShape('rect')}
+        onAddImage={handleAddImage}
         onDeleteSelected={handleDeleteSelectedObject}
         onChangeColor={handleChangeColor}
+        onChangeTshirtColor={handleChangeTshirtColor}
+        currentTshirtColor={currentTshirtColor}
       />
     </div>
   );
