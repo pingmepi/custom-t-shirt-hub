@@ -92,8 +92,54 @@ export function useDesignAPI() {
     }
   };
 
+  /**
+   * Fetch design base image based on user responses
+   */
+  const fetchBaseDesignImage = async (questionResponses: Record<string, QuestionResponse | string>) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // This is a placeholder - in the future this would call your LLM API
+      // For now, we'll simulate by returning a placeholder image based on some of the responses
+      
+      // Extract some key preferences to choose different placeholder images
+      const stylePreference = Object.values(questionResponses).find(
+        response => typeof response === 'string' && 
+        ['Minimal', 'Vintage', 'Bold', 'Artistic', 'Funny'].includes(response)
+      );
+      
+      // Just for demonstration - map different styles to different placeholder images
+      let placeholderImageUrl = "/design-flow.png"; // default
+      
+      if (stylePreference === "Minimal") {
+        placeholderImageUrl = "/placeholder.svg";
+      } else if (stylePreference === "Vintage") {
+        placeholderImageUrl = "/design-flow.png";
+      } else if (stylePreference === "Bold") {
+        placeholderImageUrl = "/placeholder.svg";
+      }
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast.success("Design generated based on your preferences!");
+      return placeholderImageUrl;
+      
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+      console.error("Error generating base design:", err);
+      setError(errorMessage);
+      toast.error("Failed to generate design. Using default template.");
+      return "/design-flow.png"; // Fallback to default image
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     saveDesign,
+    fetchBaseDesignImage,
     loading,
     error
   };

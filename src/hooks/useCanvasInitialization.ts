@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { fabric } from "fabric";
 import { DesignData } from "@/lib/types";
+import { toast } from "sonner";
 
 interface UseCanvasInitializationProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
@@ -28,6 +29,7 @@ export function useCanvasInitialization({
 }: UseCanvasInitializationProps): UseCanvasInitializationResult {
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
   const tshirtImageRef = useRef<fabric.Image>();
+  const designImageRef = useRef<fabric.Image>();
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -96,56 +98,7 @@ export function useCanvasInitialization({
       
       canvas.add(designArea);
       
-      // Once the t-shirt is loaded, conditionally add the initial design or placeholder
-      if (initialImageUrl && initialImageUrl.endsWith('.svg')) {
-        // Handle SVG loading
-        fabric.loadSVGFromURL(initialImageUrl, (objects, options) => {
-          const loadedObject = fabric.util.groupSVGElements(objects, options);
-          loadedObject.set({
-            left: 300,
-            top: 225,
-            scaleX: 0.3,
-            scaleY: 0.3,
-            originX: 'center',
-            originY: 'center',
-          });
-          
-          canvas.add(loadedObject);
-          canvas.renderAll();
-          setIsLoaded(true);
-        });
-      } else if (initialImageUrl) {
-        // Handle other image formats
-        fabric.Image.fromURL(initialImageUrl, (img) => {
-          img.scaleToWidth(200);
-          img.set({
-            left: 300,
-            top: 225,
-            originX: 'center',
-            originY: 'center',
-          });
-          
-          canvas.add(img);
-          canvas.renderAll();
-          setIsLoaded(true);
-        });
-      } else {
-        // Add a placeholder text if no image is provided
-        const text = new fabric.Text('Your Design Here', {
-          fontSize: 24,
-          fontFamily: 'Arial',
-          left: 300,
-          top: 225,
-          fill: '#888888',
-          originX: 'center',
-          originY: 'center',
-        });
-        
-        canvas.add(text);
-        setIsLoaded(true);
-      }
-      
-      canvas.renderAll();
+      loadDesignImage(canvas, initialImageUrl);
     });
 
     // Setup canvas event listeners
@@ -168,6 +121,111 @@ export function useCanvasInitialization({
       canvas.dispose();
     };
   }, [initialImageUrl, onDesignUpdated, isInitialized, canvasRef, tshirtColor]);
+
+  // Helper function to load design image
+  const loadDesignImage = (canvas: fabric.Canvas, imageUrl?: string) => {
+    // Remove existing design image if it exists
+    if (designImageRef.current) {
+      canvas.remove(designImageRef.current);
+    }
+    
+    // Handle when an initial image URL is provided
+    if (imageUrl) {
+      setIsLoaded(false);
+      
+      if (imageUrl.endsWith('.svg')) {
+        // Handle SVG loading
+        fabric.loadSVGFromURL(imageUrl, (objects, options) => {
+          const loadedObject = fabric.util.groupSVGElements(objects, options);
+          loadedObject.set({
+            left: 300,
+            top: 225,
+            scaleX: 0.3,
+            scaleY: 0.3,
+            originX: 'center',
+            originY: 'center',
+          });
+          
+          canvas.add(loadedObject);
+          designImageRef.current = loadedObject as unknown as fabric.Image;
+          canvas.renderAll();
+          setIsLoaded(true);
+          
+          if (onDesignUpdated) {
+            const canvasJson = canvas.toJSON();
+            const designData: DesignData = {
+              canvas_json: JSON.stringify(canvasJson),
+              width: canvas.width,
+              height: canvas.height,
+              background_color: canvas.backgroundColor as string,
+              version: '1.0'
+            };
+            onDesignUpdated(designData);
+          }
+        });
+      } else {
+        // Handle other image formats
+        fabric.Image.fromURL(imageUrl, (img) => {
+          // Scale image to fit the design area while maintaining aspect ratio
+          img.scaleToWidth(200);
+          img.set({
+            left: 300,
+            top: 225,
+            originX: 'center',
+            originY: 'center',
+          });
+          
+          canvas.add(img);
+          designImageRef.current = img;
+          canvas.renderAll();
+          setIsLoaded(true);
+          
+          if (onDesignUpdated) {
+            const canvasJson = canvas.toJSON();
+            const designData: DesignData = {
+              canvas_json: JSON.stringify(canvasJson),
+              width: canvas.width,
+              height: canvas.height,
+              background_color: canvas.backgroundColor as string,
+              version: '1.0'
+            };
+            onDesignUpdated(designData);
+          }
+        }, (err) => {
+          console.error("Error loading image:", err);
+          toast.error("Failed to load design image");
+          
+          // Add a placeholder text if image fails to load
+          const text = new fabric.Text('Your Design Here', {
+            fontSize: 24,
+            fontFamily: 'Arial',
+            left: 300,
+            top: 225,
+            fill: '#888888',
+            originX: 'center',
+            originY: 'center',
+          });
+          
+          canvas.add(text);
+          setIsLoaded(true);
+        });
+      }
+    } else {
+      // Add a placeholder text if no image is provided
+      const text = new fabric.Text('Your Design Here', {
+        fontSize: 24,
+        fontFamily: 'Arial',
+        left: 300,
+        top: 225,
+        fill: '#888888',
+        originX: 'center',
+        originY: 'center',
+      });
+      
+      canvas.add(text);
+      setIsLoaded(true);
+    }
+  };
 
   // Update tshirt color when it changes
   useEffect(() => {
@@ -202,6 +260,13 @@ export function useCanvasInitialization({
       }
     }
   }, [tshirtColor, onDesignUpdated, isInitialized]);
+
+  // Update design image when initialImageUrl changes
+  useEffect(() => {
+    if (fabricCanvasRef.current && isInitialized && initialImageUrl) {
+      loadDesignImage(fabricCanvasRef.current, initialImageUrl);
+    }
+  }, [initialImageUrl, isInitialized]);
 
   return {
     fabricCanvas: fabricCanvasRef.current,

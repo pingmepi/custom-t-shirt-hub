@@ -1,13 +1,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import DesignCanvas from "@/components/design/DesignCanvas";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import LoginRequired from "./LoginRequired";
-
+import { useDesignAPI } from "@/hooks/useDesignAPI";
 import { DesignData, QuestionResponse } from "@/lib/types";
 
 interface DesignStepContentProps {
@@ -24,9 +24,12 @@ const DesignStepContent = ({
   onQuestionsComplete
 }: DesignStepContentProps) => {
   const [designData, setDesignData] = useState<DesignData | null>(null);
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const { fetchBaseDesignImage } = useDesignAPI();
 
   const handleDesignUpdated = useCallback((data: DesignData) => {
     setDesignData(data);
@@ -45,6 +48,32 @@ const DesignStepContent = ({
     }));
     navigate("/login", { state: { from: "/design" } });
   };
+
+  // Generate base image based on user's responses
+  useEffect(() => {
+    const generateBaseImage = async () => {
+      // Only generate if we have question responses and no image already
+      if (Object.keys(questionResponses).length > 0 && !generatedImageUrl) {
+        setIsGeneratingImage(true);
+        try {
+          const imageUrl = await fetchBaseDesignImage(questionResponses);
+          setGeneratedImageUrl(imageUrl);
+        } catch (error) {
+          console.error("Error generating image:", error);
+          toast({
+            title: "Generation error",
+            description: "Failed to generate your design. Using a default template.",
+            variant: "destructive",
+          });
+          setGeneratedImageUrl("/design-flow.png"); // Fallback
+        } finally {
+          setIsGeneratingImage(false);
+        }
+      }
+    };
+
+    generateBaseImage();
+  }, [questionResponses, fetchBaseDesignImage, generatedImageUrl, toast]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -128,10 +157,17 @@ const DesignStepContent = ({
             Use the editor below to customize your design. Add text, shapes, or upload your own images.
           </p>
 
-          <DesignCanvas
-            initialImageUrl="/design-flow.png"
-            onDesignUpdated={handleDesignUpdated}
-          />
+          {isGeneratingImage ? (
+            <div className="flex flex-col items-center justify-center h-[600px]">
+              <Loader2 className="h-12 w-12 animate-spin text-brand-green mb-4" />
+              <p className="text-gray-600">Generating your custom design based on your preferences...</p>
+            </div>
+          ) : (
+            <DesignCanvas
+              initialImageUrl={generatedImageUrl || "/design-flow.png"}
+              onDesignUpdated={handleDesignUpdated}
+            />
+          )}
 
           <div className="flex justify-between mt-8">
             <Button
@@ -143,7 +179,7 @@ const DesignStepContent = ({
             </Button>
             <Button
               onClick={() => onNavigateStep("options")}
-              disabled={!designData}
+              disabled={!designData || isGeneratingImage}
               className="bg-brand-green hover:bg-brand-darkGreen"
             >
               Next: Choose Options
