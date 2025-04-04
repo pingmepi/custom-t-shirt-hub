@@ -9,6 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import LoginRequired from "./LoginRequired";
 import { useDesignAPI } from "@/hooks/useDesignAPI";
 import { DesignData, QuestionResponse } from "@/lib/types";
+import { designImages } from "@/images";
 
 interface DesignStepContentProps {
   questionResponses: Record<string, QuestionResponse | string>;
@@ -65,7 +66,7 @@ const DesignStepContent = ({
             description: "Failed to generate your design. Using a default template.",
             variant: "destructive",
           });
-          setGeneratedImageUrl("/images/design/design-flow.png"); // Updated path
+          setGeneratedImageUrl(designImages.designFlow); // Using imported image
         } finally {
           setIsGeneratingImage(false);
         }
@@ -164,7 +165,7 @@ const DesignStepContent = ({
             </div>
           ) : (
             <DesignCanvas
-              initialImageUrl={generatedImageUrl || "/images/design/design-flow.png"} // Updated path
+              initialImageUrl={generatedImageUrl || designImages.designFlow} // Using imported image
               onDesignUpdated={handleDesignUpdated}
             />
           )}

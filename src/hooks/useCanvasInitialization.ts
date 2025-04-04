@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { fabric } from "fabric";
 import { DesignData } from "@/lib/types";
 import { toast } from "sonner";
+import { tshirtImages } from "@/images";
 
 interface UseCanvasInitializationProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
@@ -47,10 +48,10 @@ export function useCanvasInitialization({
         renderOnAddRemove: false,
         stateful: false
       });
-      
+
       fabricCanvasRef.current = canvas;
       setIsInitialized(true);
-      
+
       // Helper function to add placeholder text
       const addPlaceholderText = () => {
         try {
@@ -63,7 +64,7 @@ export function useCanvasInitialization({
             originX: 'center',
             originY: 'center',
           });
-          
+
           canvas.add(text);
           canvas.renderAll();
           setIsLoaded(true);
@@ -72,18 +73,18 @@ export function useCanvasInitialization({
           setIsLoaded(true);
         }
       };
-      
+
       // Helper function to load design image
       const loadDesignImage = (imageUrl?: string) => {
         // Remove existing design image if it exists
         if (designImageRef.current) {
           canvas.remove(designImageRef.current);
         }
-        
+
         // Handle when an initial image URL is provided
         if (imageUrl) {
           setIsLoaded(false);
-          
+
           if (imageUrl.endsWith('.svg')) {
             // Handle SVG loading
             try {
@@ -98,12 +99,12 @@ export function useCanvasInitialization({
                     originX: 'center',
                     originY: 'center',
                   });
-                  
+
                   canvas.add(loadedObject);
                   designImageRef.current = loadedObject as unknown as fabric.Image;
                   canvas.renderAll();
                   setIsLoaded(true);
-                  
+
                   if (onDesignUpdated) {
                     const canvasJson = canvas.toJSON();
                     const designData: DesignData = {
@@ -139,12 +140,12 @@ export function useCanvasInitialization({
                     originX: 'center',
                     originY: 'center',
                   });
-                  
+
                   canvas.add(img);
                   designImageRef.current = img;
                   canvas.renderAll();
                   setIsLoaded(true);
-                  
+
                   if (onDesignUpdated) {
                     const canvasJson = canvas.toJSON();
                     const designData: DesignData = {
@@ -172,10 +173,11 @@ export function useCanvasInitialization({
           addPlaceholderText();
         }
       };
-      
+
       // Load t-shirt mockup as background image
       try {
-        fabric.Image.fromURL('/images/tshirt/mockup-1.png', (tshirtImg) => {
+        // Use imported image instead of direct path
+        fabric.Image.fromURL(tshirtImages.mockup1, (tshirtImg) => {
           try {
             // Apply initial color filter if not white
             if (tshirtColor !== "#ffffff") {
@@ -187,7 +189,7 @@ export function useCanvasInitialization({
               tshirtImg.filters = [filter];
               tshirtImg.applyFilters();
             }
-            
+
             tshirtImg.scaleToWidth(500);
             tshirtImg.set({
               left: 300,
@@ -197,13 +199,13 @@ export function useCanvasInitialization({
               selectable: false,
               evented: false,
             });
-            
+
             // Store reference to tshirt image for color changes
             tshirtImageRef.current = tshirtImg;
-            
+
             canvas.add(tshirtImg);
             canvas.sendToBack(tshirtImg);
-            
+
             // Create a visible design area/boundary
             const designArea = new fabric.Rect({
               width: 250,
@@ -219,15 +221,15 @@ export function useCanvasInitialization({
               selectable: false,
               evented: false,
             });
-            
+
             canvas.add(designArea);
-            
+
             // Load the design image after t-shirt mockup is loaded
             loadDesignImage(initialImageUrl);
           } catch (error) {
             console.error("Error setting up t-shirt image:", error);
             toast.error("Failed to set up t-shirt mockup");
-            
+
             // Still try to load the design image
             loadDesignImage(initialImageUrl);
           }
@@ -235,11 +237,11 @@ export function useCanvasInitialization({
       } catch (error) {
         console.error("Error loading t-shirt mockup:", error);
         toast.error("Failed to load t-shirt mockup");
-        
+
         // Still try to load the design image even if t-shirt fails
         loadDesignImage(initialImageUrl);
       }
-      
+
       // Setup canvas event listeners
       canvas.on('object:modified', () => {
         if (onDesignUpdated) {
@@ -259,7 +261,7 @@ export function useCanvasInitialization({
           }
         }
       });
-      
+
       // Return cleanup function
       return () => {
         try {
@@ -274,7 +276,7 @@ export function useCanvasInitialization({
       setIsInitialized(false);
     }
   }, [initialImageUrl, onDesignUpdated, isInitialized, canvasRef, tshirtColor]);
-  
+
   // Update tshirt color when it changes
   useEffect(() => {
     if (fabricCanvasRef.current && tshirtImageRef.current && isInitialized) {
@@ -291,10 +293,10 @@ export function useCanvasInitialization({
           });
           tshirtImageRef.current.filters = [filter];
         }
-        
+
         tshirtImageRef.current.applyFilters();
         fabricCanvasRef.current.renderAll();
-        
+
         // Update design data if callback exists
         if (onDesignUpdated && fabricCanvasRef.current) {
           const canvasJson = fabricCanvasRef.current.toJSON();
@@ -312,7 +314,7 @@ export function useCanvasInitialization({
       }
     }
   }, [tshirtColor, onDesignUpdated, isInitialized]);
-  
+
   return {
     fabricCanvas: fabricCanvasRef.current,
     isLoaded,

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DesignData, QuestionResponse, UserStylePreference } from "@/lib/types";
 import { extractPreferences } from "@/utils/designTransformation";
+import { designImages } from "@/images";
 
 interface SaveDesignParams {
   userId: string | undefined;
@@ -29,7 +30,7 @@ export function useDesignAPI() {
     userId,
     questionResponses,
     designData,
-    previewUrl = "/images/design/design-flow.png" // Updated path
+    previewUrl = designImages.designFlow // Using imported image
   }: SaveDesignParams): Promise<SaveDesignResult> => {
     if (!userId) {
       setError("User ID is required to save a design");
@@ -39,17 +40,17 @@ export function useDesignAPI() {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Extract preferences for metadata
       const preferences = extractPreferences(questionResponses);
-      
+
       // Create metadata object
       const userStyleMetadata: UserStylePreference = {
         color_scheme: preferences.color ? [preferences.color] : undefined,
         style_preference: preferences.style,
         timestamp: new Date().toISOString(),
       };
-      
+
       // Fixed Supabase query with array syntax for insertions
       const { data, error: supabaseError } = await supabase
         .from("designs")
@@ -62,19 +63,19 @@ export function useDesignAPI() {
         }])
         .select('id')
         .single();
-        
+
       if (supabaseError) {
         console.error("Error saving design:", supabaseError);
         setError("Failed to save design. Please try again.");
         toast.error("Failed to save design. Please try again.");
-        return { 
-          success: false, 
-          error: supabaseError.message 
+        return {
+          success: false,
+          error: supabaseError.message
         };
       }
-      
+
       toast.success("Design saved successfully!");
-      return { 
+      return {
         success: true,
         designId: data?.id
       };
@@ -83,9 +84,9 @@ export function useDesignAPI() {
       console.error("Error saving design:", err);
       setError(errorMessage);
       toast.error("Failed to save design. Please try again.");
-      return { 
-        success: false, 
-        error: errorMessage 
+      return {
+        success: false,
+        error: errorMessage
       };
     } finally {
       setLoading(false);
@@ -99,39 +100,39 @@ export function useDesignAPI() {
     try {
       setLoading(true);
       setError(null);
-      
+
       // This is a placeholder - in the future this would call your LLM API
       // For now, we'll simulate by returning a placeholder image based on some of the responses
-      
+
       // Extract some key preferences to choose different placeholder images
       const stylePreference = Object.values(questionResponses).find(
-        response => typeof response === 'string' && 
+        response => typeof response === 'string' &&
         ['Minimal', 'Vintage', 'Bold', 'Artistic', 'Funny'].includes(response)
       );
-      
+
       // Just for demonstration - map different styles to different placeholder images
-      let placeholderImageUrl = "/images/design/design-flow.png"; // updated path
-      
+      let placeholderImageUrl = designImages.designFlow; // Using imported image
+
       if (stylePreference === "Minimal") {
-        placeholderImageUrl = "/images/design/placeholder.svg";
+        placeholderImageUrl = designImages.placeholder;
       } else if (stylePreference === "Vintage") {
-        placeholderImageUrl = "/images/design/design-flow.png";
+        placeholderImageUrl = designImages.designFlow;
       } else if (stylePreference === "Bold") {
-        placeholderImageUrl = "/images/design/placeholder.svg";
+        placeholderImageUrl = designImages.placeholder;
       }
-      
+
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       toast.success("Design generated based on your preferences!");
       return placeholderImageUrl;
-      
+
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
       console.error("Error generating base design:", err);
       setError(errorMessage);
       toast.error("Failed to generate design. Using default template.");
-      return "/images/design/design-flow.png"; // updated path & fallback
+      return designImages.designFlow; // Using imported image
     } finally {
       setLoading(false);
     }

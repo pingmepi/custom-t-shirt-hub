@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkle, Zap, Truck, Brush, Check } from "lucide-react";
 import FeaturedDesigns from "@/components/FeaturedDesigns";
+import { tshirtImages } from "@/images";
 
 const HomePage = () => {
   return (
@@ -34,10 +35,10 @@ const HomePage = () => {
               </div>
             </div>
             <div className="relative animate-slide-up">
-              <img 
-                src="/images/tshirt/mockup-5.png" 
-                alt="T-shirt mockup" 
-                className="w-full h-auto rounded-lg shadow-xl" 
+              <img
+                src={tshirtImages.mockup5}
+                alt="T-shirt mockup"
+                className="w-full h-auto rounded-lg shadow-xl"
               />
               <div className="absolute -bottom-6 -right-6 bg-brand-green text-white rounded-full p-4">
                 <Sparkle className="h-10 w-10" />
@@ -53,7 +54,7 @@ const HomePage = () => {
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-brand-gray">Bring your ideas to life in minutes</h2>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex flex-col items-center text-center">
               <div className="bg-brand-lightGreen p-4 rounded-full mb-6">
@@ -64,7 +65,7 @@ const HomePage = () => {
                 Answer a few questions about your design preferences and our intuitive editor takes care of the rest.
               </p>
             </div>
-            
+
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex flex-col items-center text-center">
               <div className="bg-brand-lightGreen p-4 rounded-full mb-6">
                 <Zap className="h-6 w-6 text-brand-green" />
@@ -74,7 +75,7 @@ const HomePage = () => {
                 Experiment with various designs, colors, and layouts to find the perfect look for your shirt.
               </p>
             </div>
-            
+
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex flex-col items-center text-center">
               <div className="bg-brand-lightGreen p-4 rounded-full mb-6">
                 <Truck className="h-6 w-6 text-brand-green" />
@@ -100,7 +101,7 @@ const HomePage = () => {
               Our streamlined design process makes it simple to create your perfect custom t-shirt in just a few steps.
             </p>
           </div>
-          
+
           <div className="relative">
             <div className="hidden md:block absolute top-1/2 left-0 right-0 h-0.5 bg-brand-lightGreen -translate-y-1/2"></div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -115,7 +116,7 @@ const HomePage = () => {
                   </p>
                 </div>
               </div>
-              
+
               <div className="relative bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
                 <div className="absolute top-0 left-1/2 -translate-y-1/2 -translate-x-1/2 bg-brand-green text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
                   2
@@ -127,7 +128,7 @@ const HomePage = () => {
                   </p>
                 </div>
               </div>
-              
+
               <div className="relative bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
                 <div className="absolute top-0 left-1/2 -translate-y-1/2 -translate-x-1/2 bg-brand-green text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
                   3
@@ -141,7 +142,7 @@ const HomePage = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="mt-16 text-center">
             <Link to="/how-it-works">
               <Button variant="outline" className="border-brand-green text-brand-green hover:text-brand-darkGreen">
@@ -158,7 +159,7 @@ const HomePage = () => {
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-brand-gray">Simple pricing for everyone</h2>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="bg-white p-8 rounded-lg border border-gray-200 shadow-sm flex flex-col">
               <h3 className="text-2xl font-bold">Basic</h3>
@@ -178,7 +179,7 @@ const HomePage = () => {
                 Choose Basic
               </Button>
             </div>
-            
+
             <div className="bg-white p-8 rounded-lg border-2 border-brand-green shadow-lg flex flex-col relative">
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-brand-green text-white text-sm px-3 py-1 rounded-full">
                 Most Popular
@@ -190,9 +191,9 @@ const HomePage = () => {
               <p className="mt-2 text-gray-500">per shirt</p>
               <ul className="mt-6 space-y-3 flex-grow">
                 {[
-                  "Premium cotton blend", 
-                  "Extended color options", 
-                  "Complex designs", 
+                  "Premium cotton blend",
+                  "Extended color options",
+                  "Complex designs",
                   "Expedited shipping",
                   "Design assistance"
                 ].map((feature, index) => (
@@ -206,7 +207,7 @@ const HomePage = () => {
                 Choose Premium
               </Button>
             </div>
-            
+
             <div className="bg-white p-8 rounded-lg border border-gray-200 shadow-sm flex flex-col">
               <h3 className="text-2xl font-bold">Business</h3>
               <div className="mt-4 text-4xl font-bold text-brand-green">
@@ -215,9 +216,9 @@ const HomePage = () => {
               <p className="mt-2 text-gray-500">per shirt</p>
               <ul className="mt-6 space-y-3 flex-grow">
                 {[
-                  "Luxury fabric", 
-                  "All color options", 
-                  "Advanced designs", 
+                  "Luxury fabric",
+                  "All color options",
+                  "Advanced designs",
                   "Priority shipping",
                   "Dedicated designer",
                   "Bulk discounts"

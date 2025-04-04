@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ChevronRight, Sparkle, Paintbrush, ShoppingCart, Truck } from "lucide-react";
+import { tshirtImages, designImages } from "@/images";
 
 const HowItWorksPage = () => {
   return (
@@ -43,10 +44,10 @@ const HowItWorksPage = () => {
         </div>
         <div className="order-1 md:order-2">
           <div className="bg-white rounded-lg shadow-lg p-4">
-            <img 
-              src="/images/tshirt/mockup-1.png" 
-              alt="Design questionnaire" 
-              className="w-full h-auto rounded" 
+            <img
+              src={tshirtImages.mockup1}
+              alt="Design questionnaire"
+              className="w-full h-auto rounded"
             />
           </div>
         </div>
@@ -56,10 +57,10 @@ const HowItWorksPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center mb-24">
         <div>
           <div className="bg-white rounded-lg shadow-lg p-4">
-            <img 
-              src="/images/design/design-flow.png" 
-              alt="Design editor" 
-              className="w-full h-auto rounded" 
+            <img
+              src={designImages.designFlow}
+              alt="Design editor"
+              className="w-full h-auto rounded"
             />
           </div>
         </div>
@@ -123,10 +124,10 @@ const HowItWorksPage = () => {
         </div>
         <div className="order-1 md:order-2">
           <div className="bg-white rounded-lg shadow-lg p-4">
-            <img 
-              src="/images/tshirt/mockup-3.png" 
-              alt="T-shirt options" 
-              className="w-full h-auto rounded" 
+            <img
+              src={tshirtImages.mockup3}
+              alt="T-shirt options"
+              className="w-full h-auto rounded"
             />
           </div>
         </div>
@@ -136,10 +137,10 @@ const HowItWorksPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center mb-16">
         <div>
           <div className="bg-white rounded-lg shadow-lg p-4">
-            <img 
-              src="/images/tshirt/mockup-4.png" 
-              alt="Delivery process" 
-              className="w-full h-auto rounded" 
+            <img
+              src={tshirtImages.mockup4}
+              alt="Delivery process"
+              className="w-full h-auto rounded"
             />
           </div>
         </div>
@@ -180,7 +181,7 @@ const HowItWorksPage = () => {
             Our platform offers unique features that make designing and ordering custom t-shirts easier than ever
           </p>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <div className="bg-brand-lightGreen p-3 rounded-full w-12 h-12 flex items-center justify-center mb-4">
@@ -191,7 +192,7 @@ const HowItWorksPage = () => {
               Our system learns from your preferences to suggest design elements that match your style.
             </p>
           </div>
-          
+
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <div className="bg-brand-lightGreen p-3 rounded-full w-12 h-12 flex items-center justify-center mb-4">
               <Paintbrush className="h-6 w-6 text-brand-green" />
@@ -201,7 +202,7 @@ const HowItWorksPage = () => {
               Powerful yet easy-to-use design tools that give you complete creative freedom.
             </p>
           </div>
-          
+
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <div className="bg-brand-lightGreen p-3 rounded-full w-12 h-12 flex items-center justify-center mb-4">
               <ShoppingCart className="h-6 w-6 text-brand-green" />
@@ -211,7 +212,7 @@ const HowItWorksPage = () => {
               Streamlined checkout process with multiple payment options for your convenience.
             </p>
           </div>
-          
+
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <div className="bg-brand-lightGreen p-3 rounded-full w-12 h-12 flex items-center justify-center mb-4">
               <Truck className="h-6 w-6 text-brand-green" />
