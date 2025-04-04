@@ -1,6 +1,6 @@
 # API Documentation
 
-This document provides a comprehensive overview of all APIs in the Custom T-Shirt Hub platform, including both implemented and documented endpoints.
+This document provides a comprehensive overview of all APIs in the Custom T-Shirt Hub platform, including both implemented and planned endpoints.
 
 ## Table of Contents
 - [Authentication APIs](#authentication-apis)
@@ -11,12 +11,18 @@ This document provides a comprehensive overview of all APIs in the Custom T-Shir
 - [User APIs](#user-apis)
 - [Sample Images APIs](#sample-images-apis)
 
+## Implementation Status Legend
+- ✅ **Implemented**: API is fully implemented and working
+- 🚧 **Partially Implemented**: Some aspects of the API are implemented
+- ❌ **Planned**: API is defined but not yet implemented
+
 ## Authentication APIs
 
-### Supabase Auth Endpoints (Implemented)
+### Supabase Auth Endpoints (✅ Implemented)
 These endpoints are implemented using Supabase authentication.
 
 #### Sign Up
+- **Status**: ✅ Implemented
 - **Endpoint**: `auth.signUp`
 - **Description**: Creates a new user account
 - **Used in**: `src/pages/auth/Signup.tsx`
@@ -34,6 +40,7 @@ These endpoints are implemented using Supabase authentication.
 ```
 
 #### Sign In
+- **Status**: ✅ Implemented
 - **Endpoint**: `auth.signInWithPassword`
 - **Description**: Authenticates a user
 - **Used in**: `src/pages/auth/Login.tsx`
@@ -46,18 +53,21 @@ These endpoints are implemented using Supabase authentication.
 ```
 
 #### Sign Out
+- **Status**: ✅ Implemented
 - **Endpoint**: `auth.signOut`
 - **Description**: Signs out the current user
 - **Used in**: `src/context/AuthContext.tsx`
 
 #### Get Session
+- **Status**: ✅ Implemented
 - **Endpoint**: `auth.getSession`
 - **Description**: Retrieves the current user session
 - **Used in**: `src/hooks/useAuth.tsx`
 
 ## Design APIs
 
-### Get All Designs (Implemented)
+### Get All Designs
+- **Status**: ✅ Implemented
 - **Endpoint**: Database query `designs` table
 - **Description**: Fetches all designs for a user
 - **Used in**: `src/pages/user/Dashboard.tsx`
@@ -76,7 +86,8 @@ These endpoints are implemented using Supabase authentication.
 }
 ```
 
-### Save Design (Implemented)
+### Save Design
+- **Status**: ✅ Implemented
 - **Endpoint**: Database insert to `designs` table
 - **Description**: Saves a new design
 - **Used in**: `src/hooks/useDesignState.ts`
@@ -90,10 +101,10 @@ These endpoints are implemented using Supabase authentication.
 }
 ```
 
-### Get Design Preview (Documented but not implemented)
+### Get Design Preview (❌ Planned)
+- **Status**: ❌ Planned
 - **Endpoint**: `POST /generate-design-preview`
 - **Description**: Generates a preview of the design
-- **Status**: Planned
 - **Request**:
 ```json
 {
@@ -114,7 +125,8 @@ These endpoints are implemented using Supabase authentication.
 
 ## Theme APIs
 
-### Get Themes (Implemented)
+### Get Themes
+- **Status**: ✅ Implemented
 - **Endpoint**: Database query `themes` table
 - **Description**: Fetches available themes
 - **Used in**: `src/services/themesService.ts`
@@ -131,6 +143,17 @@ These endpoints are implemented using Supabase authentication.
   ]
 }
 ```
+
+### Confirmation Dialog (✅ Implemented)
+- **Status**: ✅ Implemented
+- **Description**: Displays question responses for user confirmation before proceeding
+- **Used in**: `src/components/design/ConfirmationDialog.tsx`
+
+### Get Question Text (✅ Implemented)
+- **Status**: ✅ Implemented
+- **Endpoint**: Client-side function
+- **Description**: Retrieves human-readable question text based on question IDs
+- **Used in**: Various components that display question texts
 
 ### Track Theme Selection (Implemented)
 - **Endpoint**: Database function `track_theme_selection`
@@ -263,6 +286,69 @@ These endpoints are implemented using Supabase authentication.
 {
   "order_id": "order-123",
   "new_status": "shipped"
+}
+```
+
+## New APIs Required
+
+### Get Design Editor Initial State
+- **Status**: 🚧 Partially Implemented
+- **Description**: Initializes the design editor with appropriate state based on user responses
+- **Used in**: `src/hooks/useCanvasInitialization.ts`
+- **Implementation Needs**:
+  - Improved loading performance
+  - Better integration with fabric.js
+  - Proper handling of t-shirt mockup images
+
+### Navigate to Previous Question
+- **Status**: 🚧 Partially Implemented
+- **Description**: Handles navigation between questions in the question flow
+- **Used in**: Question flow components
+- **Implementation Needs**:
+  - Better state management for question history
+  - Proper handling of "Back" functionality
+
+### Get User Preferences
+- **Endpoint**: `GET /user-preferences/:userId`
+- **Description**: Retrieves user's design preferences
+- **Status**: Planned
+- **Response**:
+```json
+{
+  "color_preferences": ["blue", "pastel", "muted"],
+  "style_preferences": ["minimal", "elegant"],
+  "most_recent_design_id": "design-789",
+  "total_designs": 4,
+  "total_orders": 2
+}
+```
+
+## User APIs
+
+### Get User Profile
+- **Endpoint**: `GET /user/:userId`
+- **Description**: Retrieves user profile information
+- **Status**: Planned
+- **Response**:
+```json
+{
+  "user_id": "user-123",
+  "full_name": "User Name",
+  "email": "user@example.com",
+  "profile_image": "url"
+}
+```
+
+### Update User Profile
+- **Endpoint**: `PUT /user/:userId`
+- **Description**: Updates user profile information
+- **Status**: Planned
+- **Request**:
+```json
+{
+  "full_name": "New Name",
+  "email": "newemail@example.com",
+  "profile_image": "new url"
 }
 ```
 

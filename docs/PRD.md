@@ -1,8 +1,8 @@
 # T-Shirt Design & Ordering Platform - Product Requirements Document
 
-**Date**: 2025-04-01\
+**Date**: 2025-04-04\
 **Author**: [Your Name]\
-**Status**: Draft
+**Status**: Work in Progress
 
 ## Overview
 
@@ -36,6 +36,35 @@ So that I can ensure smooth delivery and customer satisfaction
 ```
 
 ## Functional Requirements
+
+### Currently Implemented
+- ✅ Landing page showcasing pre-designed t-shirts to inspire users
+- ✅ T-shirt color selector to preview templates on different colors (e.g., black, white, grey)
+- ✅ User authentication with email/password (basic implementation)
+- ✅ Theme selection view with ~15 predefined themes shown as cards/toggles
+- ✅ Step-by-step question flow with one question shown at a time and a progress bar
+- ✅ Confirmation dialog to review question responses before proceeding
+- ✅ Basic design editor with fabric.js for customization
+- ✅ Question response sidebar during design editing to reference user preferences
+
+### In Progress
+- 🚧 Role-based access control (Customer, Admin)
+- 🚧 Capture and store all user responses to questions
+- 🚧 Generate a preview design based on question inputs
+- 🚧 User dashboard to view saved designs and past orders
+
+### Not Yet Implemented
+- ❌ If the user is not logged in, a sign-up pop-up should be shown
+- ❌ Allow users to edit the generated design using a visual editor
+- ❌ Store the original model-generated image and the final user-edited image
+- ❌ Maintain metadata: themes, user responses, editor actions, timestamps
+- ❌ Enable design reordering from saved history
+- ❌ Collect shipping details including phone, address, and pin code
+- ❌ Integrate payments using Razorpay or Stripe
+- ❌ Create orders with status tracking (pending, printing, shipped, delivered)
+- ❌ Admin dashboard to manage and update order statuses
+- ❌ Basic support section with contact number
+- ❌ Track question usage statistics for analytics and improvement
 
 ### Must Have
  Landing page showcasing pre-designed t-shirts to inspire users
@@ -563,7 +592,18 @@ Fetch all available themes to be shown on the theme selection screen.
 
 - Modular backend to enable future vendor integrations
 
-## UI/UX Requirements
+## UI/UX Requirements - Implementation Status
+- ✅ Theme selection view with predefined interest themes displayed as cards or toggles
+- ✅ Progress bar for question design flow
+- ✅ One-question-at-a-time design UI
+- ✅ Confirmation dialog for reviewing responses before proceeding
+- ✅ Basic DesignCanvas with fabric.js integration
+- 🚧 Dashboard for user profile, saved designs, and orders
+- ❌ Clean dashboard for current design being edited
+- ❌ Support page with email and phone
+- ❌ Color picker input with visual selection and text input
+- 🚧 Clear error messages for failed operations
+- 🚧 Loading states for asynchronous operations
 - Clean, Flowing UX/UI
 - Landing page with a carousel or grid of already-made designs to inspire users
 - Option for users to preview each design on different t-shirt colors (e.g., white, black, grey)
@@ -629,5 +669,3 @@ Fetch all available themes to be shown on the theme selection screen.
 - Color inputs support both visual selection and text entry
 - Progress indicators use both color and text to show completion status
 - Error messages are clear and provide actionable information
-
-
