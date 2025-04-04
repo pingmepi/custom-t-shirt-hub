@@ -211,7 +211,7 @@ export interface ChartContainerProps extends React.ComponentPropsWithoutRef<"div
 export const ChartContainer = ({ className, children, ...props }: ChartContainerProps) => (
   <div className={cn("h-80 w-full", className)} {...props}>
     <RechartsPrimitive.ResponsiveContainer width="100%" height="100%">
-      {children}
+      {children as React.ReactElement}
     </RechartsPrimitive.ResponsiveContainer>
   </div>
 );

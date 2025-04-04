@@ -53,13 +53,13 @@ export function useDesignAPI() {
       // Save the design to the database - fixed Supabase query
       const { data, error: supabaseError } = await supabase
         .from("designs")
-        .insert({
+        .insert([{  // Wrap the object in an array to fix the type error
           user_id: userId,
           question_responses: questionResponses,
           design_data: designData,
           preview_url: previewUrl,
           user_style_metadata: userStyleMetadata
-        })
+        }])
         .select('id')
         .single();
         
