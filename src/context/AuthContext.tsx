@@ -22,19 +22,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log("Setting up auth state listener");
+    
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-        setUser(session?.user || null);
+      (event, newSession) => {
+        console.log("Auth state changed:", event, newSession?.user?.email);
+        setSession(newSession);
+        setUser(newSession?.user || null);
         setLoading(false);
       }
     );
 
+    // THEN check for existing session
     const checkUser = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        setUser(session?.user || null);
+        console.log("Checking for existing session");
+        const { data: { session: existingSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error getting session:", error);
+          return;
+        }
+        
+        if (existingSession) {
+          console.log("Found existing session for user:", existingSession.user?.email);
+          setSession(existingSession);
+          setUser(existingSession.user);
+        } else {
+          console.log("No existing session found");
+        }
       } catch (error) {
         console.error("Error checking authentication:", error);
       } finally {
@@ -45,13 +62,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     checkUser();
 
     return () => {
+      console.log("Cleaning up auth subscription");
       subscription.unsubscribe();
     };
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    console.log("Attempting to sign in user:", email);
+    
     // For test credentials from docs/test_file
     if (email === "kmandalam@gmail.com" && password === "12345678") {
+      console.log("Using test credentials");
       const mockUser = {
         id: "test-user-id",
         email: "kmandalam@gmail.com",
@@ -77,19 +98,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         password
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Sign in error:", error.message);
+        throw error;
+      }
       
       if (data?.session) {
+        console.log("Sign in successful for:", data.user?.email);
         setSession(data.session);
         setUser(data.user);
+      } else {
+        console.error("Sign in returned no session");
+        throw new Error("Failed to sign in: No session returned");
       }
     } catch (error: any) {
+      console.error("Sign in process failed:", error);
       toast.error(error.message || "Failed to sign in");
       throw error;
     }
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
+    console.log("Attempting to sign up user:", email);
     try {
       const { error, data } = await supabase.auth.signUp({ 
         email,
@@ -101,34 +131,56 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Sign up error:", error.message);
+        throw error;
+      }
+      
+      console.log("Sign up response:", data);
       
       if (data?.user) {
-        // For quick testing, auto sign-in after signup
-        await signIn(email, password);
-        return;
+        // Check if email confirmation is required
+        if (data.session) {
+          console.log("Sign up successful with auto-login for:", data.user.email);
+          setSession(data.session);
+          setUser(data.user);
+        } else {
+          console.log("Sign up successful, confirmation required for:", data.user.email);
+          toast.info("Please check your email to confirm your account");
+        }
+      } else {
+        console.error("Sign up returned no user");
+        throw new Error("Failed to sign up: No user returned");
       }
     } catch (error: any) {
+      console.error("Sign up process failed:", error);
       toast.error(error.message || "Failed to sign up");
       throw error;
     }
   };
 
   const signOut = async () => {
+    console.log("Attempting to sign out user");
     try {
       // For test user
       if (user?.email === "kmandalam@gmail.com") {
+        console.log("Signing out test user");
         setUser(null);
         setSession(null);
         return;
       }
       
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      if (error) {
+        console.error("Sign out error:", error.message);
+        throw error;
+      }
       
+      console.log("User signed out successfully");
       setUser(null);
       setSession(null);
     } catch (error: any) {
+      console.error("Sign out process failed:", error);
       toast.error(error.message || "Failed to sign out");
       throw error;
     }
