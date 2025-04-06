@@ -1,5 +1,5 @@
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { DesignData } from "@/lib/types";
 import { useCanvasInitialization } from "@/hooks/useCanvasInitialization";
@@ -22,6 +22,10 @@ interface DesignCanvasProps {
 const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [currentTshirtColor, setCurrentTshirtColor] = useState("#ffffff");
+  const [error, setError] = useState<string | null>(null);
+  const [initAttempts, setInitAttempts] = useState(0);
+
+  console.log("DesignCanvas rendering with initialImageUrl:", initialImageUrl);
 
   // Use the custom hook for canvas initialization
   const { fabricCanvas, isLoaded, isInitialized, tshirtImageObject } = useCanvasInitialization({
@@ -31,79 +35,179 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
     tshirtColor: currentTshirtColor
   });
 
-  // Handle canvas operations
+  // Add effect to log canvas initialization state and retry if necessary
+  useEffect(() => {
+    console.log("Canvas initialization state:", {
+      isInitialized,
+      isLoaded,
+      fabricCanvasExists: !!fabricCanvas,
+      tshirtImageExists: !!tshirtImageObject,
+      canvasRefExists: !!canvasRef.current,
+      initialImageUrl,
+      initAttempts
+    });
+    
+    if (!isInitialized && canvasRef.current && initAttempts < 3) {
+      console.log("Canvas element exists but not initialized, attempt:", initAttempts + 1);
+      
+      // Wait a bit and trigger re-initialization by incrementing attempts
+      const timer = setTimeout(() => {
+        setInitAttempts(prev => prev + 1);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+    
+    if (initialImageUrl) {
+      console.log("Attempting to load image:", initialImageUrl);
+    }
+  }, [isInitialized, isLoaded, fabricCanvas, tshirtImageObject, initialImageUrl, initAttempts]);
+
+  // Handle canvas operations with improved error logging
   const handleAddText = () => {
-    if (!fabricCanvas) return;
-
-    addTextToCanvas(fabricCanvas);
-
-    if (onDesignUpdated) {
-      onDesignUpdated(canvasToDesignData(fabricCanvas));
+    if (!fabricCanvas) {
+      console.error("Cannot add text: Canvas not initialized");
+      setError("Canvas not initialized");
+      return;
     }
 
-    toast.success('Text added successfully');
+    try {
+      console.log("Adding text to canvas");
+      addTextToCanvas(fabricCanvas);
+
+      if (onDesignUpdated) {
+        const designData = canvasToDesignData(fabricCanvas);
+        console.log("Design updated after adding text:", designData);
+        onDesignUpdated(designData);
+      }
+
+      toast.success('Text added successfully');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.error("Error adding text:", err);
+      toast.error("Failed to add text");
+      setError(`Error adding text: ${errorMessage}`);
+    }
   };
 
   const handleAddShape = (shape: 'circle' | 'rect') => {
-    if (!fabricCanvas) return;
-
-    addShapeToCanvas(fabricCanvas, shape);
-
-    if (onDesignUpdated) {
-      onDesignUpdated(canvasToDesignData(fabricCanvas));
+    if (!fabricCanvas) {
+      console.error("Cannot add shape: Canvas not initialized");
+      setError("Canvas not initialized");
+      return;
     }
 
-    toast.success(`${shape === 'circle' ? 'Circle' : 'Rectangle'} added successfully`);
+    try {
+      console.log(`Adding ${shape} to canvas`);
+      addShapeToCanvas(fabricCanvas, shape);
+
+      if (onDesignUpdated) {
+        const designData = canvasToDesignData(fabricCanvas);
+        console.log("Design updated after adding shape:", designData);
+        onDesignUpdated(designData);
+      }
+
+      toast.success(`${shape === 'circle' ? 'Circle' : 'Rectangle'} added successfully`);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.error(`Error adding ${shape}:`, err);
+      toast.error(`Failed to add ${shape}`);
+      setError(`Error adding ${shape}: ${errorMessage}`);
+    }
   };
 
   const handleAddImage = async (file: File) => {
-    if (!fabricCanvas) return;
+    if (!fabricCanvas) {
+      console.error("Cannot add image: Canvas not initialized");
+      setError("Canvas not initialized");
+      return;
+    }
     
     try {
+      console.log("Loading image from file:", file.name);
       const img = await loadImageFromFile(file);
+      
+      console.log("Image loaded, adding to canvas");
       await addImageToCanvas(fabricCanvas, img);
       
       if (onDesignUpdated) {
-        onDesignUpdated(canvasToDesignData(fabricCanvas));
+        const designData = canvasToDesignData(fabricCanvas);
+        console.log("Design updated after adding image:", designData);
+        onDesignUpdated(designData);
       }
       
       toast.success('Image added successfully');
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       console.error('Error adding image:', error);
       toast.error('Failed to add image. Please try again.');
+      setError(`Error adding image: ${errorMessage}`);
     }
   };
 
   const handleDeleteSelectedObject = () => {
-    if (!fabricCanvas) return;
+    if (!fabricCanvas) {
+      console.error("Cannot delete object: Canvas not initialized");
+      setError("Canvas not initialized");
+      return;
+    }
 
-    const success = deleteSelectedObject(fabricCanvas);
+    try {
+      console.log("Attempting to delete selected object");
+      const success = deleteSelectedObject(fabricCanvas);
 
-    if (success) {
-      if (onDesignUpdated) {
-        onDesignUpdated(canvasToDesignData(fabricCanvas));
+      if (success) {
+        console.log("Object deleted successfully");
+        if (onDesignUpdated) {
+          const designData = canvasToDesignData(fabricCanvas);
+          console.log("Design updated after deleting object:", designData);
+          onDesignUpdated(designData);
+        }
+        toast.success('Object deleted');
+      } else {
+        console.log("No object selected for deletion");
+        toast.error('No object selected');
       }
-      toast.success('Object deleted');
-    } else {
-      toast.error('No object selected');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.error("Error deleting object:", err);
+      toast.error("Failed to delete object");
+      setError(`Error deleting object: ${errorMessage}`);
     }
   };
 
   const handleChangeColor = (color: string) => {
-    if (!fabricCanvas) return;
+    if (!fabricCanvas) {
+      console.error("Cannot change color: Canvas not initialized");
+      setError("Canvas not initialized");
+      return;
+    }
 
-    const success = changeObjectColor(fabricCanvas, color);
+    try {
+      console.log(`Changing object color to: ${color}`);
+      const success = changeObjectColor(fabricCanvas, color);
 
-    if (success) {
-      if (onDesignUpdated) {
-        onDesignUpdated(canvasToDesignData(fabricCanvas));
+      if (success) {
+        console.log("Color changed successfully");
+        if (onDesignUpdated) {
+          const designData = canvasToDesignData(fabricCanvas);
+          console.log("Design updated after changing color:", designData);
+          onDesignUpdated(designData);
+        }
+      } else {
+        console.log("No object selected for color change");
+        toast.error('No object selected');
       }
-    } else {
-      toast.error('No object selected');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.error("Error changing color:", err);
+      toast.error("Failed to change color");
+      setError(`Error changing color: ${errorMessage}`);
     }
   };
   
   const handleChangeTshirtColor = (color: string) => {
+    console.log(`Changing t-shirt color to: ${color}`);
     setCurrentTshirtColor(color);
     toast.success(`T-shirt color updated`);
   };
@@ -111,10 +215,18 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
   return (
     <div className="flex flex-col items-center">
       <div className="mb-4 bg-white rounded-lg shadow-lg p-2 relative">
-        <canvas ref={canvasRef} className="border border-gray-200 rounded" />
+        <canvas ref={canvasRef} className="border border-gray-200 rounded" width="400" height="400" />
         {!isLoaded && (
           <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-green"></div>
+          </div>
+        )}
+        {error && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70">
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded max-w-md overflow-auto">
+              <p className="font-bold">Error loading canvas</p>
+              <p>{error}</p>
+            </div>
           </div>
         )}
       </div>

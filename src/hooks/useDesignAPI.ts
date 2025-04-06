@@ -33,16 +33,20 @@ export function useDesignAPI() {
     previewUrl = designImages.designFlow // Using imported image
   }: SaveDesignParams): Promise<SaveDesignResult> => {
     if (!userId) {
+      console.error("User ID is required to save a design");
       setError("User ID is required to save a design");
       return { success: false, error: "User ID is required" };
     }
 
     try {
+      console.log("Saving design for user:", userId);
       setLoading(true);
       setError(null);
 
       // Extract preferences for metadata
       const preferences = extractPreferences(questionResponses);
+      console.log("Extracted preferences:", preferences);
+      
 
       // Create metadata object
       const userStyleMetadata: UserStylePreference = {
@@ -51,10 +55,17 @@ export function useDesignAPI() {
         timestamp: new Date().toISOString(),
       };
 
+
       // Fixed Supabase query with array syntax for insertions
+
+      
+      console.log("Preparing to insert design into Supabase");
+      
+      // Fix: Pass the data as an array to match Supabase's expected type
+
       const { data, error: supabaseError } = await supabase
         .from("designs")
-        .insert([{
+        .insert([{  // Notice the array brackets here
           user_id: userId,
           question_responses: questionResponses,
           design_data: designData,
@@ -73,6 +84,11 @@ export function useDesignAPI() {
           error: supabaseError.message
         };
       }
+
+
+
+      
+      console.log("Design saved successfully, ID:", data?.id);
 
       toast.success("Design saved successfully!");
       return {
@@ -98,6 +114,7 @@ export function useDesignAPI() {
    */
   const fetchBaseDesignImage = async (questionResponses: Record<string, QuestionResponse | string>) => {
     try {
+      console.log("Fetching base design image based on responses:", questionResponses);
       setLoading(true);
       setError(null);
 
@@ -110,6 +127,11 @@ export function useDesignAPI() {
         ['Minimal', 'Vintage', 'Bold', 'Artistic', 'Funny'].includes(response)
       );
 
+
+      
+      console.log("Style preference detected:", stylePreference);
+      
+
       // Just for demonstration - map different styles to different placeholder images
       let placeholderImageUrl = designImages.designFlow; // Using imported image
 
@@ -120,6 +142,10 @@ export function useDesignAPI() {
       } else if (stylePreference === "Bold") {
         placeholderImageUrl = designImages.placeholder;
       }
+
+      
+      console.log("Selected placeholder image:", placeholderImageUrl);
+      
 
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
