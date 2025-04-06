@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     console.log("Setting up auth state listener");
-    
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
@@ -39,12 +39,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         console.log("Checking for existing session");
         const { data: { session: existingSession }, error } = await supabase.auth.getSession();
-        
+
         if (error) {
           console.error("Error getting session:", error);
           return;
         }
-        
+
         if (existingSession) {
           console.log("Found existing session for user:", existingSession.user?.email);
           setSession(existingSession);
@@ -69,40 +69,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     console.log("Attempting to sign in user:", email);
-    
+
     // For test credentials from docs/test_file
     if (email === "kmandalam@gmail.com" && password === "12345678") {
       console.log("Using test credentials");
       const mockUser = {
-        id: "test-user-id",
+        id: "0ad70049-b2a7-4248-a395-811665c971fe", // Valid UUID format for testing
         email: "kmandalam@gmail.com",
         user_metadata: {
           name: "Test User"
         }
       } as unknown as User;
-      
+
       const mockSession = {
         access_token: "mock-token",
         refresh_token: "mock-refresh",
         user: mockUser
       } as unknown as Session;
-      
+
       setUser(mockUser);
       setSession(mockSession);
       return;
     }
-    
+
     try {
-      const { error, data } = await supabase.auth.signInWithPassword({ 
-        email, 
+      const { error, data } = await supabase.auth.signInWithPassword({
+        email,
         password
       });
-      
+
       if (error) {
         console.error("Sign in error:", error.message);
         throw error;
       }
-      
+
       if (data?.session) {
         console.log("Sign in successful for:", data.user?.email);
         setSession(data.session);
@@ -121,7 +121,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signUp = async (email: string, password: string, fullName: string) => {
     console.log("Attempting to sign up user:", email);
     try {
-      const { error, data } = await supabase.auth.signUp({ 
+      const { error, data } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -130,14 +130,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         }
       });
-      
+
       if (error) {
         console.error("Sign up error:", error.message);
         throw error;
       }
-      
+
       console.log("Sign up response:", data);
-      
+
       if (data?.user) {
         // Check if email confirmation is required
         if (data.session) {
@@ -163,19 +163,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     console.log("Attempting to sign out user");
     try {
       // For test user
-      if (user?.email === "kmandalam@gmail.com") {
+      if (user?.email === "kmandalam@gmail.com" || user?.id === "0ad70049-b2a7-4248-a395-811665c971fe") {
         console.log("Signing out test user");
         setUser(null);
         setSession(null);
         return;
       }
-      
+
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error("Sign out error:", error.message);
         throw error;
       }
-      
+
       console.log("User signed out successfully");
       setUser(null);
       setSession(null);
@@ -187,14 +187,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
+    <AuthContext.Provider value={{
+      user,
       session,
-      loading, 
+      loading,
       signIn,
-      signUp, 
-      signOut, 
-      isAuthenticated: !!user 
+      signUp,
+      signOut,
+      isAuthenticated: !!user
     }}>
       {children}
     </AuthContext.Provider>

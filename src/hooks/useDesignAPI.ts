@@ -38,6 +38,14 @@ export function useDesignAPI() {
       return { success: false, error: "User ID is required" };
     }
 
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userId)) {
+      console.error("Invalid UUID format for user ID:", userId);
+      setError("Invalid user ID format");
+      return { success: false, error: "Invalid user ID format" };
+    }
+
     try {
       console.log("Saving design for user:", userId);
       setLoading(true);

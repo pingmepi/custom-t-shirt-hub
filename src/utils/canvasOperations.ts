@@ -34,11 +34,11 @@ export const addTextToCanvas = (
     originY: 'center',
     ...options
   });
-  
+
   canvas.add(textObject);
   canvas.setActiveObject(textObject);
   canvas.renderAll();
-  
+
   return textObject;
 };
 
@@ -51,7 +51,7 @@ export const addShapeToCanvas = (
   options: Partial<fabric.ICircleOptions | fabric.IRectOptions> = {}
 ): fabric.Object => {
   let shapeObject: fabric.Object;
-  
+
   if (shape === 'circle') {
     shapeObject = new fabric.Circle({
       left: 300,
@@ -74,11 +74,11 @@ export const addShapeToCanvas = (
       ...options
     });
   }
-  
+
   canvas.add(shapeObject);
   canvas.setActiveObject(shapeObject);
   canvas.renderAll();
-  
+
   return shapeObject;
 };
 
@@ -91,34 +91,34 @@ export const addImageToCanvas = (
   options: Partial<fabric.IImageOptions> = {}
 ): Promise<fabric.Image> => {
   return new Promise((resolve) => {
-    fabric.Image.fromElement(imgElement as unknown as SVGImageElement, (imgObject) => {
-      // Scale image to fit within design area while maintaining aspect ratio
-      const maxWidth = 200;
-      const maxHeight = 150;
-      
-      if (imgObject.width && imgObject.height) {
-        if (imgObject.width > maxWidth || imgObject.height > maxHeight) {
-          const scaleFactor = Math.min(
-            maxWidth / imgObject.width,
-            maxHeight / imgObject.height
-          );
-          imgObject.scale(scaleFactor);
-        }
-      }
-      
-      imgObject.set({
-        left: 300,
-        top: 225,
-        originX: 'center',
-        originY: 'center',
-        ...options
-      });
-      
-      canvas.add(imgObject);
-      canvas.setActiveObject(imgObject);
-      canvas.renderAll();
-      resolve(imgObject);
+    // Create a new fabric.Image instance from the HTMLImageElement
+    const imgObject = new fabric.Image(imgElement, {
+      left: 300,
+      top: 225,
+      originX: 'center',
+      originY: 'center',
+      ...options
     });
+
+    // Scale image to fit within design area while maintaining aspect ratio
+    const maxWidth = 200;
+    const maxHeight = 150;
+
+    if (imgObject.width && imgObject.height) {
+      if (imgObject.width > maxWidth || imgObject.height > maxHeight) {
+        const scaleFactor = Math.min(
+          maxWidth / imgObject.width,
+          maxHeight / imgObject.height
+        );
+        imgObject.scale(scaleFactor);
+      }
+    }
+
+    // Add the image to the canvas
+    canvas.add(imgObject);
+    canvas.setActiveObject(imgObject);
+    canvas.renderAll();
+    resolve(imgObject);
   });
 };
 
@@ -136,7 +136,7 @@ export const changeTshirtColor = (
       mode: 'tint',
       alpha: 1
     });
-    
+
     tshirtImageObject.filters = [filter];
     tshirtImageObject.applyFilters();
     canvas.renderAll();
@@ -148,13 +148,13 @@ export const changeTshirtColor = (
  */
 export const deleteSelectedObject = (canvas: fabric.Canvas): boolean => {
   const activeObject = canvas.getActiveObject();
-  
+
   if (activeObject) {
     canvas.remove(activeObject);
     canvas.renderAll();
     return true;
   }
-  
+
   return false;
 };
 
@@ -163,13 +163,13 @@ export const deleteSelectedObject = (canvas: fabric.Canvas): boolean => {
  */
 export const changeObjectColor = (canvas: fabric.Canvas, color: string): boolean => {
   const activeObject = canvas.getActiveObject();
-  
+
   if (activeObject) {
     activeObject.set('fill', color);
     canvas.renderAll();
     return true;
   }
-  
+
   return false;
 };
 
@@ -178,16 +178,33 @@ export const changeObjectColor = (canvas: fabric.Canvas, color: string): boolean
  */
 export const loadImageFromFile = (file: File): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
+    // Validate file type
+    if (!file.type.match('image.*')) {
+      return reject(new Error('Selected file is not an image'));
+    }
+
     const reader = new FileReader();
+
     reader.onload = (e) => {
+      if (!e.target || !e.target.result) {
+        return reject(new Error('Failed to read file'));
+      }
+
       const img = new Image();
+
       img.onload = () => {
+        // Check if image loaded successfully
+        if (img.width === 0 || img.height === 0) {
+          return reject(new Error('Invalid image dimensions'));
+        }
         resolve(img);
       };
-      img.onerror = reject;
-      img.src = e.target?.result as string;
+
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = e.target.result as string;
     };
-    reader.onerror = reject;
+
+    reader.onerror = () => reject(new Error('Failed to read file'));
     reader.readAsDataURL(file);
   });
 };
