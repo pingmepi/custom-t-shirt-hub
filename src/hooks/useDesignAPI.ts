@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -60,15 +61,16 @@ export function useDesignAPI() {
 
       console.log("Preparing to insert design into Supabase");
 
+      // Fix: Correctly format insert data to match Supabase schema expectation
       const { data, error: supabaseError } = await supabase
         .from("designs")
-        .insert([{
+        .insert({
           user_id: userId,
           question_responses: serializedQuestionResponses,
           design_data: serializedDesignData,
           preview_url: previewUrl,
           user_style_metadata: serializedUserStyleMetadata
-        }])
+        })
         .select('id')
         .single();
 
