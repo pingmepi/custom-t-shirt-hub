@@ -7,8 +7,8 @@ import mockup5 from '../assets/images/mockup-5.webp';
 import mockup6 from '../assets/images/mockup-6.webp';
 
 // Design images
-import designFlow from '../assets/images/design-flow.webp';
-import placeholder from '../assets/images/placeholder.webp';
+import designFlow from '../assets/images/design/designFlow.webp';
+import placeholder from '../assets/images/design/placeholder.svg';
 import placeholder1 from '../assets/images/placeholder-1.jpeg';
 
 // Export all assets for easy access
