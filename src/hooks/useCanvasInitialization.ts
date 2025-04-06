@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { fabric } from "fabric";
 import { DesignData } from "@/lib/types";
-import { toast } from "sonner";
 import { tshirtImages } from "@/assets";
 
 interface UseCanvasInitializationProps {
@@ -186,6 +185,8 @@ export function useCanvasInitialization({
   useEffect(() => {
     if (fabricCanvasRef.current && tshirtImageRef.current && isInitialized) {
       try {
+        console.log("Updating t-shirt color in hook:", tshirtColor);
+
         // Update t-shirt color
         if (tshirtColor === "#ffffff") {
           // For white, remove all filters
@@ -201,6 +202,18 @@ export function useCanvasInitialization({
 
         tshirtImageRef.current.applyFilters();
         fabricCanvasRef.current.renderAll();
+
+        // Make sure the canvas is still interactive
+        fabricCanvasRef.current.selection = true;
+        fabricCanvasRef.current.interactive = true;
+
+        // Ensure all objects remain selectable
+        fabricCanvasRef.current.forEachObject((obj: fabric.Object) => {
+          if (obj !== tshirtImageRef.current) {
+            obj.selectable = true;
+            obj.evented = true;
+          }
+        });
 
         // Update design data if callback exists
         if (onDesignUpdated && fabricCanvasRef.current) {

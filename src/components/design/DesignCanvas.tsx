@@ -1,6 +1,7 @@
 
 import { useRef, useState, useEffect } from "react";
 import { toast } from "sonner";
+import { fabric } from "fabric";
 import { DesignData } from "@/lib/types";
 import { useCanvasInitialization } from "@/hooks/useCanvasInitialization";
 import { designImages } from "@/assets";
@@ -230,9 +231,48 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
   };
 
   const handleChangeTshirtColor = (color: string) => {
-    console.log(`Changing t-shirt color to: ${color}`);
-    setCurrentTshirtColor(color);
-    toast.success(`T-shirt color updated`);
+    if (!fabricCanvas || !tshirtImageObject) {
+      console.error("Cannot change t-shirt color: Canvas or t-shirt image not initialized");
+      setError("Canvas not initialized");
+      return;
+    }
+
+    try {
+      console.log(`Changing t-shirt color to: ${color}`);
+
+      // Update the state
+      setCurrentTshirtColor(color);
+
+      // Apply the color change directly to the t-shirt image
+      if (color === "#ffffff") {
+        // For white, remove all filters
+        tshirtImageObject.filters = [];
+      } else {
+        const filter = new fabric.Image.filters.BlendColor({
+          color: color,
+          mode: 'tint',
+          alpha: 1
+        });
+        tshirtImageObject.filters = [filter];
+      }
+
+      tshirtImageObject.applyFilters();
+      fabricCanvas.renderAll();
+
+      // Update design data if callback exists
+      if (onDesignUpdated) {
+        const designData = canvasToDesignData(fabricCanvas);
+        console.log("Design updated after changing t-shirt color:", designData);
+        onDesignUpdated(designData);
+      }
+
+      toast.success(`T-shirt color updated`);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.error("Error changing t-shirt color:", err);
+      toast.error("Failed to change t-shirt color");
+      setError(`Error changing t-shirt color: ${errorMessage}`);
+    }
   };
 
   return (
