@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -53,21 +52,22 @@ export function useDesignAPI() {
         style_preference: preferences.style,
         timestamp: new Date().toISOString(),
       };
-      // Fixed Supabase query with array syntax for insertions
 
+      // Serialize data to JSON-compatible formats
+      const serializedQuestionResponses = JSON.stringify(questionResponses);
+      const serializedDesignData = JSON.stringify(designData);
+      const serializedUserStyleMetadata = JSON.stringify(userStyleMetadata);
 
       console.log("Preparing to insert design into Supabase");
 
-      // Fix: Pass the data as an array to match Supabase's expected type
-
       const { data, error: supabaseError } = await supabase
         .from("designs")
-        .insert([{  // Notice the array brackets here
+        .insert([{
           user_id: userId,
-          question_responses: questionResponses,
-          design_data: designData,
+          question_responses: serializedQuestionResponses,
+          design_data: serializedDesignData,
           preview_url: previewUrl,
-          user_style_metadata: userStyleMetadata
+          user_style_metadata: serializedUserStyleMetadata
         }])
         .select('id')
         .single();
