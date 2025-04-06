@@ -54,16 +54,17 @@ export function useDesignAPI() {
       };
       
       console.log("Preparing to insert design into Supabase");
-      // Fix: Use the correct format for Supabase insert
+      
+      // Fix: Pass the data as an array to match Supabase's expected type
       const { data, error: supabaseError } = await supabase
         .from("designs")
-        .insert({
+        .insert([{  // Notice the array brackets here
           user_id: userId,
           question_responses: questionResponses,
           design_data: designData,
           preview_url: previewUrl,
           user_style_metadata: userStyleMetadata
-        })
+        }])
         .select('id')
         .single();
         
