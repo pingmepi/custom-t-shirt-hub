@@ -46,7 +46,6 @@ export function useDesignAPI() {
       // Extract preferences for metadata
       const preferences = extractPreferences(questionResponses);
       console.log("Extracted preferences:", preferences);
-      
 
       // Create metadata object
       const userStyleMetadata: UserStylePreference = {
@@ -54,13 +53,11 @@ export function useDesignAPI() {
         style_preference: preferences.style,
         timestamp: new Date().toISOString(),
       };
-
-
       // Fixed Supabase query with array syntax for insertions
 
-      
+
       console.log("Preparing to insert design into Supabase");
-      
+
       // Fix: Pass the data as an array to match Supabase's expected type
 
       const { data, error: supabaseError } = await supabase
@@ -85,11 +82,7 @@ export function useDesignAPI() {
         };
       }
 
-
-
-      
       console.log("Design saved successfully, ID:", data?.id);
-
       toast.success("Design saved successfully!");
       return {
         success: true,
@@ -127,10 +120,7 @@ export function useDesignAPI() {
         ['Minimal', 'Vintage', 'Bold', 'Artistic', 'Funny'].includes(response)
       );
 
-
-      
       console.log("Style preference detected:", stylePreference);
-      
 
       // Just for demonstration - map different styles to different placeholder images
       let placeholderImageUrl = designImages.designFlow; // Using imported image
@@ -143,10 +133,7 @@ export function useDesignAPI() {
         placeholderImageUrl = designImages.placeholder;
       }
 
-      
       console.log("Selected placeholder image:", placeholderImageUrl);
-      
-
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
 
