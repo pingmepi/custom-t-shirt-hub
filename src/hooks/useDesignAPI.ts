@@ -50,16 +50,16 @@ export function useDesignAPI() {
         timestamp: new Date().toISOString(),
       };
       
-      // Correctly format the insert call for Supabase
+      // Fix the insert method to use array format which is expected by Supabase
       const { data, error: supabaseError } = await supabase
         .from("designs")
-        .insert({
+        .insert([{
           user_id: userId,
           question_responses: questionResponses,
           design_data: designData,
           preview_url: previewUrl,
           user_style_metadata: userStyleMetadata
-        })
+        }])
         .select('id')
         .single();
         
