@@ -75,10 +75,15 @@ export function useCanvasInitialization({
   }, [canvasRef]);
 
   // Handle loading images after canvas is initialized
+  // Using refs to track if images have been loaded
+  const imagesLoadedRef = useRef(false);
+
   useEffect(() => {
-    if (!fabricCanvasRef.current || !isInitialized) return;
+    // Only load images once when canvas is initialized
+    if (!fabricCanvasRef.current || !isInitialized || imagesLoadedRef.current) return;
 
     const canvas = fabricCanvasRef.current;
+    imagesLoadedRef.current = true;
 
     // Load t-shirt mockup first
     fabric.Image.fromURL(tshirtImages.mockup1, (tshirtImg: fabric.Image) => {
@@ -181,11 +186,19 @@ export function useCanvasInitialization({
 
   }, [isInitialized, initialImageUrl, tshirtColor]);
 
-  // Update tshirt color when it changes
+  // Update tshirt color when it changes - using a ref to track previous color
+  const prevTshirtColorRef = useRef<string>(tshirtColor);
+
   useEffect(() => {
-    if (fabricCanvasRef.current && tshirtImageRef.current && isInitialized) {
+    // Only run if the color has actually changed
+    if (tshirtColor !== prevTshirtColorRef.current &&
+        fabricCanvasRef.current &&
+        tshirtImageRef.current &&
+        isInitialized) {
+
       try {
-        console.log("Updating t-shirt color in hook:", tshirtColor);
+        console.log("Updating t-shirt color in hook from", prevTshirtColorRef.current, "to", tshirtColor);
+        prevTshirtColorRef.current = tshirtColor;
 
         // Update t-shirt color
         if (tshirtColor === "#ffffff") {
@@ -205,7 +218,9 @@ export function useCanvasInitialization({
 
         // Make sure the canvas is still interactive
         fabricCanvasRef.current.selection = true;
-        fabricCanvasRef.current.interactive = true;
+        if ('interactive' in fabricCanvasRef.current) {
+          (fabricCanvasRef.current as any).interactive = true;
+        }
 
         // Ensure all objects remain selectable
         fabricCanvasRef.current.forEachObject((obj: fabric.Object) => {
