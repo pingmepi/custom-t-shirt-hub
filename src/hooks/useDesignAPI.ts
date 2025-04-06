@@ -61,7 +61,7 @@ export function useDesignAPI() {
 
       console.log("Preparing to insert design into Supabase");
 
-      // Fix: Correctly format insert data to match Supabase schema expectation
+      // Fixed version - properly formatted for Supabase insert
       const { data, error: supabaseError } = await supabase
         .from("designs")
         .insert({
