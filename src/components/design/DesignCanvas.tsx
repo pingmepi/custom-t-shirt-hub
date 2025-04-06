@@ -36,6 +36,57 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
     tshirtColor: currentTshirtColor
   });
 
+  // Function to delete the selected object
+  const handleDeleteSelectedObject = () => {
+    if (!fabricCanvas) {
+      console.error("Cannot delete object: Canvas not initialized");
+      setError("Canvas not initialized");
+      return;
+    }
+
+    try {
+      console.log("Attempting to delete selected object");
+      const success = deleteSelectedObject(fabricCanvas);
+
+      if (success) {
+        console.log("Object deleted successfully");
+        if (onDesignUpdated) {
+          const designData = canvasToDesignData(fabricCanvas);
+          console.log("Design updated after deleting object:", designData);
+          onDesignUpdated(designData);
+        }
+        toast.success('Object deleted');
+      } else {
+        console.log("No object selected for deletion");
+        toast.error('No object selected');
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.error("Error deleting object:", err);
+      toast.error("Failed to delete object");
+      setError(`Error deleting object: ${errorMessage}`);
+    }
+  };
+
+  // Add keyboard event listener for Delete key
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Check if Delete or Backspace key is pressed
+      if ((event.key === 'Delete' || event.key === 'Backspace') && fabricCanvas) {
+        console.log('Delete key pressed, attempting to delete selected object');
+        handleDeleteSelectedObject();
+      }
+    };
+
+    // Add event listener
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Clean up
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [fabricCanvas]); // Re-add listener when fabricCanvas changes
+
   // Add effect to log canvas initialization state and retry if necessary
   useEffect(() => {
     console.log("Canvas initialization state:", {
@@ -146,36 +197,7 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
     }
   };
 
-  const handleDeleteSelectedObject = () => {
-    if (!fabricCanvas) {
-      console.error("Cannot delete object: Canvas not initialized");
-      setError("Canvas not initialized");
-      return;
-    }
 
-    try {
-      console.log("Attempting to delete selected object");
-      const success = deleteSelectedObject(fabricCanvas);
-
-      if (success) {
-        console.log("Object deleted successfully");
-        if (onDesignUpdated) {
-          const designData = canvasToDesignData(fabricCanvas);
-          console.log("Design updated after deleting object:", designData);
-          onDesignUpdated(designData);
-        }
-        toast.success('Object deleted');
-      } else {
-        console.log("No object selected for deletion");
-        toast.error('No object selected');
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      console.error("Error deleting object:", err);
-      toast.error("Failed to delete object");
-      setError(`Error deleting object: ${errorMessage}`);
-    }
-  };
 
   const handleChangeColor = (color: string) => {
     if (!fabricCanvas) {
