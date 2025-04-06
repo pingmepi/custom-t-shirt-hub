@@ -1,13 +1,13 @@
 // T-shirt mockups
-import mockup1 from './images/tshirt/mockup-1.png';
-import mockup2 from './images/tshirt/mockup-2.png';
-import mockup3 from './images/tshirt/mockup-3.png';
-import mockup4 from './images/tshirt/mockup-4.png';
-import mockup5 from './images/tshirt/mockup-5.png';
-import mockup6 from './images/tshirt/mockup-6.png';
+import mockup1 from './images/tshirt/mockup-1.webp';
+import mockup2 from './images/tshirt/mockup-2.webp';
+import mockup3 from './images/tshirt/mockup-3.webp';
+import mockup4 from './images/tshirt/mockup-4.webp';
+import mockup5 from './images/tshirt/mockup-5.webp';
+import mockup6 from './images/tshirt/mockup-6.webp';
 
 // Design images
-import designFlow from './images/design/design-flow.png';
+import designFlow from './images/design/designFlow.webp';
 import placeholder from './images/design/placeholder.svg';
 
 // Logos

@@ -3,6 +3,7 @@ import { useRef, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { DesignData } from "@/lib/types";
 import { useCanvasInitialization } from "@/hooks/useCanvasInitialization";
+import { designImages } from "@/assets";
 import {
   addTextToCanvas,
   addShapeToCanvas,
@@ -30,7 +31,7 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
   // Use the custom hook for canvas initialization
   const { fabricCanvas, isLoaded, isInitialized, tshirtImageObject } = useCanvasInitialization({
     canvasRef,
-    initialImageUrl,
+    initialImageUrl: initialImageUrl || designImages.designFlow,
     onDesignUpdated,
     tshirtColor: currentTshirtColor
   });
@@ -46,18 +47,18 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
       initialImageUrl,
       initAttempts
     });
-    
+
     if (!isInitialized && canvasRef.current && initAttempts < 3) {
       console.log("Canvas element exists but not initialized, attempt:", initAttempts + 1);
-      
+
       // Wait a bit and trigger re-initialization by incrementing attempts
       const timer = setTimeout(() => {
         setInitAttempts(prev => prev + 1);
       }, 1000);
-      
+
       return () => clearTimeout(timer);
     }
-    
+
     if (initialImageUrl) {
       console.log("Attempting to load image:", initialImageUrl);
     }
@@ -122,20 +123,20 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
       setError("Canvas not initialized");
       return;
     }
-    
+
     try {
       console.log("Loading image from file:", file.name);
       const img = await loadImageFromFile(file);
-      
+
       console.log("Image loaded, adding to canvas");
       await addImageToCanvas(fabricCanvas, img);
-      
+
       if (onDesignUpdated) {
         const designData = canvasToDesignData(fabricCanvas);
         console.log("Design updated after adding image:", designData);
         onDesignUpdated(designData);
       }
-      
+
       toast.success('Image added successfully');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -205,7 +206,7 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
       setError(`Error changing color: ${errorMessage}`);
     }
   };
-  
+
   const handleChangeTshirtColor = (color: string) => {
     console.log(`Changing t-shirt color to: ${color}`);
     setCurrentTshirtColor(color);
