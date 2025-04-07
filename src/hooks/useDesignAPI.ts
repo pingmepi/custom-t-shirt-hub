@@ -62,6 +62,39 @@ export function useDesignAPI() {
         timestamp: new Date().toISOString(),
       };
 
+      // First, verify the user exists in the profiles table
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", userId)
+        .single();
+
+      if (profileError) {
+        console.error("Error checking user profile:", profileError);
+        // If the profile doesn't exist, try to create one
+        if (profileError.code === 'PGRST116') {
+          // Get user details to create profile
+          const { data: userData } = await supabase.auth.getUser();
+          
+          if (userData?.user) {
+            const { error: insertError } = await supabase
+              .from("profiles")
+              .insert({
+                id: userId,
+                full_name: userData.user.user_metadata.full_name || "User",
+                role: "user"
+              });
+              
+            if (insertError) {
+              console.error("Error creating user profile:", insertError);
+              throw new Error("Failed to create user profile");
+            }
+          }
+        } else {
+          throw new Error("Failed to verify user profile");
+        }
+      }
+
       // Serialize data to JSON-compatible formats
       const serializedQuestionResponses = JSON.stringify(questionResponses);
       const serializedDesignData = JSON.stringify(designData);
