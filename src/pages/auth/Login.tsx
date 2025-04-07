@@ -32,7 +32,9 @@ const LoginPage = () => {
   
   // Redirect if already authenticated
   useEffect(() => {
+    console.log("[Login] Checking authentication status:", isAuthenticated);
     if (isAuthenticated) {
+      console.log("[Login] User already authenticated, redirecting to:", redirectTo);
       navigate(redirectTo);
     }
   }, [isAuthenticated, navigate, redirectTo]);
@@ -47,20 +49,26 @@ const LoginPage = () => {
   });
 
   const onSubmit = async (data: LoginFormValues) => {
+    console.log("[Login] Form submitted with remember me:", data.rememberMe);
     try {
       setIsLoading(true);
       
       await signIn(data.email, data.password, data.rememberMe);
 
+      console.log("[Login] Login successful");
       toast.success("Login successful!");
+      
       // Check for stored design data
       const savedAnswers = sessionStorage.getItem('designAnswers');
       if (savedAnswers) {
+        console.log("[Login] Found saved design answers, redirecting to design page");
         navigate('/design');
       } else {
+        console.log("[Login] No saved design answers, redirecting to:", redirectTo);
         navigate(redirectTo);
       }
     } catch (error: any) {
+      console.error("[Login] Login error:", error);
       toast.error(error.message || "Failed to login. Please check your credentials.");
     } finally {
       setIsLoading(false);

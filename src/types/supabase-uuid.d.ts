@@ -4,10 +4,8 @@
 // Define UUID type
 type UUID = string;
 
-// Extend the Database type from Supabase using declaration merging
-// This avoids the "Duplicate identifier 'Database'" error
+// Extend the existing Tables interface
 declare module '@/integrations/supabase/types' {
-  // Extend the existing Tables interface
   interface Tables {
     designs: {
       Row: {

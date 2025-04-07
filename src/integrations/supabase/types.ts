@@ -61,7 +61,7 @@ export type Database = {
           name: string
           preview_url: string | null
           question_responses: Json | null
-          user_id: string | null // UUID format required
+          user_id: string | null
           user_style_metadata: Json | null
         }
         Insert: {
@@ -73,7 +73,7 @@ export type Database = {
           name?: string
           preview_url?: string | null
           question_responses?: Json | null
-          user_id?: string | null // UUID format required
+          user_id?: string | null
           user_style_metadata?: Json | null
         }
         Update: {
@@ -85,7 +85,7 @@ export type Database = {
           name?: string
           preview_url?: string | null
           question_responses?: Json | null
-          user_id?: string | null // UUID format required
+          user_id?: string | null
           user_style_metadata?: Json | null
         }
         Relationships: []

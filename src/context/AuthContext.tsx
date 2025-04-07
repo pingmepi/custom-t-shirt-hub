@@ -26,6 +26,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Fetch user profile from the profiles table
   const fetchUserProfile = async (userId: string) => {
+    console.log(`[Auth] Fetching profile for user ID: ${userId}`);
     try {
       const { data, error } = await supabase
         .from("profiles")
@@ -34,35 +35,52 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .single();
 
       if (error) {
-        console.error("Error fetching user profile:", error);
+        console.error("[Auth] Error fetching user profile:", error);
         return null;
       }
 
+      console.log("[Auth] Profile fetched successfully:", data);
       return data as UserProfile;
     } catch (error) {
-      console.error("Error in fetchUserProfile:", error);
+      console.error("[Auth] Exception in fetchUserProfile:", error);
       return null;
     }
   };
 
   useEffect(() => {
-    console.log("Setting up auth state listener");
+    console.log("[Auth] Setting up auth state listener");
+
+    // Check for remembered test user first
+    const rememberedTestUser = localStorage.getItem("testUserRemembered");
+    if (rememberedTestUser) {
+      console.log("[Auth] Found remembered test user in localStorage");
+      const parsed = JSON.parse(rememberedTestUser);
+      setUser(parsed.user);
+      setUserProfile(parsed.profile);
+      setSession({ user: parsed.user } as Session); // Mock session
+      setLoading(false);
+      console.log("[Auth] Restored test user session from localStorage");
+      return;
+    }
 
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
-        console.log("Auth state changed:", event, newSession?.user?.email);
+        console.log("[Auth] Auth state changed:", event, newSession?.user?.email);
         
         setSession(newSession);
         setUser(newSession?.user || null);
         
         // Fetch profile data separately to avoid blocking the auth state change
         if (newSession?.user) {
+          console.log("[Auth] New session detected, fetching user profile");
           setTimeout(async () => {
             const profile = await fetchUserProfile(newSession.user.id);
             setUserProfile(profile);
+            console.log("[Auth] User profile updated after auth state change:", profile);
           }, 0);
         } else {
+          console.log("[Auth] No session detected, clearing user profile");
           setUserProfile(null);
         }
         
@@ -73,27 +91,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // THEN check for existing session
     const checkUser = async () => {
       try {
-        console.log("Checking for existing session");
+        console.log("[Auth] Checking for existing session");
         const { data: { session: existingSession }, error } = await supabase.auth.getSession();
 
         if (error) {
-          console.error("Error getting session:", error);
+          console.error("[Auth] Error getting session:", error);
           return;
         }
 
         if (existingSession) {
-          console.log("Found existing session for user:", existingSession.user?.email);
+          console.log("[Auth] Found existing session for user:", existingSession.user?.email);
+          console.log("[Auth] Session expires at:", new Date(existingSession.expires_at * 1000).toLocaleString());
+          
           setSession(existingSession);
           setUser(existingSession.user);
           
           // Fetch user profile
+          console.log("[Auth] Fetching profile for existing session user");
           const profile = await fetchUserProfile(existingSession.user.id);
           setUserProfile(profile);
+          console.log("[Auth] Existing user profile set:", profile);
         } else {
-          console.log("No existing session found");
+          console.log("[Auth] No existing session found");
         }
       } catch (error) {
-        console.error("Error checking authentication:", error);
+        console.error("[Auth] Error checking authentication:", error);
       } finally {
         setLoading(false);
       }
@@ -102,19 +124,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     checkUser();
 
     return () => {
-      console.log("Cleaning up auth subscription");
+      console.log("[Auth] Cleaning up auth subscription");
       subscription.unsubscribe();
     };
   }, []);
 
 
-  const signIn = async (email: string, password: string) => {
-    console.log("Attempting to sign in user:", email);
-
+  const signIn = async (email: string, password: string, rememberMe = false) => {
+    console.log("[Auth] Attempting to sign in user:", email, "Remember me:", rememberMe);
 
     // For test credentials from docs/test_file
     if (email === "kmandalam@gmail.com" && password === "12345678") {
-      console.log("Using test credentials");
+      console.log("[Auth] Using test credentials");
       const mockUser = {
         id: "0ad70049-b2a7-4248-a395-811665c971fe", // Valid UUID format for testing
         email: "kmandalam@gmail.com",
@@ -136,61 +157,78 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         created_at: new Date().toISOString()
       };
 
-
       setUser(mockUser);
       setSession(mockSession);
       setUserProfile(mockProfile);
       
       // If remember me is enabled, save to localStorage
       if (rememberMe) {
+        console.log("[Auth] Saving test user to localStorage for persistence");
         localStorage.setItem("testUserRemembered", JSON.stringify({
           user: mockUser,
           profile: mockProfile
         }));
+      } else {
+        console.log("[Auth] Not remembering test user - removing from localStorage if present");
+        localStorage.removeItem("testUserRemembered");
       }
       
+      console.log("[Auth] Test user sign in complete");
       return;
     }
 
     try {
+      console.log("[Auth] Signing in with Supabase auth...");
       const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
       if (error) {
-        console.error("Sign in error:", error.message);
+        console.error("[Auth] Sign in error:", error.message);
         throw error;
       }
 
       if (data?.session) {
-        console.log("Sign in successful for:", data.user?.email);
+        console.log("[Auth] Sign in successful for:", data.user?.email);
+        console.log("[Auth] Session expiry:", new Date(data.session.expires_at * 1000).toLocaleString());
         setSession(data.session);
         setUser(data.user);
         
         // Fetch user profile
+        console.log("[Auth] Fetching user profile after successful login");
         const profile = await fetchUserProfile(data.user.id);
         setUserProfile(profile);
         
         // If remember me is checked, configure session persistence
         if (rememberMe) {
-          await supabase.auth.refreshSession({
+          console.log("[Auth] Remember me enabled, refreshing session for persistence");
+          const refreshResult = await supabase.auth.refreshSession({
             refresh_token: data.session.refresh_token,
           });
+          
+          if (refreshResult.error) {
+            console.error("[Auth] Error refreshing session:", refreshResult.error);
+          } else {
+            console.log("[Auth] Session refreshed successfully, new expiry:", 
+              new Date(refreshResult.data.session?.expires_at * 1000).toLocaleString());
+          }
+        } else {
+          console.log("[Auth] Remember me not enabled");
         }
       } else {
-        console.error("Sign in returned no session");
+        console.error("[Auth] Sign in returned no session");
         throw new Error("Failed to sign in: No session returned");
       }
     } catch (error: any) {
-      console.error("Sign in process failed:", error);
+      console.error("[Auth] Sign in process failed:", error);
       toast.error(error.message || "Failed to sign in");
       throw error;
     }
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
-    console.log("Attempting to sign up user:", email);
+    console.log("[Auth] Attempting to sign up user:", email);
     try {
       const { error, data } = await supabase.auth.signUp({
         email,
@@ -203,26 +241,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
       if (error) {
-        console.error("Sign up error:", error.message);
+        console.error("[Auth] Sign up error:", error.message);
         throw error;
       }
 
-      console.log("Sign up response:", data);
+      console.log("[Auth] Sign up response:", data);
 
       if (data?.user) {
         // Check if email confirmation is required
         if (data.session) {
-          console.log("Sign up successful with auto-login for:", data.user.email);
+          console.log("[Auth] Sign up successful with auto-login for:", data.user.email);
           setSession(data.session);
           setUser(data.user);
           
           // Fetch user profile after a brief delay to allow the trigger to create it
+          console.log("[Auth] Waiting for database trigger to create profile");
           setTimeout(async () => {
+            console.log("[Auth] Checking for newly created profile");
             const profile = await fetchUserProfile(data.user.id);
-            setUserProfile(profile);
             
             // If profile doesn't exist, create it manually
             if (!profile) {
+              console.log("[Auth] Profile not found, creating it manually");
               try {
                 const { error } = await supabase.from("profiles").insert({
                   id: data.user.id,
@@ -231,57 +271,62 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 });
                 
                 if (error) {
-                  console.error("Error creating profile manually:", error);
+                  console.error("[Auth] Error creating profile manually:", error);
                 } else {
+                  console.log("[Auth] Profile created manually");
                   // Fetch the newly created profile
                   const newProfile = await fetchUserProfile(data.user.id);
                   setUserProfile(newProfile);
                 }
               } catch (err) {
-                console.error("Error in manual profile creation:", err);
+                console.error("[Auth] Error in manual profile creation:", err);
               }
+            } else {
+              console.log("[Auth] Profile created by trigger successfully:", profile);
+              setUserProfile(profile);
             }
           }, 500);
         } else {
-          console.log("Sign up successful, confirmation required for:", data.user.email);
+          console.log("[Auth] Sign up successful, confirmation required for:", data.user.email);
           toast.info("Please check your email to confirm your account");
         }
       } else {
-        console.error("Sign up returned no user");
+        console.error("[Auth] Sign up returned no user");
         throw new Error("Failed to sign up: No user returned");
       }
     } catch (error: any) {
-      console.error("Sign up process failed:", error);
+      console.error("[Auth] Sign up process failed:", error);
       toast.error(error.message || "Failed to sign up");
       throw error;
     }
   };
 
   const signOut = async () => {
-    console.log("Attempting to sign out user");
+    console.log("[Auth] Attempting to sign out user");
     try {
       // For test user
       if (user?.email === "kmandalam@gmail.com" || user?.id === "0ad70049-b2a7-4248-a395-811665c971fe") {
-        console.log("Signing out test user");
+        console.log("[Auth] Signing out test user");
         setUser(null);
         setSession(null);
         setUserProfile(null);
         localStorage.removeItem("testUserRemembered");
+        console.log("[Auth] Test user signed out, localStorage cleared");
         return;
       }
 
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error("Sign out error:", error.message);
+        console.error("[Auth] Sign out error:", error.message);
         throw error;
       }
 
-      console.log("User signed out successfully");
+      console.log("[Auth] User signed out successfully");
       setUser(null);
       setSession(null);
       setUserProfile(null);
     } catch (error: any) {
-      console.error("Sign out process failed:", error);
+      console.error("[Auth] Sign out process failed:", error);
       toast.error(error.message || "Failed to sign out");
       throw error;
     }
