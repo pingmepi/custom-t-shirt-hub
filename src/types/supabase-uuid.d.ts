@@ -184,5 +184,3 @@ declare module '@/integrations/supabase/types' {
     }
   }
 }
-
-export {};
