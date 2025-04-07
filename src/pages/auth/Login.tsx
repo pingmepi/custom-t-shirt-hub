@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,10 +25,17 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn } = useAuth();
+  const { signIn, isAuthenticated } = useAuth();
   
   // Extract the redirect path from the location state
   const redirectTo = location.state?.from || "/dashboard";
+  
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(redirectTo);
+    }
+  }, [isAuthenticated, navigate, redirectTo]);
   
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -42,7 +50,7 @@ const LoginPage = () => {
     try {
       setIsLoading(true);
       
-      await signIn(data.email, data.password);
+      await signIn(data.email, data.password, data.rememberMe);
 
       toast.success("Login successful!");
       // Check for stored design data

@@ -10,7 +10,7 @@ interface AuthContextType {
   userProfile: UserProfile | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   signUp: (email: string, password: string, fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
   isAuthenticated: boolean;
@@ -107,8 +107,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  const signIn = async (email: string, password: string) => {
-    console.log("Attempting to sign in user:", email);
+  const signIn = async (email: string, password: string, rememberMe: boolean = false) => {
+    console.log("Attempting to sign in user:", email, "Remember me:", rememberMe);
 
     // For test credentials from docs/test_file
     if (email === "kmandalam@gmail.com" && password === "12345678") {
@@ -137,6 +137,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(mockUser);
       setSession(mockSession);
       setUserProfile(mockProfile);
+      
+      // If remember me is enabled, save to localStorage
+      if (rememberMe) {
+        localStorage.setItem("testUserRemembered", JSON.stringify({
+          user: mockUser,
+          profile: mockProfile
+        }));
+      }
+      
       return;
     }
 
@@ -159,6 +168,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Fetch user profile
         const profile = await fetchUserProfile(data.user.id);
         setUserProfile(profile);
+        
+        // If remember me is checked, configure session persistence
+        if (rememberMe) {
+          await supabase.auth.refreshSession({
+            refresh_token: data.session.refresh_token,
+          });
+        }
       } else {
         console.error("Sign in returned no session");
         throw new Error("Failed to sign in: No session returned");
@@ -247,6 +263,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(null);
         setSession(null);
         setUserProfile(null);
+        localStorage.removeItem("testUserRemembered");
         return;
       }
 
