@@ -7,7 +7,8 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export interface Database {
+// Renamed to avoid conflict with supabase/types.ts
+export interface AppDatabase {
   public: {
     Tables: {
       sample_images: {

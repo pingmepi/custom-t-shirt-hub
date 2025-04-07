@@ -107,8 +107,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  const signIn = async (email: string, password: string, rememberMe: boolean = false) => {
-    console.log("Attempting to sign in user:", email, "Remember me:", rememberMe);
+
+  const signIn = async (email: string, password: string) => {
+    console.log("Attempting to sign in user:", email);
+
 
     // For test credentials from docs/test_file
     if (email === "kmandalam@gmail.com" && password === "12345678") {
@@ -133,6 +135,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         role: "user" as const,
         created_at: new Date().toISOString()
       };
+
 
       setUser(mockUser);
       setSession(mockSession);
