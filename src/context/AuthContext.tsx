@@ -2,13 +2,15 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
+import { UserProfile } from "@/lib/types";
 import { toast } from "sonner";
 
 interface AuthContextType {
   user: User | null;
+  userProfile: UserProfile | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   signUp: (email: string, password: string, fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
   isAuthenticated: boolean;
@@ -18,18 +20,52 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Fetch user profile from the profiles table
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching user profile:", error);
+        return null;
+      }
+
+      return data as UserProfile;
+    } catch (error) {
+      console.error("Error in fetchUserProfile:", error);
+      return null;
+    }
+  };
 
   useEffect(() => {
     console.log("Setting up auth state listener");
 
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
+      async (event, newSession) => {
         console.log("Auth state changed:", event, newSession?.user?.email);
+        
         setSession(newSession);
         setUser(newSession?.user || null);
+        
+        // Fetch profile data separately to avoid blocking the auth state change
+        if (newSession?.user) {
+          setTimeout(async () => {
+            const profile = await fetchUserProfile(newSession.user.id);
+            setUserProfile(profile);
+          }, 0);
+        } else {
+          setUserProfile(null);
+        }
+        
         setLoading(false);
       }
     );
@@ -49,6 +85,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           console.log("Found existing session for user:", existingSession.user?.email);
           setSession(existingSession);
           setUser(existingSession.user);
+          
+          // Fetch user profile
+          const profile = await fetchUserProfile(existingSession.user.id);
+          setUserProfile(profile);
         } else {
           console.log("No existing session found");
         }
@@ -67,8 +107,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
+
   const signIn = async (email: string, password: string) => {
     console.log("Attempting to sign in user:", email);
+
 
     // For test credentials from docs/test_file
     if (email === "kmandalam@gmail.com" && password === "12345678") {
@@ -87,8 +129,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user: mockUser
       } as unknown as Session;
 
+      const mockProfile = {
+        id: mockUser.id,
+        full_name: "Test User",
+        role: "user" as const,
+        created_at: new Date().toISOString()
+      };
+
+
       setUser(mockUser);
       setSession(mockSession);
+      setUserProfile(mockProfile);
+      
+      // If remember me is enabled, save to localStorage
+      if (rememberMe) {
+        localStorage.setItem("testUserRemembered", JSON.stringify({
+          user: mockUser,
+          profile: mockProfile
+        }));
+      }
+      
       return;
     }
 
@@ -107,6 +167,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log("Sign in successful for:", data.user?.email);
         setSession(data.session);
         setUser(data.user);
+        
+        // Fetch user profile
+        const profile = await fetchUserProfile(data.user.id);
+        setUserProfile(profile);
+        
+        // If remember me is checked, configure session persistence
+        if (rememberMe) {
+          await supabase.auth.refreshSession({
+            refresh_token: data.session.refresh_token,
+          });
+        }
       } else {
         console.error("Sign in returned no session");
         throw new Error("Failed to sign in: No session returned");
@@ -144,6 +215,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           console.log("Sign up successful with auto-login for:", data.user.email);
           setSession(data.session);
           setUser(data.user);
+          
+          // Fetch user profile after a brief delay to allow the trigger to create it
+          setTimeout(async () => {
+            const profile = await fetchUserProfile(data.user.id);
+            setUserProfile(profile);
+            
+            // If profile doesn't exist, create it manually
+            if (!profile) {
+              try {
+                const { error } = await supabase.from("profiles").insert({
+                  id: data.user.id,
+                  full_name: fullName,
+                  role: "user"
+                });
+                
+                if (error) {
+                  console.error("Error creating profile manually:", error);
+                } else {
+                  // Fetch the newly created profile
+                  const newProfile = await fetchUserProfile(data.user.id);
+                  setUserProfile(newProfile);
+                }
+              } catch (err) {
+                console.error("Error in manual profile creation:", err);
+              }
+            }
+          }, 500);
         } else {
           console.log("Sign up successful, confirmation required for:", data.user.email);
           toast.info("Please check your email to confirm your account");
@@ -167,6 +265,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log("Signing out test user");
         setUser(null);
         setSession(null);
+        setUserProfile(null);
+        localStorage.removeItem("testUserRemembered");
         return;
       }
 
@@ -179,6 +279,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log("User signed out successfully");
       setUser(null);
       setSession(null);
+      setUserProfile(null);
     } catch (error: any) {
       console.error("Sign out process failed:", error);
       toast.error(error.message || "Failed to sign out");
@@ -189,6 +290,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   return (
     <AuthContext.Provider value={{
       user,
+      userProfile,
       session,
       loading,
       signIn,

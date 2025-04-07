@@ -26,7 +26,12 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
   const [error, setError] = useState<string | null>(null);
   const [initAttempts, setInitAttempts] = useState(0);
 
-  console.log("DesignCanvas rendering with initialImageUrl:", initialImageUrl);
+  // Only log on first render using a ref
+  const hasLoggedInitialRender = useRef(false);
+  if (!hasLoggedInitialRender.current) {
+    console.log("DesignCanvas initial render with initialImageUrl:", initialImageUrl);
+    hasLoggedInitialRender.current = true;
+  }
 
   // Use the custom hook for canvas initialization
   const { fabricCanvas, isLoaded, isInitialized, tshirtImageObject } = useCanvasInitialization({
@@ -36,17 +41,79 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
     tshirtColor: currentTshirtColor
   });
 
-  // Add effect to log canvas initialization state and retry if necessary
+  // Function to delete the selected object
+  const handleDeleteSelectedObject = () => {
+    if (!fabricCanvas) {
+      console.error("Cannot delete object: Canvas not initialized");
+      setError("Canvas not initialized");
+      return;
+    }
+
+    try {
+      console.log("Attempting to delete selected object");
+      const success = deleteSelectedObject(fabricCanvas);
+
+      if (success) {
+        console.log("Object deleted successfully");
+        if (onDesignUpdated) {
+          const designData = canvasToDesignData(fabricCanvas);
+          console.log("Design updated after deleting object:", designData);
+          onDesignUpdated(designData);
+        }
+        toast.success('Object deleted');
+      } else {
+        console.log("No object selected for deletion");
+        toast.error('No object selected');
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.error("Error deleting object:", err);
+      toast.error("Failed to delete object");
+      setError(`Error deleting object: ${errorMessage}`);
+    }
+  };
+
+  // Add keyboard event listener for Delete key
   useEffect(() => {
-    console.log("Canvas initialization state:", {
-      isInitialized,
-      isLoaded,
-      fabricCanvasExists: !!fabricCanvas,
-      tshirtImageExists: !!tshirtImageObject,
-      canvasRefExists: !!canvasRef.current,
-      initialImageUrl,
-      initAttempts
-    });
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Check if Delete or Backspace key is pressed
+      if ((event.key === 'Delete' || event.key === 'Backspace') && fabricCanvas) {
+        console.log('Delete key pressed, attempting to delete selected object');
+        handleDeleteSelectedObject();
+      }
+    };
+
+    // Add event listener
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Clean up
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [fabricCanvas]); // Re-add listener when fabricCanvas changes
+
+  // Add effect to handle canvas initialization retry if necessary
+  // Use a ref to track if we've logged the initialization state
+  const hasLoggedInitState = useRef(false);
+
+  useEffect(() => {
+    // Only log the initialization state once or when it changes significantly
+    const shouldLog = !hasLoggedInitState.current ||
+                     (isInitialized && !hasLoggedInitState.current) ||
+                     initAttempts > 0;
+
+    if (shouldLog) {
+      console.log("Canvas initialization state:", {
+        isInitialized,
+        isLoaded,
+        fabricCanvasExists: !!fabricCanvas,
+        tshirtImageExists: !!tshirtImageObject,
+        canvasRefExists: !!canvasRef.current,
+        initialImageUrl: initialImageUrl ? `${initialImageUrl.substring(0, 30)}...` : null,
+        initAttempts
+      });
+      hasLoggedInitState.current = true;
+    }
 
     if (!isInitialized && canvasRef.current && initAttempts < 3) {
       console.log("Canvas element exists but not initialized, attempt:", initAttempts + 1);
@@ -57,10 +124,6 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
       }, 1000);
 
       return () => clearTimeout(timer);
-    }
-
-    if (initialImageUrl) {
-      console.log("Attempting to load image:", initialImageUrl);
     }
   }, [isInitialized, isLoaded, fabricCanvas, tshirtImageObject, initialImageUrl, initAttempts]);
 
@@ -146,36 +209,7 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
     }
   };
 
-  const handleDeleteSelectedObject = () => {
-    if (!fabricCanvas) {
-      console.error("Cannot delete object: Canvas not initialized");
-      setError("Canvas not initialized");
-      return;
-    }
 
-    try {
-      console.log("Attempting to delete selected object");
-      const success = deleteSelectedObject(fabricCanvas);
-
-      if (success) {
-        console.log("Object deleted successfully");
-        if (onDesignUpdated) {
-          const designData = canvasToDesignData(fabricCanvas);
-          console.log("Design updated after deleting object:", designData);
-          onDesignUpdated(designData);
-        }
-        toast.success('Object deleted');
-      } else {
-        console.log("No object selected for deletion");
-        toast.error('No object selected');
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      console.error("Error deleting object:", err);
-      toast.error("Failed to delete object");
-      setError(`Error deleting object: ${errorMessage}`);
-    }
-  };
 
   const handleChangeColor = (color: string) => {
     if (!fabricCanvas) {
@@ -207,10 +241,42 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
     }
   };
 
+  // Use a ref to track if we're changing the color to avoid redundant updates
+  const isChangingColorRef = useRef(false);
+
   const handleChangeTshirtColor = (color: string) => {
-    console.log(`Changing t-shirt color to: ${color}`);
-    setCurrentTshirtColor(color);
-    toast.success(`T-shirt color updated`);
+    // Prevent redundant color changes
+    if (color === currentTshirtColor || isChangingColorRef.current) {
+      return;
+    }
+
+    if (!fabricCanvas || !tshirtImageObject) {
+      console.error("Cannot change t-shirt color: Canvas or t-shirt image not initialized");
+      setError("Canvas not initialized");
+      return;
+    }
+
+    try {
+      console.log(`Changing t-shirt color to: ${color}`);
+      isChangingColorRef.current = true;
+
+      // Just update the state - the hook will handle the actual color change
+      setCurrentTshirtColor(color);
+
+      // Show success message
+      toast.success(`T-shirt color updated`);
+
+      // Reset the changing flag after a short delay
+      setTimeout(() => {
+        isChangingColorRef.current = false;
+      }, 100);
+    } catch (err) {
+      isChangingColorRef.current = false;
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.error("Error changing t-shirt color:", err);
+      toast.error("Failed to change t-shirt color");
+      setError(`Error changing t-shirt color: ${errorMessage}`);
+    }
   };
 
   return (

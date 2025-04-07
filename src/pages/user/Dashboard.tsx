@@ -5,13 +5,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
-import { TShirtDesign, OrderDetails, QuestionResponse } from "@/lib/types";
+import { TShirtDesign, OrderDetails } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, ShoppingBag, Palette, AlertCircle } from "lucide-react";
 
 const UserDashboard = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, userProfile, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("designs");
 
@@ -85,7 +85,7 @@ const UserDashboard = () => {
         <div>
           <h1 className="text-3xl font-bold">My Dashboard</h1>
           <p className="text-gray-600 mt-2">
-            Manage your saved designs and track your orders
+            Welcome, {userProfile?.full_name || user?.email}! Manage your saved designs and track your orders
           </p>
         </div>
         <Button

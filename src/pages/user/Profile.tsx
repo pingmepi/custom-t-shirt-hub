@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,12 +11,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
 const ProfilePage = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, userProfile, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   
-  const [fullName, setFullName] = useState(user?.user_metadata?.name || "");
-  const [phoneNumber, setPhoneNumber] = useState(user?.user_metadata?.phone || "");
+  const [fullName, setFullName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Initialize form data from profile
+  useEffect(() => {
+    if (userProfile) {
+      setFullName(userProfile.full_name || "");
+      setPhoneNumber(userProfile.phone_number || "");
+    }
+  }, [userProfile]);
 
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
@@ -32,17 +40,29 @@ const ProfilePage = () => {
     try {
       setIsLoading(true);
       
-      const { error } = await supabase.auth.updateUser({
+      // Update auth metadata
+      const { error: authError } = await supabase.auth.updateUser({
         data: { 
-          name: fullName,
-          phone: phoneNumber 
+          name: fullName
         }
       });
       
-      if (error) throw error;
+      if (authError) throw authError;
+      
+      // Update profile in profiles table
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          full_name: fullName,
+          phone_number: phoneNumber
+        })
+        .eq("id", user.id);
+      
+      if (profileError) throw profileError;
       
       toast.success("Profile updated successfully!");
     } catch (error: any) {
+      console.error("Error updating profile:", error);
       toast.error(error.message || "Failed to update profile");
     } finally {
       setIsLoading(false);
