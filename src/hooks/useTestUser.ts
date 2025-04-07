@@ -63,19 +63,20 @@ export const useTestUser = () => {
   
   /**
    * Loads test user data from localStorage
+   * Returns null if no test user is saved or if parse fails
    */
   const loadTestUser = (): { user: User | null; profile: UserProfile | null } => {
-    const rememberedTestUser = localStorage.getItem(TEST_USER_STORAGE_KEY);
-    
-    if (rememberedTestUser) {
-      console.log("[TestUser] Found remembered test user in localStorage");
-      try {
+    try {
+      const rememberedTestUser = localStorage.getItem(TEST_USER_STORAGE_KEY);
+      
+      if (rememberedTestUser) {
+        console.log("[TestUser] Found remembered test user in localStorage");
         const parsed = JSON.parse(rememberedTestUser);
         return { user: parsed.user, profile: parsed.profile };
-      } catch (error) {
-        console.error("[TestUser] Error parsing remembered test user:", error);
-        localStorage.removeItem(TEST_USER_STORAGE_KEY);
       }
+    } catch (error) {
+      console.error("[TestUser] Error parsing remembered test user:", error);
+      localStorage.removeItem(TEST_USER_STORAGE_KEY);
     }
     
     return { user: null, profile: null };

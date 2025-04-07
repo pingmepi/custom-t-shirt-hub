@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useEffect, ReactNode } from "react";
+import { createContext, useContext, useEffect, ReactNode, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthManager } from "@/hooks/useAuthManager";
 
@@ -8,6 +8,7 @@ const AuthContext = createContext<ReturnType<typeof useAuthManager> | undefined>
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const auth = useAuthManager();
+  const [isInitialized, setIsInitialized] = useState(false);
   const { 
     setUser, 
     setSession, 
@@ -18,7 +19,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     loadTestUser
   } = auth;
 
+  // This effect will only run once on component mount
   useEffect(() => {
+    if (isInitialized) return;
+    
     console.log("[Auth] Setting up auth state listener");
 
     // Check for remembered test user first
@@ -29,12 +33,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUserProfile(testProfile);
       setSession({ user: testUser } as any); // Mock session
       setLoading(false);
+      setIsInitialized(true);
       return;
     }
 
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
+      (event, newSession) => {
         console.log("[Auth] Auth state changed:", event, newSession?.user?.email);
         
         setSession(newSession);
@@ -43,11 +48,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Fetch profile data separately to avoid blocking the auth state change
         if (newSession?.user) {
           console.log("[Auth] New session detected, fetching user profile");
-          setTimeout(async () => {
-            const profile = await fetchUserProfile(newSession.user.id);
+          fetchUserProfile(newSession.user.id).then(profile => {
             setUserProfile(profile);
             console.log("[Auth] User profile updated after auth state change:", profile);
-          }, 0);
+          });
         } else {
           console.log("[Auth] No session detected, clearing user profile");
           setUserProfile(null);
@@ -81,6 +85,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       } finally {
         setLoading(false);
+        setIsInitialized(true);
       }
     };
 
@@ -91,6 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       subscription.unsubscribe();
     };
   }, [
+    isInitialized,
     setUser, 
     setSession, 
     setUserProfile, 
