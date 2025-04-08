@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 // import { toast } from "sonner";
@@ -28,10 +28,16 @@ const EditDesignPage = () => {
     handleSaveDesign,
     handleAddToCart,
     redirectToLogin
-  } = useDesignState();
+  } = useDesignState({ designId });
+
+  // Use a ref to track if we've already fetched the design
+  const hasFetchedDesign = useRef(false);
 
   // Fetch the design data when the component mounts
   useEffect(() => {
+    // Prevent multiple fetches
+    if (hasFetchedDesign.current) return;
+    hasFetchedDesign.current = true;
     const fetchDesign = async () => {
       if (!designId) {
         setError("No design ID provided");
@@ -45,39 +51,12 @@ const EditDesignPage = () => {
       }
 
       try {
-        console.log(`[EditDesign] Fetching design with ID: ${designId}`);
-
         // Check if we have a session
         const { data: sessionData } = await supabase.auth.getSession();
-        console.log("[EditDesign] Session check:", sessionData.session ? "Active session" : "No session");
 
         if (!sessionData.session) {
           console.log("[EditDesign] No active session, redirecting to login");
           redirectToLogin(`/design/${designId}`);
-          return;
-        }
-
-        // For test user, use mock data
-        if (user?.id === "0ad70049-b2a7-4248-a395-811665c971fe") {
-          console.log("[EditDesign] Using mock data for test user");
-
-          // Create mock design data
-          const mockDesignData: DesignData = {
-            elements: [],
-            background_color: "#ffffff",
-            width: 500,
-            height: 500
-          };
-
-          const mockResponses = {
-            "q1": "Test Design",
-            "q2": "Minimal",
-            "q3": "#ffffff"
-          };
-
-          setDesignData(mockDesignData);
-          setQuestionResponses(mockResponses);
-          setIsLoading(false);
           return;
         }
 
@@ -109,8 +88,6 @@ const EditDesignPage = () => {
           return;
         }
 
-        console.log("[EditDesign] Design data fetched successfully:", data);
-
         // Parse the JSON data
         try {
           // Check if design_data is already an object or needs parsing
@@ -128,9 +105,6 @@ const EditDesignPage = () => {
           } else {
             parsedQuestionResponses = data.question_responses as Record<string, QuestionResponse | string>;
           }
-
-          console.log("[EditDesign] Parsed design data:", parsedDesignData);
-          console.log("[EditDesign] Parsed question responses:", parsedQuestionResponses);
 
           setDesignData(parsedDesignData);
           setQuestionResponses(parsedQuestionResponses);
@@ -158,7 +132,7 @@ const EditDesignPage = () => {
             }
           }
 
-          console.log("[EditDesign] Design data parsed successfully");
+          // Design data parsed successfully
         } catch (parseError) {
           console.error("[EditDesign] Error parsing design data:", parseError);
           setError("Error parsing design data");

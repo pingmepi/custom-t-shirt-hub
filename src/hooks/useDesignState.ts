@@ -8,7 +8,12 @@ import { useDesignAPI } from "@/hooks/useDesignAPI";
 import { useDesignNavigation } from "@/hooks/useDesignNavigation";
 import { validateAuthentication, validateDesignData } from "@/utils/designValidation";
 
-export function useDesignState() {
+interface UseDesignStateProps {
+  designId?: string;
+}
+
+export function useDesignState(props?: UseDesignStateProps) {
+  const { designId } = props || {};
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const { saveDesign, loading, error } = useDesignAPI();
@@ -71,11 +76,18 @@ export function useDesignState() {
       return;
     }
 
+    // Include t-shirt options in user style metadata
+    const userStyleMetadata = {
+      tshirt_options: tshirtOptions
+    };
+
     const result = await saveDesign({
       userId: user?.id,
       questionResponses,
       designData: designData as DesignData,
-      previewUrl: "/design-flow.png" // This would be replaced with an actual preview
+      previewUrl: "/design-flow.png", // This would be replaced with an actual preview
+      designId, // Pass the designId if we're editing an existing design
+      userStyleMetadata // Pass the t-shirt options
     });
 
     if (result.success) {

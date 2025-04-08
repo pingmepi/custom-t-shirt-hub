@@ -11,6 +11,8 @@ interface SaveDesignParams {
   questionResponses: Record<string, QuestionResponse | string>;
   designData: DesignData;
   previewUrl?: string;
+  designId?: string; // Optional designId for updating existing designs
+  userStyleMetadata?: any; // Optional user style metadata including t-shirt options
 }
 
 interface SaveDesignResult {
@@ -30,7 +32,9 @@ export function useDesignAPI() {
     userId,
     questionResponses,
     designData,
-    previewUrl = designImages.designFlow // Using imported image
+    previewUrl = designImages.designFlow, // Using imported image
+    designId, // Optional designId for updating existing designs
+    userStyleMetadata: providedStyleMetadata = {}
   }: SaveDesignParams): Promise<SaveDesignResult> => {
     if (!userId) {
       console.error("User ID is required to save a design");
@@ -53,13 +57,13 @@ export function useDesignAPI() {
 
       // Extract preferences for metadata
       const preferences = extractPreferences(questionResponses);
-      console.log("Extracted preferences:", preferences);
 
-      // Create metadata object
+      // Create metadata object, merging with any provided metadata
       const userStyleMetadata: UserStylePreference = {
         color_scheme: preferences.color ? [preferences.color] : undefined,
         style_preference: preferences.style,
         timestamp: new Date().toISOString(),
+        ...providedStyleMetadata // Merge any provided metadata (like t-shirt options)
       };
 
       // First verify authentication
@@ -69,37 +73,32 @@ export function useDesignAPI() {
         throw new Error("Authentication required");
       }
 
-      // For test user, bypass profile check and creation
-      if (userId === "0ad70049-b2a7-4248-a395-811665c971fe") {
-        console.log("Test user detected - bypassing profile check");
-      } else {
-        // For regular users, check for profile
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("id", userId)
-          .single();
+      // Check for profile
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", userId)
+        .single();
 
-        if (profileError) {
-          if (profileError.code === 'PGRST116') {
-            // Profile doesn't exist, create one
-            const { error: createError } = await supabase
-              .from("profiles")
-              .insert({
-                id: userId,
-                full_name: "New User",
-                role: "user",
-                created_at: new Date().toISOString()
-              });
+      if (profileError) {
+        if (profileError.code === 'PGRST116') {
+          // Profile doesn't exist, create one
+          const { error: createError } = await supabase
+            .from("profiles")
+            .insert({
+              id: userId,
+              full_name: "New User",
+              role: "user",
+              created_at: new Date().toISOString()
+            });
 
-            if (createError) {
-              console.error("Failed to create profile:", createError);
-              throw new Error("Failed to create user profile");
-            }
-          } else {
-            console.error("Error checking profile:", profileError);
-            throw new Error("Failed to verify user profile");
+          if (createError) {
+            console.error("Failed to create profile:", createError);
+            throw new Error("Failed to create user profile");
           }
+        } else {
+          console.error("Error checking profile:", profileError);
+          throw new Error("Failed to verify user profile");
         }
       }
 
@@ -113,59 +112,49 @@ export function useDesignAPI() {
       // Make sure we're authenticated with the correct user
       console.log("Preparing to insert design with user ID:", userId);
 
-      // For test user, completely bypass database operations
-      if (userId === "0ad70049-b2a7-4248-a395-811665c971fe") {
-        console.log("Using test user - bypassing database operations completely");
+      // Check if we're updating an existing design or creating a new one
+      let data: any = null;
+      let supabaseError: any = null;
 
-        // Generate a mock design ID
-        const mockDesignId = "test-design-" + Date.now();
-
-        // Store design data in localStorage for test user
-        try {
-          const testUserDesigns = JSON.parse(localStorage.getItem('testUserDesigns') || '[]');
-          testUserDesigns.push({
-            id: mockDesignId,
-            user_id: userId,
-            question_responses: questionResponses,
-            design_data: designData,
+      if (designId) {
+        // Update existing design
+        console.log(`Updating existing design with ID: ${designId}`);
+        const { data: updateData, error: updateError } = await supabase
+          .from("designs")
+          .update({
+            question_responses: serializedQuestionResponses,
+            design_data: serializedDesignData,
             preview_url: previewUrl,
-            user_style_metadata: userStyleMetadata,
-            name: "My Test Design",
+            user_style_metadata: serializedUserStyleMetadata,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', designId)
+          .eq('user_id', userId) // Ensure the user owns this design
+          .select('id')
+          .single();
+
+        data = updateData;
+        supabaseError = updateError;
+      } else {
+        // Insert new design
+        console.log("Inserting new design into Supabase for regular user");
+        const { data: insertData, error: insertError } = await supabase
+          .from("designs")
+          .insert({
+            user_id: userId,
+            question_responses: serializedQuestionResponses,
+            design_data: serializedDesignData,
+            preview_url: previewUrl,
+            user_style_metadata: serializedUserStyleMetadata,
+            name: "My Design", // Add a default name as this field is required
             created_at: new Date().toISOString()
-          });
-          localStorage.setItem('testUserDesigns', JSON.stringify(testUserDesigns));
-          console.log("Saved test user design to localStorage");
-        } catch (e) {
-          console.error("Failed to save test user design to localStorage:", e);
-        }
+          })
+          .select('id')
+          .single();
 
-        // Simulate a delay to make it feel like a real save
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        console.log("Mock design saved with ID:", mockDesignId);
-        toast.success("Design saved successfully!");
-        return {
-          success: true,
-          designId: mockDesignId
-        };
+        data = insertData;
+        supabaseError = insertError;
       }
-
-      // For regular users, use the normal approach
-      // Insert the design with all required fields
-      console.log("Inserting design into Supabase for regular user");
-      const { data, error: supabaseError } = await supabase
-        .from("designs")
-        .insert({
-          user_id: userId,
-          question_responses: serializedQuestionResponses,
-          design_data: serializedDesignData,
-          preview_url: previewUrl,
-          user_style_metadata: serializedUserStyleMetadata,
-          name: "My Design", // Add a default name as this field is required
-          created_at: new Date().toISOString()
-        })
-        .select('id')
-        .single();
 
       if (supabaseError) {
         console.error("Error saving design:", supabaseError);

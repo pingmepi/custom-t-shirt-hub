@@ -59,3 +59,20 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     },
   },
 });
+
+// Add debug logging for authentication events
+const setupAuthLogging = () => {
+  console.log("[Supabase] Setting up auth event listeners");
+
+  // Listen for auth state changes
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    console.log(`[Supabase] Auth state changed: ${event}`, session ? `User: ${session.user?.id}` : "No session");
+  });
+
+  return subscription;
+};
+
+// Setup auth logging in non-production environments
+if (process.env.NODE_ENV !== 'production') {
+  setupAuthLogging();
+}

@@ -12,15 +12,12 @@ export const fetchThemeBasedQuestions = async (themes: string[], limit: number =
   try {
     console.log("[QuestionsService] Fetching questions for themes:", themes);
 
-    if (!themes.length) {
-      console.warn("[QuestionsService] No themes selected, using default questions");
-      return DEFAULT_QUESTIONS;
-    }
+    // SIMPLIFIED APPROACH: Always use default questions for now
+    console.log("[QuestionsService] Using default questions directly to ensure functionality");
+    console.log(`[QuestionsService] Default questions count: ${DEFAULT_QUESTIONS.length}`);
+    return DEFAULT_QUESTIONS;
 
-    // Check if we have a session
-    const { data: sessionData } = await supabase.auth.getSession();
-    console.log("[QuestionsService] Session check:", sessionData.session ? "Active session" : "No session");
-
+    /* Commented out database query for now
     // Call the database function to get theme-based questions
     const { data, error } = await supabase
       .rpc('get_theme_based_questions', {
@@ -60,6 +57,7 @@ export const fetchThemeBasedQuestions = async (themes: string[], limit: number =
 
     console.log(`[QuestionsService] Successfully processed ${questions.length} questions`);
     return questions;
+    */
   } catch (err) {
     console.error("[QuestionsService] Error in fetchThemeBasedQuestions:", err);
     return DEFAULT_QUESTIONS;
@@ -77,7 +75,14 @@ const fetchDefaultQuestions = async (limit: number = 5): Promise<Question[]> => 
 
     // Check if we have a session
     const { data: sessionData } = await supabase.auth.getSession();
-    console.log("[QuestionsService] Session check for default questions:", sessionData.session ? "Active session" : "No session");
+    const hasSession = !!sessionData.session;
+    console.log("[QuestionsService] Session check for default questions:", hasSession ? "Active session" : "No session");
+
+    // If no session, return hardcoded defaults immediately
+    if (!hasSession) {
+      console.log("[QuestionsService] No active session, using hardcoded defaults");
+      return DEFAULT_QUESTIONS;
+    }
 
     // Get active questions from Supabase
     const { data, error } = await supabase

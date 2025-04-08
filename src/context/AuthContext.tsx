@@ -15,8 +15,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUserProfile,
     setLoading,
     fetchUserProfile,
-    getCurrentSession,
-    loadTestUser
+    getCurrentSession
   } = auth;
 
   // This effect will only run once on component mount
@@ -25,48 +24,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     console.log("[Auth] Setting up auth state listener");
 
-    // Check for remembered test user first
-    const { user: testUser, profile: testProfile } = loadTestUser();
-    if (testUser) {
-      console.log("[Auth] Restored test user session from localStorage");
-      setUser(testUser);
-      setUserProfile(testProfile);
-
-      // Create a more complete mock session
-      const mockSession = {
-        access_token: "mock-token-" + Date.now(),
-        refresh_token: "mock-refresh-" + Date.now(),
-        user: testUser,
-        expires_at: Math.floor(Date.now() / 1000) + 3600, // Expires in 1 hour
-        expires_in: 3600,
-        token_type: "bearer",
-        provider_token: null,
-        provider_refresh_token: null
-      } as Session;
-
-      setSession(mockSession);
-
-      // Store the mock session in Supabase's storage to help with RLS
-      try {
-        localStorage.setItem('sb-lchamzwbdmqpmabvaqpi-auth', JSON.stringify({
-          access_token: mockSession.access_token,
-          refresh_token: mockSession.refresh_token,
-          expires_at: mockSession.expires_at,
-          expires_in: mockSession.expires_in,
-          token_type: "bearer",
-          user: testUser
-        }));
-        console.log("[Auth] Set Supabase auth in localStorage for test user");
-      } catch (e) {
-        console.error("[Auth] Failed to set Supabase auth in localStorage:", e);
-      }
-
-      setLoading(false);
-      setIsInitialized(true);
-      return;
-    }
-
-    // Set up auth state listener FIRST
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         console.log("[Auth] Auth state changed:", event, newSession?.user?.email);
@@ -206,8 +164,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUserProfile,
     setLoading,
     fetchUserProfile,
-    getCurrentSession,
-    loadTestUser
+    getCurrentSession
   ]);
 
   return (

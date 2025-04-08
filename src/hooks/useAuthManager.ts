@@ -2,7 +2,6 @@
 import { useState, useCallback } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { UserProfile } from "@/lib/types";
-import { useTestUser } from "./useTestUser";
 import * as authService from "@/services/authService";
 import { toast } from "sonner";
 
@@ -14,52 +13,12 @@ export const useAuthManager = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const testUser = useTestUser();
 
   /**
    * Sign in with email and password
    */
   const signIn = useCallback(async (email: string, password: string, rememberMe = false) => {
     console.log("[AuthManager] Attempting to sign in user:", email, "Remember me:", rememberMe);
-
-    // Handle test user
-    if (testUser.isTestUser(email, password)) {
-      console.log("[AuthManager] Using test credentials");
-      const { mockUser, mockProfile } = testUser.saveTestUser(rememberMe);
-
-      // Create a more complete mock session
-      const mockSession = {
-        access_token: "mock-token-" + Date.now(),
-        refresh_token: "mock-refresh-" + Date.now(),
-        user: mockUser,
-        expires_at: Math.floor(Date.now() / 1000) + 3600, // Expires in 1 hour
-        expires_in: 3600,
-        token_type: "bearer",
-        provider_token: null,
-        provider_refresh_token: null
-      } as unknown as Session;
-
-      // Set the session in Supabase's internal storage to help with RLS
-      try {
-        localStorage.setItem('sb-lchamzwbdmqpmabvaqpi-auth', JSON.stringify({
-          access_token: mockSession.access_token,
-          refresh_token: mockSession.refresh_token,
-          expires_at: mockSession.expires_at,
-          expires_in: mockSession.expires_in,
-          token_type: "bearer",
-          user: mockUser
-        }));
-        console.log("[AuthManager] Set Supabase auth in localStorage for test user");
-      } catch (e) {
-        console.error("[AuthManager] Failed to set Supabase auth in localStorage:", e);
-      }
-
-      setUser(mockUser);
-      setSession(mockSession);
-      setUserProfile(mockProfile);
-      console.log("[AuthManager] Test user sign in complete");
-      return;
-    }
 
     try {
       // Sign in with Supabase
@@ -91,7 +50,7 @@ export const useAuthManager = () => {
       toast.error(error.message || "Failed to sign in");
       throw error;
     }
-  }, [testUser]);
+  }, []);
 
   /**
    * Sign up a new user
@@ -154,16 +113,6 @@ export const useAuthManager = () => {
   const signOut = useCallback(async () => {
     console.log("[AuthManager] Attempting to sign out user");
     try {
-      // For test user
-      if (user?.email === "kmandalam@gmail.com" || user?.id === "0ad70049-b2a7-4248-a395-811665c971fe") {
-        console.log("[AuthManager] Signing out test user");
-        setUser(null);
-        setSession(null);
-        setUserProfile(null);
-        testUser.clearTestUser();
-        console.log("[AuthManager] Test user signed out, localStorage cleared");
-        return;
-      }
 
       const { error } = await authService.signOut();
       if (error) {
@@ -179,7 +128,7 @@ export const useAuthManager = () => {
       toast.error(error.message || "Failed to sign out");
       throw error;
     }
-  }, [user, testUser]);
+  }, [user]);
 
   /**
    * Send a magic link for passwordless authentication
@@ -222,7 +171,6 @@ export const useAuthManager = () => {
     sendMagicLink,
     isAuthenticated: !!user,
     fetchUserProfile: authService.fetchUserProfile,
-    getCurrentSession: authService.getCurrentSession,
-    loadTestUser: testUser.loadTestUser
+    getCurrentSession: authService.getCurrentSession
   };
 };

@@ -31,18 +31,6 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
       // unless we implement admin functionality later
     }
 
-    // Handle test user specially
-    if (userId === "0ad70049-b2a7-4248-a395-811665c971fe") {
-      console.log("[AuthService] Detected test user ID, using mock profile");
-      return {
-        id: userId,
-        full_name: "Test User",
-        role: "user",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      } as UserProfile;
-    }
-
     // Try to fetch the profile with the current session
     try {
       const { data, error } = await supabase
@@ -109,30 +97,6 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
 async function createUserProfile(userId: string): Promise<UserProfile | null> {
   try {
     console.log("[AuthService] Creating new profile for user:", userId);
-
-    // Handle test user specially
-    if (userId === "0ad70049-b2a7-4248-a395-811665c971fe") {
-      console.log("[AuthService] Creating mock profile for test user");
-      const testProfile = {
-        id: userId,
-        full_name: "Test User",
-        role: "user",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      } as UserProfile;
-
-      // Try to save it, but don't worry if it fails
-      try {
-        await supabase
-          .from("profiles")
-          .upsert(testProfile);
-        console.log("[AuthService] Test profile saved to database");
-      } catch (e) {
-        console.warn("[AuthService] Could not save test profile to database, using mock");
-      }
-
-      return testProfile;
-    }
 
     // Get user details from auth
     const { data: userData } = await supabase.auth.getUser();
