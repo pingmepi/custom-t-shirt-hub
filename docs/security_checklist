@@ -1,0 +1,92 @@
+Thanks for sharing the detailed stack! Based on this setup, here's a **security audit checklist tailored to your codebase**:
+
+---
+
+## 🔐 **Codebase Security Checklist – Custom T-shirt Design App**
+
+### ✅ **1. Authentication & Authorization**
+- [ ] Supabase Auth configured with email domain restrictions or email confirmations if needed.
+- [ ] JWT tokens are **validated on both client and server** (e.g., during Supabase Function calls).
+- [ ] No sensitive data (JWT, access tokens) stored in `localStorage`; use **HttpOnly cookies** where feasible.
+- [ ] Role-based UI logic matches Supabase RLS policies to avoid privilege escalation on the frontend.
+
+---
+
+### 📦 **2. API & Data Layer (Supabase)**
+- [ ] RLS policies are thoroughly tested for:
+  - Unauthorized read/write protection.
+  - Authenticated-only access.
+  - Design ownership for user-saved designs and orders.
+- [ ] Supabase storage buckets set to **private** unless explicitly public (e.g., preview images).
+- [ ] API calls via Supabase client are scoped to the **minimum necessary tables/fields**.
+- [ ] No unscoped or `select *` queries in production.
+
+---
+
+### 🛡️ **3. Input Validation & Forms**
+- [ ] Zod schemas are implemented for **every form and user input**, both client-side and serverless functions.
+- [ ] Validation errors do not leak technical details (stack traces, etc.).
+- [ ] Image uploads (e.g., custom designs) are validated for MIME type and size.
+
+---
+
+### 🎨 **4. Canvas & Design Editor**
+- [ ] Input to the Canvas (e.g., text, images) is sanitized to prevent injection or DoS attacks.
+- [ ] File export logic (e.g., downloading .png/.svg) doesn’t leak user-specific data.
+- [ ] No access to other users’ designs via predictable file paths or IDs.
+
+---
+
+### 🧩 **5. Frontend Code Practices**
+- [ ] Sensitive keys are injected via environment variables (`VITE_PUBLIC_` if needed).
+- [ ] React Query responses are sanitized before being rendered in UI.
+- [ ] No exposure of internal error messages in production (use `console.error` + toast fallback).
+- [ ] All modals/popups (Radix UI) respect focus trap and escape behavior (for accessibility and security).
+
+---
+
+### 🧪 **6. Testing & Static Analysis**
+- [ ] ESLint + Prettier + TypeScript in CI/CD to catch unsafe patterns.
+- [ ] Vitest includes coverage of:
+  - Auth flows
+  - Design save/export
+  - Role-based access in UI
+- [ ] Add Semgrep (optional) for static security scanning of frontend code.
+
+---
+
+### 🔑 **7. CI/CD & Environment Config**
+- [ ] No API keys or secrets pushed to Git (check with `git-secrets` or similar).
+- [ ] `.env` files ignored via `.gitignore`.
+- [ ] Vercel/Netlify environment variables scoped to project and team.
+- [ ] Limit Supabase service roles to specific use cases (e.g., admin dashboard).
+
+---
+
+### 🌐 **8. Browser-Side Protections**
+- [ ] Secure headers added via Vercel/Netlify middleware:
+  - `Content-Security-Policy`
+  - `Strict-Transport-Security`
+  - `X-Frame-Options`
+  - `Referrer-Policy`
+- [ ] Rate-limiting via Supabase edge functions (or alternative) on sensitive endpoints.
+- [ ] CORS policies tightened if Supabase functions or API endpoints are called cross-origin.
+
+---
+
+### 🧾 **9. Miscellaneous**
+- [ ] No direct rendering of user input (e.g., usernames, design titles) without escaping.
+- [ ] Unused permissions and endpoints removed.
+- [ ] Designs and orders are associated with authenticated user IDs, verified before action.
+
+---
+
+### 🔭 **10. Optional Enhancements**
+- [ ] Add basic anomaly detection (e.g., 10+ failed logins → lock account).
+- [ ] Use [Helmet](https://helmetjs.github.io/) if any custom Express backend is introduced.
+- [ ] Monitor usage via Supabase logs or integrate a lightweight analytics solution like PostHog with event-level privacy.
+
+---
+
+Would you like this as a downloadable checklist or integrated as a Notion doc or GitHub Issue template?  
+Also happy to help set up tools like **Semgrep**, **SonarCloud**, or **GitHub Actions** for automated checks.
