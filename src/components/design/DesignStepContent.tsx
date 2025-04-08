@@ -16,15 +16,17 @@ interface DesignStepContentProps {
   onDesignUpdated: (data: DesignData) => void;
   onNavigateStep: (step: string) => void;
   onQuestionsComplete: (responses: Record<string, QuestionResponse | string>) => void;
+  initialDesignData?: DesignData | null;
 }
 
 const DesignStepContent = ({
   questionResponses,
   onDesignUpdated,
   onNavigateStep,
-  onQuestionsComplete
+  onQuestionsComplete,
+  initialDesignData = null
 }: DesignStepContentProps) => {
-  const [designData, setDesignData] = useState<DesignData | null>(null);
+  const [designData, setDesignData] = useState<DesignData | null>(initialDesignData);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const { toast } = useToast();
@@ -50,17 +52,27 @@ const DesignStepContent = ({
     navigate("/login", { state: { from: "/design" } });
   };
 
-  // Generate base image based on user's responses
+  // Generate base image based on user's responses or use initial design data
   useEffect(() => {
+    // If we have initial design data, don't generate a new image
+    if (initialDesignData) {
+      console.log("[DesignStepContent] Using initial design data, skipping image generation");
+      setDesignData(initialDesignData);
+      // Notify parent component about the initial design data
+      onDesignUpdated(initialDesignData);
+      return;
+    }
+
     const generateBaseImage = async () => {
       // Only generate if we have question responses and no image already
       if (Object.keys(questionResponses).length > 0 && !generatedImageUrl) {
+        console.log("[DesignStepContent] Generating base image from question responses");
         setIsGeneratingImage(true);
         try {
           const imageUrl = await fetchBaseDesignImage(questionResponses);
           setGeneratedImageUrl(imageUrl);
         } catch (error) {
-          console.error("Error generating image:", error);
+          console.error("[DesignStepContent] Error generating image:", error);
           toast({
             title: "Generation error",
             description: "Failed to generate your design. Using a default template.",
@@ -74,7 +86,7 @@ const DesignStepContent = ({
     };
 
     generateBaseImage();
-  }, [questionResponses, fetchBaseDesignImage, generatedImageUrl, toast]);
+  }, [questionResponses, fetchBaseDesignImage, generatedImageUrl, toast, initialDesignData, onDesignUpdated]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -166,6 +178,7 @@ const DesignStepContent = ({
           ) : (
             <DesignCanvas
               initialImageUrl={generatedImageUrl || designImages.designFlow} // Using imported image
+              initialDesignData={initialDesignData}
               onDesignUpdated={handleDesignUpdated}
             />
           )}

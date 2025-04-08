@@ -7,6 +7,7 @@ import { tshirtImages } from "@/assets";
 interface UseCanvasInitializationProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
   initialImageUrl?: string;
+  initialDesignData?: DesignData | null;
   onDesignUpdated?: (designData: DesignData) => void;
   tshirtColor?: string;
 }
@@ -24,6 +25,7 @@ interface UseCanvasInitializationResult {
 export function useCanvasInitialization({
   canvasRef,
   initialImageUrl,
+  initialDesignData,
   onDesignUpdated,
   tshirtColor = "#ffffff"
 }: UseCanvasInitializationProps): UseCanvasInitializationResult {
@@ -137,45 +139,88 @@ export function useCanvasInitialization({
           }
         };
 
-        // Now load the design image or add placeholder
-        if (initialImageUrl) {
+        // Check if we have initialDesignData to restore
+        if (initialDesignData && Object.keys(initialDesignData).length > 0) {
           try {
-            fabric.Image.fromURL(initialImageUrl, (designImg: fabric.Image) => {
-              try {
-                // Scale and position the design image
-                const maxWidth = 300;
-                const maxHeight = 300;
+            console.log("[useCanvasInitialization] Restoring design from initialDesignData:", initialDesignData);
 
-                if (designImg.width && designImg.width > maxWidth) {
-                  designImg.scaleToWidth(maxWidth);
+            // If we have elements array, restore the canvas
+            if (initialDesignData.elements && initialDesignData.elements.length > 0) {
+              // Add each element to the canvas
+              initialDesignData.elements.forEach((obj: any) => {
+                if (obj.type === 'text') {
+                  const text = new fabric.Text(obj.text || 'Text', {
+                    left: obj.left || 300,
+                    top: obj.top || 225,
+                    fontSize: obj.fontSize || 24,
+                    fontFamily: obj.fontFamily || 'Arial',
+                    fill: obj.fill || '#000000',
+                    angle: obj.angle || 0,
+                    scaleX: obj.scaleX || 1,
+                    scaleY: obj.scaleY || 1,
+                    opacity: obj.opacity || 1
+                  });
+                  canvas.add(text);
                 }
+                // Add other object types as needed
+              });
 
-                if (designImg.height && designImg.getScaledHeight() > maxHeight) {
-                  designImg.scaleToHeight(maxHeight);
-                }
-
-                designImg.set({
-                  left: 300,
-                  top: 225,
-                  originX: 'center',
-                  originY: 'center',
-                });
-
-                designImageRef.current = designImg;
-                canvas.add(designImg);
-                canvas.renderAll();
-              } catch (error) {
-                console.error("Error processing image:", error);
-                addPlaceholderText();
-              }
-            }, { crossOrigin: 'anonymous' });
+              canvas.renderAll();
+              console.log("[useCanvasInitialization] Canvas restored from objects");
+            } else {
+              // If we have initialDesignData but no usable content, load the image
+              loadInitialImage();
+            }
           } catch (error) {
-            console.error("Error loading design image:", error);
-            addPlaceholderText();
+            console.error("[useCanvasInitialization] Error restoring design:", error);
+            loadInitialImage();
           }
         } else {
-          // Add placeholder text if no image URL provided
-          addPlaceholderText();
+          // No initialDesignData, load the image
+          loadInitialImage();
+        }
+
+        // Function to load the initial image
+        function loadInitialImage() {
+          if (initialImageUrl) {
+            try {
+              fabric.Image.fromURL(initialImageUrl, (designImg: fabric.Image) => {
+                try {
+                  // Scale and position the design image
+                  const maxWidth = 300;
+                  const maxHeight = 300;
+
+                  if (designImg.width && designImg.width > maxWidth) {
+                    designImg.scaleToWidth(maxWidth);
+                  }
+
+                  if (designImg.height && designImg.getScaledHeight() > maxHeight) {
+                    designImg.scaleToHeight(maxHeight);
+                  }
+
+                  designImg.set({
+                    left: 300,
+                    top: 225,
+                    originX: 'center',
+                    originY: 'center',
+                  });
+
+                  designImageRef.current = designImg;
+                  canvas.add(designImg);
+                  canvas.renderAll();
+                } catch (error) {
+                  console.error("Error processing image:", error);
+                  addPlaceholderText();
+                }
+              }, { crossOrigin: 'anonymous' });
+            } catch (error) {
+              console.error("Error loading design image:", error);
+              addPlaceholderText();
+            }
+          } else {
+            // Add placeholder text if no image URL provided
+            addPlaceholderText();
+          }
         }
 
         setIsLoaded(true);
@@ -185,7 +230,7 @@ export function useCanvasInitialization({
       }
     }, { crossOrigin: 'anonymous' });
 
-  }, [isInitialized, initialImageUrl, tshirtColor]);
+  }, [isInitialized, initialImageUrl, initialDesignData, tshirtColor, onDesignUpdated]);
 
   // Update tshirt color when it changes - using a ref to track previous color
   const prevTshirtColorRef = useRef<string>(tshirtColor);

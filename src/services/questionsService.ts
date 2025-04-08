@@ -10,33 +10,45 @@ import { Question } from "@/lib/types";
  */
 export const fetchThemeBasedQuestions = async (themes: string[], limit: number = 5): Promise<Question[]> => {
   try {
-    console.log("Fetching questions for themes:", themes);
-    
+    console.log("[QuestionsService] Fetching questions for themes:", themes);
+
     if (!themes.length) {
-      console.warn("No themes selected, using default questions");
-      return await fetchDefaultQuestions(limit);
+      console.warn("[QuestionsService] No themes selected, using default questions");
+      return DEFAULT_QUESTIONS;
     }
-    
+
+    // Check if we have a session
+    const { data: sessionData } = await supabase.auth.getSession();
+    console.log("[QuestionsService] Session check:", sessionData.session ? "Active session" : "No session");
+
     // Call the database function to get theme-based questions
     const { data, error } = await supabase
-      .rpc('get_theme_based_questions', { 
+      .rpc('get_theme_based_questions', {
         theme_ids: themes,
         limit_count: limit
       });
-    
+
     if (error) {
-      console.error("Error fetching theme-based questions:", error);
-      throw new Error(`Failed to fetch questions: ${error.message}`);
+      console.error("[QuestionsService] Error fetching theme-based questions:", error);
+
+      // If we get a 401 error, use default questions
+      if (error.code === "PGRST301" || error.code === "401") {
+        console.log("[QuestionsService] Authentication error, using default questions");
+        return DEFAULT_QUESTIONS;
+      }
+
+      // Try fallback method
+      return await fetchDefaultQuestions(limit);
     }
-    
-    console.log("Received questions data:", data);
-    
+
+    console.log("[QuestionsService] Received questions data:", data);
+
     if (!data || data.length === 0) {
-      console.warn("No theme-based questions found, using default questions");
+      console.warn("[QuestionsService] No theme-based questions found, using default questions");
       // Fallback to get any active questions if no theme-based questions
       return await fetchDefaultQuestions(limit);
     }
-    
+
     const questions: Question[] = data.map(q => ({
       id: q.id,
       type: q.type as 'text' | 'choice' | 'color' | 'textarea',
@@ -45,11 +57,12 @@ export const fetchThemeBasedQuestions = async (themes: string[], limit: number =
       is_active: q.is_active === true,
       usage_count: q.usage_count || 0
     }));
-    
+
+    console.log(`[QuestionsService] Successfully processed ${questions.length} questions`);
     return questions;
   } catch (err) {
-    console.error("Error in fetchThemeBasedQuestions:", err);
-    return await fetchDefaultQuestions(limit);
+    console.error("[QuestionsService] Error in fetchThemeBasedQuestions:", err);
+    return DEFAULT_QUESTIONS;
   }
 };
 
@@ -60,6 +73,12 @@ export const fetchThemeBasedQuestions = async (themes: string[], limit: number =
  */
 const fetchDefaultQuestions = async (limit: number = 5): Promise<Question[]> => {
   try {
+    console.log("[QuestionsService] Fetching default questions");
+
+    // Check if we have a session
+    const { data: sessionData } = await supabase.auth.getSession();
+    console.log("[QuestionsService] Session check for default questions:", sessionData.session ? "Active session" : "No session");
+
     // Get active questions from Supabase
     const { data, error } = await supabase
       .from('questions')
@@ -67,19 +86,26 @@ const fetchDefaultQuestions = async (limit: number = 5): Promise<Question[]> => 
       .eq('is_active', true)
       .order('usage_count', { ascending: false })
       .limit(limit);
-    
+
     if (error) {
-      console.error("Error fetching default questions:", error);
+      console.error("[QuestionsService] Error fetching default questions:", error);
+
+      // If we get a 401 error, use hardcoded defaults
+      if (error.code === "PGRST301" || error.code === "401") {
+        console.log("[QuestionsService] Authentication error, using hardcoded defaults");
+        return DEFAULT_QUESTIONS;
+      }
+
       throw new Error(`Failed to fetch questions: ${error.message}`);
     }
-    
-    console.log("Received default questions data:", data);
-    
+
+    console.log("[QuestionsService] Received default questions data:", data);
+
     if (!data || data.length === 0) {
-      console.warn("No questions found in database, using hardcoded defaults");
+      console.warn("[QuestionsService] No questions found in database, using hardcoded defaults");
       return DEFAULT_QUESTIONS;
     }
-    
+
     const questions: Question[] = data.map(q => ({
       id: q.id,
       type: q.type as 'text' | 'choice' | 'color' | 'textarea',
@@ -88,10 +114,11 @@ const fetchDefaultQuestions = async (limit: number = 5): Promise<Question[]> => 
       is_active: q.is_active === true,
       usage_count: q.usage_count || 0
     }));
-    
+
+    console.log(`[QuestionsService] Successfully processed ${questions.length} default questions`);
     return questions;
   } catch (err) {
-    console.error("Error in fetchDefaultQuestions:", err);
+    console.error("[QuestionsService] Error in fetchDefaultQuestions:", err);
     return DEFAULT_QUESTIONS;
   }
 };
@@ -107,19 +134,19 @@ export const incrementQuestionUsage = async (questionId: string): Promise<void> 
       .select('usage_count')
       .eq('id', questionId)
       .single();
-      
+
     if (fetchError) {
       console.error(`Error fetching question ${questionId}:`, fetchError);
       return;
     }
-    
+
     const currentCount = questionData?.usage_count || 0;
-    
+
     const { error: updateError } = await supabase
       .from('questions')
       .update({ usage_count: currentCount + 1 })
       .eq('id', questionId);
-      
+
     if (updateError) {
       console.error(`Error updating usage count for question ${questionId}:`, updateError);
     } else {
@@ -147,7 +174,7 @@ const DEFAULT_QUESTIONS: Question[] = [
   },
   {
     id: "q3",
-    type: "color", 
+    type: "color",
     question_text: "What's your preferred color palette?",
     is_active: true,
   },

@@ -6,6 +6,7 @@ interface DesignStepperProps {
   questionResponses: Record<string, any>;
   designData: any;
   isDesignComplete: boolean;
+  editMode?: boolean;
 }
 
 const DesignStepper = ({
@@ -13,6 +14,7 @@ const DesignStepper = ({
   questionResponses,
   designData,
   isDesignComplete,
+  editMode = false
 }: DesignStepperProps) => {
   return (
     <div className="mb-8">
@@ -25,26 +27,26 @@ const DesignStepper = ({
         </div>
         <div className="flex justify-between">
           <div className="flex flex-col items-center">
-            <div 
+            <div
               className={`w-10 h-10 flex items-center justify-center rounded-full border-2 ${
-                activeStep === "questions" 
-                  ? "border-brand-green bg-brand-green text-white" 
-                  : Object.keys(questionResponses).length 
-                    ? "border-brand-green bg-brand-lightGreen" 
+                activeStep === "questions"
+                  ? "border-brand-green bg-brand-green text-white"
+                  : Object.keys(questionResponses).length
+                    ? "border-brand-green bg-brand-lightGreen"
                     : "border-gray-300"
               }`}
             >
               {Object.keys(questionResponses).length ? <CheckCircle size={18} /> : "1"}
             </div>
-            <span className="mt-2 text-sm font-medium">Preferences</span>
+            <span className="mt-2 text-sm font-medium">{editMode ? "Design Info" : "Preferences"}</span>
           </div>
           <div className="flex flex-col items-center">
-            <div 
+            <div
               className={`w-10 h-10 flex items-center justify-center rounded-full border-2 ${
-                activeStep === "design" 
-                  ? "border-brand-green bg-brand-green text-white" 
-                  : designData 
-                    ? "border-brand-green bg-brand-lightGreen" 
+                activeStep === "design"
+                  ? "border-brand-green bg-brand-green text-white"
+                  : designData
+                    ? "border-brand-green bg-brand-lightGreen"
                     : "border-gray-300"
               }`}
             >
@@ -53,12 +55,12 @@ const DesignStepper = ({
             <span className="mt-2 text-sm font-medium">Design</span>
           </div>
           <div className="flex flex-col items-center">
-            <div 
+            <div
               className={`w-10 h-10 flex items-center justify-center rounded-full border-2 ${
-                activeStep === "options" 
-                  ? "border-brand-green bg-brand-green text-white" 
-                  : isDesignComplete 
-                    ? "border-brand-green bg-brand-lightGreen" 
+                activeStep === "options"
+                  ? "border-brand-green bg-brand-green text-white"
+                  : isDesignComplete
+                    ? "border-brand-green bg-brand-lightGreen"
                     : "border-gray-300"
               }`}
             >

@@ -26,10 +26,10 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { signIn, isAuthenticated } = useAuth();
-  
+
   // Extract the redirect path from the location state
   const redirectTo = location.state?.from || "/dashboard";
-  
+
   // Redirect if already authenticated
   useEffect(() => {
     console.log("[Login] Checking authentication status:", isAuthenticated);
@@ -38,7 +38,7 @@ const LoginPage = () => {
       navigate(redirectTo);
     }
   }, [isAuthenticated, navigate, redirectTo]);
-  
+
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -52,12 +52,12 @@ const LoginPage = () => {
     console.log("[Login] Form submitted with remember me:", data.rememberMe);
     try {
       setIsLoading(true);
-      
+
       await signIn(data.email, data.password, data.rememberMe);
 
       console.log("[Login] Login successful");
       toast.success("Login successful!");
-      
+
       // Check for stored design data
       const savedAnswers = sessionStorage.getItem('designAnswers');
       if (savedAnswers) {
@@ -112,9 +112,9 @@ const LoginPage = () => {
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
                 <div className="text-sm">
-                  <a href="#" className="font-medium text-brand-green hover:text-brand-darkGreen">
-                    Forgot your password?
-                  </a>
+                  <Link to="/magic-link" className="font-medium text-brand-green hover:text-brand-darkGreen">
+                    Use magic link instead
+                  </Link>
                 </div>
               </div>
               <div className="mt-1 relative">
@@ -155,8 +155,8 @@ const LoginPage = () => {
             </div>
 
             <div>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="w-full bg-brand-green hover:bg-brand-darkGreen"
                 disabled={isLoading}
               >

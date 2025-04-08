@@ -8,4 +8,54 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+// Create a custom storage implementation that uses localStorage for better compatibility
+const customStorage = {
+  getItem: (key: string) => {
+    try {
+      // Use localStorage for better compatibility
+      const localItem = localStorage.getItem(key);
+      return localItem ? JSON.parse(localItem) : null;
+    } catch (error) {
+      console.error(`[Supabase] Error getting item from storage: ${key}`, error);
+      return null;
+    }
+  },
+  setItem: (key: string, value: any) => {
+    try {
+      // Store in localStorage
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.error(`[Supabase] Error setting item in storage: ${key}`, error);
+    }
+  },
+  removeItem: (key: string) => {
+    try {
+      // Remove from localStorage
+      localStorage.removeItem(key);
+    } catch (error) {
+      console.error(`[Supabase] Error removing item from storage: ${key}`, error);
+    }
+  },
+};
+
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: {
+    storageKey: 'sb-lchamzwbdmqpmabvaqpi-auth',
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false, // Important: disable automatic URL parsing
+    storage: customStorage,
+    flowType: 'pkce', // Use PKCE flow for better security
+  },
+  global: {
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
+    },
+  },
+});
