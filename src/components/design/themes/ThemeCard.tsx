@@ -10,18 +10,23 @@ interface ThemeCardProps {
 }
 
 const ThemeCard = ({ theme, isSelected, onSelect }: ThemeCardProps) => {
+  // Only log on first render, not on every re-render
+  const handleSelect = () => {
+    onSelect(theme.id);
+  };
+
   return (
-    <Card 
+    <Card
       key={theme.id}
       className={`cursor-pointer transition-all ${
-        isSelected 
-          ? 'ring-2 ring-brand-green' 
+        isSelected
+          ? 'ring-2 ring-brand-green'
           : 'hover:shadow-md'
       }`}
-      onClick={() => onSelect(theme.id)}
+      onClick={handleSelect}
     >
       <CardContent className="p-3">
-        <div 
+        <div
           className="aspect-square relative mb-2 rounded-md overflow-hidden"
           style={{
             background: theme.primary_color || "#f3f4f6",
@@ -31,7 +36,7 @@ const ThemeCard = ({ theme, isSelected, onSelect }: ThemeCardProps) => {
           }}
         >
           {!theme.image_url && (
-            <div 
+            <div
               className="absolute inset-0 flex items-center justify-center"
               style={{
                 background: `linear-gradient(45deg, ${theme.primary_color || '#f3f4f6'}, ${theme.secondary_color || theme.primary_color || '#e5e7eb'})`,

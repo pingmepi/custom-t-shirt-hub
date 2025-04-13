@@ -2,7 +2,6 @@
 import { useState, useCallback } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { UserProfile } from "@/lib/types";
-import { useTestUser } from "./useTestUser";
 import * as authService from "@/services/authService";
 import { toast } from "sonner";
 
@@ -14,7 +13,6 @@ export const useAuthManager = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const testUser = useTestUser();
 
   /**
    * Sign in with email and password
@@ -22,28 +20,10 @@ export const useAuthManager = () => {
   const signIn = useCallback(async (email: string, password: string, rememberMe = false) => {
     console.log("[AuthManager] Attempting to sign in user:", email, "Remember me:", rememberMe);
 
-    // Handle test user
-    if (testUser.isTestUser(email, password)) {
-      console.log("[AuthManager] Using test credentials");
-      const { mockUser, mockProfile } = testUser.saveTestUser(rememberMe);
-
-      const mockSession = {
-        access_token: "mock-token",
-        refresh_token: "mock-refresh",
-        user: mockUser
-      } as unknown as Session;
-
-      setUser(mockUser);
-      setSession(mockSession);
-      setUserProfile(mockProfile);
-      console.log("[AuthManager] Test user sign in complete");
-      return;
-    }
-
     try {
       // Sign in with Supabase
       const { user: authUser, session: authSession, error } = await authService.signInWithEmailAndPassword(email, password);
-      
+
       if (error) {
         throw error;
       }
@@ -51,12 +31,12 @@ export const useAuthManager = () => {
       if (authSession) {
         setSession(authSession);
         setUser(authUser);
-        
+
         // Fetch user profile
         console.log("[AuthManager] Fetching user profile after successful login");
         const profile = await authService.fetchUserProfile(authUser!.id);
         setUserProfile(profile);
-        
+
         // Handle remember me
         if (rememberMe) {
           console.log("[AuthManager] Remember me enabled, refreshing session for persistence");
@@ -70,7 +50,7 @@ export const useAuthManager = () => {
       toast.error(error.message || "Failed to sign in");
       throw error;
     }
-  }, [testUser]);
+  }, []);
 
   /**
    * Sign up a new user
@@ -78,9 +58,9 @@ export const useAuthManager = () => {
   const signUp = useCallback(async (email: string, password: string, fullName: string) => {
     console.log("[AuthManager] Attempting to sign up user:", email);
     try {
-      const { user: authUser, session: authSession, error } = 
+      const { user: authUser, session: authSession, error } =
         await authService.signUpWithEmailAndPassword(email, password, fullName);
-      
+
       if (error) {
         throw error;
       }
@@ -91,19 +71,19 @@ export const useAuthManager = () => {
           console.log("[AuthManager] Sign up successful with auto-login for:", authUser.email);
           setSession(authSession);
           setUser(authUser);
-          
+
           // Fetch or create user profile after a brief delay to allow the trigger to create it
           console.log("[AuthManager] Waiting for database trigger to create profile");
           setTimeout(async () => {
             console.log("[AuthManager] Checking for newly created profile");
             const profile = await authService.fetchUserProfile(authUser.id);
-            
+
             // If profile doesn't exist, create it manually
             if (!profile) {
               console.log("[AuthManager] Profile not found, creating it manually");
-              const { profile: newProfile, error: profileError } = 
+              const { profile: newProfile, error: profileError } =
                 await authService.createOrUpdateProfile(authUser.id, fullName);
-                
+
               if (profileError) {
                 console.error("[AuthManager] Error creating profile manually:", profileError);
               } else if (newProfile) {
@@ -133,16 +113,6 @@ export const useAuthManager = () => {
   const signOut = useCallback(async () => {
     console.log("[AuthManager] Attempting to sign out user");
     try {
-      // For test user
-      if (user?.email === "kmandalam@gmail.com" || user?.id === "0ad70049-b2a7-4248-a395-811665c971fe") {
-        console.log("[AuthManager] Signing out test user");
-        setUser(null);
-        setSession(null);
-        setUserProfile(null);
-        testUser.clearTestUser();
-        console.log("[AuthManager] Test user signed out, localStorage cleared");
-        return;
-      }
 
       const { error } = await authService.signOut();
       if (error) {
@@ -158,7 +128,33 @@ export const useAuthManager = () => {
       toast.error(error.message || "Failed to sign out");
       throw error;
     }
-  }, [user, testUser]);
+  }, [user]);
+
+  /**
+   * Send a magic link for passwordless authentication
+   */
+  const sendMagicLink = useCallback(async (email: string) => {
+    console.log("[AuthManager] Sending magic link to:", email);
+    try {
+      // Get the current origin for the redirect URL
+      const origin = window.location.origin;
+
+      // Create a secure redirect URL that doesn't expose tokens in the URL
+      const redirectTo = `${origin}/auth/callback`;
+
+      const { error } = await authService.sendMagicLink(email, redirectTo);
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error("[AuthManager] Magic link process failed:", error);
+      toast.error(error.message || "Failed to send magic link");
+      throw error;
+    }
+  }, []);
 
   return {
     user,
@@ -172,9 +168,9 @@ export const useAuthManager = () => {
     signIn,
     signUp,
     signOut,
+    sendMagicLink,
     isAuthenticated: !!user,
     fetchUserProfile: authService.fetchUserProfile,
-    getCurrentSession: authService.getCurrentSession,
-    loadTestUser: testUser.loadTestUser
+    getCurrentSession: authService.getCurrentSession
   };
 };

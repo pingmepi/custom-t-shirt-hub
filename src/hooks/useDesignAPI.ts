@@ -11,6 +11,8 @@ interface SaveDesignParams {
   questionResponses: Record<string, QuestionResponse | string>;
   designData: DesignData;
   previewUrl?: string;
+  designId?: string; // Optional designId for updating existing designs
+  userStyleMetadata?: any; // Optional user style metadata including t-shirt options
 }
 
 interface SaveDesignResult {
@@ -30,7 +32,9 @@ export function useDesignAPI() {
     userId,
     questionResponses,
     designData,
-    previewUrl = designImages.designFlow // Using imported image
+    previewUrl = designImages.designFlow, // Using imported image
+    designId, // Optional designId for updating existing designs
+    userStyleMetadata: providedStyleMetadata = {}
   }: SaveDesignParams): Promise<SaveDesignResult> => {
     if (!userId) {
       console.error("User ID is required to save a design");
@@ -53,44 +57,47 @@ export function useDesignAPI() {
 
       // Extract preferences for metadata
       const preferences = extractPreferences(questionResponses);
-      console.log("Extracted preferences:", preferences);
 
-      // Create metadata object
+      // Create metadata object, merging with any provided metadata
       const userStyleMetadata: UserStylePreference = {
         color_scheme: preferences.color ? [preferences.color] : undefined,
         style_preference: preferences.style,
         timestamp: new Date().toISOString(),
+        ...providedStyleMetadata // Merge any provided metadata (like t-shirt options)
       };
 
-      // First, verify the user exists in the profiles table
-      const { data: profileData, error: profileError } = await supabase
+      // First verify authentication
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.access_token) {
+        console.error("No valid session found");
+        throw new Error("Authentication required");
+      }
+
+      // Check for profile
+      const { error: profileError } = await supabase
         .from("profiles")
         .select("id")
         .eq("id", userId)
         .single();
 
       if (profileError) {
-        console.error("Error checking user profile:", profileError);
-        // If the profile doesn't exist, try to create one
         if (profileError.code === 'PGRST116') {
-          // Get user details to create profile
-          const { data: userData } = await supabase.auth.getUser();
-          
-          if (userData?.user) {
-            const { error: insertError } = await supabase
-              .from("profiles")
-              .insert({
-                id: userId,
-                full_name: userData.user.user_metadata.full_name || "User",
-                role: "user"
-              });
-              
-            if (insertError) {
-              console.error("Error creating user profile:", insertError);
-              throw new Error("Failed to create user profile");
-            }
+          // Profile doesn't exist, create one
+          const { error: createError } = await supabase
+            .from("profiles")
+            .insert({
+              id: userId,
+              full_name: "New User",
+              role: "user",
+              created_at: new Date().toISOString()
+            });
+
+          if (createError) {
+            console.error("Failed to create profile:", createError);
+            throw new Error("Failed to create user profile");
           }
         } else {
+          console.error("Error checking profile:", profileError);
           throw new Error("Failed to verify user profile");
         }
       }
@@ -102,18 +109,52 @@ export function useDesignAPI() {
 
       console.log("Preparing to insert design into Supabase");
 
-      // Fixed version - properly formatted for Supabase insert
-      const { data, error: supabaseError } = await supabase
-        .from("designs")
-        .insert({
-          user_id: userId,
-          question_responses: serializedQuestionResponses,
-          design_data: serializedDesignData,
-          preview_url: previewUrl,
-          user_style_metadata: serializedUserStyleMetadata
-        })
-        .select('id')
-        .single();
+      // Make sure we're authenticated with the correct user
+      console.log("Preparing to insert design with user ID:", userId);
+
+      // Check if we're updating an existing design or creating a new one
+      let data: any = null;
+      let supabaseError: any = null;
+
+      if (designId) {
+        // Update existing design
+        console.log(`Updating existing design with ID: ${designId}`);
+        const { data: updateData, error: updateError } = await supabase
+          .from("designs")
+          .update({
+            question_responses: serializedQuestionResponses,
+            design_data: serializedDesignData,
+            preview_url: previewUrl,
+            user_style_metadata: serializedUserStyleMetadata,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', designId)
+          .eq('user_id', userId) // Ensure the user owns this design
+          .select('id')
+          .single();
+
+        data = updateData;
+        supabaseError = updateError;
+      } else {
+        // Insert new design
+        console.log("Inserting new design into Supabase for regular user");
+        const { data: insertData, error: insertError } = await supabase
+          .from("designs")
+          .insert({
+            user_id: userId,
+            question_responses: serializedQuestionResponses,
+            design_data: serializedDesignData,
+            preview_url: previewUrl,
+            user_style_metadata: serializedUserStyleMetadata,
+            name: "My Design", // Add a default name as this field is required
+            created_at: new Date().toISOString()
+          })
+          .select('id')
+          .single();
+
+        data = insertData;
+        supabaseError = insertError;
+      }
 
       if (supabaseError) {
         console.error("Error saving design:", supabaseError);

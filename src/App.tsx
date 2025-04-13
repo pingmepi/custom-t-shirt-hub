@@ -13,7 +13,10 @@ import { AuthProvider } from "./context/AuthContext";
 const HomePage = lazy(() => import("./pages/Index"));
 const LoginPage = lazy(() => import("./pages/auth/Login"));
 const SignupPage = lazy(() => import("./pages/auth/Signup"));
+const MagicLinkPage = lazy(() => import("./pages/auth/MagicLink"));
+const AuthCallbackPage = lazy(() => import("./pages/auth/Callback"));
 const DesignPage = lazy(() => import("./pages/design/Design"));
+const EditDesignPage = lazy(() => import("./pages/design/EditDesign"));
 const DesignsListPage = lazy(() => import("./pages/design/DesignsList"));
 const UserDashboard = lazy(() => import("./pages/user/Dashboard"));
 const ProfilePage = lazy(() => import("./pages/user/Profile"));
@@ -34,12 +37,15 @@ const App = () => (
           <div className="flex flex-col min-h-screen">
             <Navbar />
             <main className="flex-grow">
-              <Suspense fallback={<div className="flex justify-center items-center h-screen"><div className="animate-spin h-10 w-10 border-4 border-brand-green border-t-transparent rounded-full"></div></div>}>
+              <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
                 <Routes>
                   <Route path="/" element={<HomePage />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/signup" element={<SignupPage />} />
+                  <Route path="/magic-link" element={<MagicLinkPage />} />
+                  <Route path="/auth/callback" element={<AuthCallbackPage />} />
                   <Route path="/design" element={<DesignPage />} />
+                  <Route path="/design/:designId" element={<EditDesignPage />} />
                   <Route path="/designs" element={<DesignsListPage />} />
                   <Route path="/dashboard" element={<UserDashboard />} />
                   <Route path="/profile" element={<ProfilePage />} />

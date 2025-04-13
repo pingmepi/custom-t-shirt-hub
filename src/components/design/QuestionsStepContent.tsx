@@ -33,11 +33,17 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete, onThemesSel
 
   // Fetch questions based on selected themes
   useEffect(() => {
+    console.log("[QuestionsStepContent] useEffect triggered, step:", step);
+
     if (step === 'questions') {
+      console.log("[QuestionsStepContent] Loading questions for themes:", selectedThemes);
+
       const loadQuestions = async () => {
         try {
           setIsLoading(true);
           const fetchedQuestions = await fetchThemeBasedQuestions(selectedThemes);
+          console.log("[QuestionsStepContent] Fetched questions:", fetchedQuestions.length);
+
           setQuestions(fetchedQuestions);
 
           // Initialize answers
@@ -56,10 +62,16 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete, onThemesSel
 
       loadQuestions();
     }
-  }, [step, selectedThemes]);
+  }, [step, selectedThemes, toast]);
 
   const handleThemesSelected = () => {
+    console.log("[QuestionsStepContent] handleThemesSelected called, changing step to 'questions'");
     setStep('questions');
+
+    // Force a re-render by setting a timeout
+    setTimeout(() => {
+      console.log("[QuestionsStepContent] Current step after timeout:", step);
+    }, 100);
   };
 
   const handleBackToThemes = () => {
@@ -204,9 +216,11 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete, onThemesSel
     <div className="space-y-6">
       {step === 'themes' ? (
         <ThemeSelector onThemesSelected={(themes) => {
+          console.log("[QuestionsStepContent] Themes selected:", themes);
           if (onThemesSelected) {
             onThemesSelected(themes);
           }
+          // Set step to questions to move to the next screen
           handleThemesSelected();
         }} />
       ) : (

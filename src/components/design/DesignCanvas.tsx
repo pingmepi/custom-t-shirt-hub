@@ -17,10 +17,11 @@ import CanvasToolbar from "./CanvasToolbar";
 
 interface DesignCanvasProps {
   initialImageUrl?: string;
+  initialDesignData?: DesignData | null;
   onDesignUpdated?: (designData: DesignData) => void;
 }
 
-const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) => {
+const DesignCanvas = ({ initialImageUrl, initialDesignData, onDesignUpdated }: DesignCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [currentTshirtColor, setCurrentTshirtColor] = useState("#ffffff");
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +38,7 @@ const DesignCanvas = ({ initialImageUrl, onDesignUpdated }: DesignCanvasProps) =
   const { fabricCanvas, isLoaded, isInitialized, tshirtImageObject } = useCanvasInitialization({
     canvasRef,
     initialImageUrl: initialImageUrl || designImages.designFlow,
+    initialDesignData,
     onDesignUpdated,
     tshirtColor: currentTshirtColor
   });

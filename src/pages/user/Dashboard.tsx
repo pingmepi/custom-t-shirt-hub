@@ -31,16 +31,29 @@ const UserDashboard = () => {
     queryKey: ['userDesigns', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const { data, error } = await supabase
-        .from('designs')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data as TShirtDesign[];
+      try {
+        // Load designs from Supabase
+        const { data, error } = await supabase
+          .from('designs')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error("[Dashboard] Error fetching designs:", error);
+          return [];
+        }
+
+        return data as TShirtDesign[];
+      } catch (err) {
+        console.error("[Dashboard] Exception fetching designs:", err);
+        return [];
+      }
     },
-    enabled: !!user && isAuthenticated // Only run query when user is available
+    enabled: !!user && isAuthenticated, // Only run query when user is available
+    retry: 1, // Retry once if there's an error
+    retryDelay: 1000 // Wait 1 second before retrying
   });
 
   const {
@@ -51,11 +64,18 @@ const UserDashboard = () => {
     queryKey: ['userOrders', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      // This is a placeholder for actual order fetching logic
-      // In production, this would fetch from a real orders table
-      return [] as OrderDetails[];
+      try {
+        // This is a placeholder for actual order fetching logic
+        // In production, this would fetch from a real orders table
+        return [] as OrderDetails[];
+      } catch (err) {
+        console.error("[Dashboard] Exception fetching orders:", err);
+        return [];
+      }
     },
-    enabled: !!user && isAuthenticated // Only run query when user is available
+    enabled: !!user && isAuthenticated, // Only run query when user is available
+    retry: 1, // Retry once if there's an error
+    retryDelay: 1000 // Wait 1 second before retrying
   });
 
   // If not authenticated, show loading or nothing
