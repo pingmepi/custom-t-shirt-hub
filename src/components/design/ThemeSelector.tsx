@@ -15,10 +15,11 @@ import { FALLBACK_THEMES } from "./themes/fallbackThemes";
 
 interface ThemeSelectorProps {
   onThemesSelected: (themes: string[]) => void;
+  initialThemes?: string[];
 }
 
-const ThemeSelector = ({ onThemesSelected }: ThemeSelectorProps) => {
-  const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
+const ThemeSelector = ({ onThemesSelected, initialThemes = [] }: ThemeSelectorProps) => {
+  const [selectedThemes, setSelectedThemes] = useState<string[]>(initialThemes);
   const [themes, setThemes] = useState<Theme[]>([]);
   const [categories, setCategories] = useState<string[]>(['All']);
   const [loading, setLoading] = useState(true);
@@ -128,39 +129,10 @@ const ThemeSelector = ({ onThemesSelected }: ThemeSelectorProps) => {
     });
   };
 
-  const handleContinue = async () => {
-    console.log("[ThemeSelector] Continue button clicked");
-
-    if (selectedThemes.length === 0) {
-      toast({
-        title: "No theme selected",
-        description: "Using default minimal theme instead.",
-      });
-
-      // Use minimal theme as default if available
-      const minimalTheme = themes.find(t => t.name.toLowerCase() === "minimal");
-      const defaultThemeId = minimalTheme ? minimalTheme.id : themes[0]?.id;
-
-      if (defaultThemeId) {
-        console.log(`[ThemeSelector] Using default theme: ${defaultThemeId}`);
-        // Track theme selection
-        await trackThemeSelections([defaultThemeId]);
-        onThemesSelected([defaultThemeId]);
-      } else {
-        console.log(`[ThemeSelector] No default theme found, using 'minimal'`);
-        onThemesSelected(["minimal"]);
-      }
-    } else {
-      console.log(`[ThemeSelector] Using selected themes: ${selectedThemes.join(', ')}`);
-      // Track theme selection
-      await trackThemeSelections(selectedThemes);
-
-      onThemesSelected(selectedThemes);
-      toast({
-        title: "Themes selected",
-        description: `Selected ${selectedThemes.length} themes for your design.`,
-      });
-    }
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("[ThemeSelector] Submitting themes:", selectedThemes);
+    onThemesSelected(selectedThemes);
   };
 
   const handleRetry = () => window.location.reload();
@@ -174,29 +146,43 @@ const ThemeSelector = ({ onThemesSelected }: ThemeSelectorProps) => {
   }
 
   return (
-    <div className="bg-white shadow-md rounded-lg overflow-hidden">
-      <div className="p-6">
-        <ThemeSelectorHeader />
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+        <div className="p-6">
+          <ThemeSelectorHeader />
 
-        <CategoryFilter
-          categories={categories}
-          activeCategory={activeCategory}
-          onCategoryChange={setActiveCategory}
-        />
+          <CategoryFilter
+            categories={categories}
+            activeCategory={activeCategory}
+            onCategoryChange={setActiveCategory}
+          />
 
-        <ThemeGrid
-          themes={themes}
-          selectedThemes={selectedThemes}
-          onToggleTheme={toggleTheme}
-        />
+          <ThemeGrid
+            themes={themes}
+            selectedThemes={selectedThemes}
+            onToggleTheme={toggleTheme}
+          />
 
-        <ThemeSelectorFooter
-          selectedThemesCount={selectedThemes.length}
-          onContinue={handleContinue}
-          isLoading={loading}
-        />
+          <ThemeSelectorFooter
+            selectedThemesCount={selectedThemes.length}
+            onContinue={(e) => {
+              e.preventDefault();
+              if (selectedThemes.length === 0) {
+                toast({
+                  title: "Please select at least one theme",
+                  description: "You need to select at least one theme to continue.",
+                  variant: "destructive"
+                });
+                return;
+              }
+              trackThemeSelections(selectedThemes);
+              onThemesSelected(selectedThemes);
+            }}
+            isLoading={loading}
+          />
+        </div>
       </div>
-    </div>
+    </form>
   );
 };
 

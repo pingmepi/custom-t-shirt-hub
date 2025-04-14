@@ -38,9 +38,28 @@ export function useDesignState(props?: UseDesignStateProps) {
    * Handle completion of the questions step
    */
   const handleQuestionsComplete = (responses: Record<string, QuestionResponse | string>) => {
+    console.log("[useDesignState] handleQuestionsComplete called with responses:", responses);
+
+    // Check if this is just a theme selection
+    const isThemeSelectionOnly =
+      Object.keys(responses).length === 1 &&
+      Object.keys(responses)[0] === 'theme_selection';
+
+    // Call the navigation handler
     const success = navigationHandleQuestionsComplete(responses);
+    console.log("[useDesignState] navigationHandleQuestionsComplete result:", success);
+
     if (success) {
+      // Store the responses
       setQuestionResponses(responses);
+      console.log("[useDesignState] Question responses updated");
+
+      // If this is just theme selection, we might want to do additional handling here
+      if (isThemeSelectionOnly) {
+        console.log("[useDesignState] Theme selection only, additional handling if needed");
+      }
+    } else {
+      console.log("[useDesignState] Failed to complete questions step");
     }
   };
 
