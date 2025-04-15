@@ -60,9 +60,43 @@ This project is built with .
 - shadcn-ui
 - Tailwind CSS
 
+## Environment Setup
+
+### Local Development
+
+1. Copy the `.env.example` file to a new file named `.env.local`:
+   ```sh
+   cp .env.example .env.local
+   ```
+
+2. Edit the `.env.local` file and add your Supabase credentials:
+   ```
+   VITE_SUPABASE_URL=https://your-project-id.supabase.co
+   VITE_SUPABASE_ANON_KEY=your-anon-key-here
+   ```
+
+3. Start the development server:
+   ```sh
+   npm run dev
+   ```
+
+### Vercel Deployment
+
+When deploying to Vercel, you need to set up the following environment variables in the Vercel dashboard:
+
+1. Go to your project in the Vercel dashboard
+2. Navigate to Settings > Environment Variables
+3. Add the following environment variables:
+   - `VITE_SUPABASE_URL`: Your Supabase project URL
+   - `VITE_SUPABASE_ANON_KEY`: Your Supabase anonymous key
+
+> **Important**: Never commit your actual API keys or secrets to the repository. Always use environment variables for sensitive information.
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/7750a3d5-db60-466a-b30a-c99df74e3a89) and click on Share -> Publish.
+
+Alternatively, you can deploy to Vercel by connecting your GitHub repository to Vercel:
 
 ## Can I connect a custom domain to my Lovable project?
 

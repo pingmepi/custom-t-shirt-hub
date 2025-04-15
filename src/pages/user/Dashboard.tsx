@@ -9,6 +9,7 @@ import { TShirtDesign, OrderDetails } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, ShoppingBag, Palette, AlertCircle } from "lucide-react";
+import { useDesignAPI } from "@/hooks/useDesignAPI";
 
 const UserDashboard = () => {
   const { user, userProfile, isAuthenticated } = useAuth();
@@ -22,6 +23,9 @@ const UserDashboard = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  // Get the fetchUserDesigns function from the useDesignAPI hook
+  const { fetchUserDesigns } = useDesignAPI();
+
   // Define queries outside of conditional rendering
   const {
     data: designs,
@@ -33,19 +37,8 @@ const UserDashboard = () => {
       if (!user) return [];
 
       try {
-        // Load designs from Supabase
-        const { data, error } = await supabase
-          .from('designs')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.error("[Dashboard] Error fetching designs:", error);
-          return [];
-        }
-
-        return data as TShirtDesign[];
+        // Use the fetchUserDesigns function from useDesignAPI
+        return await fetchUserDesigns(user.id);
       } catch (err) {
         console.error("[Dashboard] Exception fetching designs:", err);
         return [];
