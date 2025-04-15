@@ -335,35 +335,45 @@ export const trackThemeSelections = async (
   try {
     console.log("[ThemesService] Tracking theme selections:", themeIds);
 
-    // Make sure user is authenticated
-    const { data: { user } } = await supabase.auth.getUser();
+    // SIMPLIFIED APPROACH: Just log the theme selections without requiring authentication
+    // This ensures the app continues to work while we debug authentication issues
+    console.log("[ThemesService] Theme selections logged (simplified approach):", themeIds);
 
-    if (!user) {
-      console.log("[ThemesService] User not authenticated, skipping theme selection tracking");
-      return;
+    // Try to get the user, but don't block if it fails
+    try {
+      // Check if we have a valid session first
+      const { data: sessionData } = await supabase.auth.getSession();
+      console.log("[ThemesService] Session check result:", sessionData.session ? "Session found" : "No session");
+
+      if (sessionData.session) {
+        // We have a session, so we can try to get the user
+        const { data: userData } = await supabase.auth.getUser();
+        console.log("[ThemesService] User check result:", userData.user ? `User found: ${userData.user.id}` : "No user");
+
+        if (userData.user) {
+          // We have a user, so we can try to track the theme selections
+          console.log("[ThemesService] Attempting to call track_theme_selection RPC");
+          const { error } = await supabase.rpc('track_theme_selection', {
+            p_user_id: userData.user.id,
+            p_theme_ids: themeIds,
+            p_design_session_id: designSessionId
+          });
+
+          if (error) {
+            console.error("[ThemesService] Error tracking theme selections:", error);
+          } else {
+            console.log("[ThemesService] Successfully tracked theme selections in database");
+          }
+        }
+      }
+    } catch (authErr) {
+      // Log the error but don't block the app
+      console.error("[ThemesService] Authentication error in trackThemeSelections:", authErr);
     }
 
-    // Check if we have a valid session
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (!sessionData.session) {
-      console.log("[ThemesService] No active session, skipping theme selection tracking");
-      return;
-    }
-
-    console.log("[ThemesService] Calling track_theme_selection RPC");
-    const { error } = await supabase.rpc('track_theme_selection', {
-      p_user_id: user.id,
-      p_theme_ids: themeIds,
-      p_design_session_id: designSessionId
-    });
-
-    if (error) {
-      console.error("[ThemesService] Error tracking theme selections:", error);
-      return;
-    }
-
-    console.log("[ThemesService] Successfully tracked theme selections");
+    // Always return successfully to ensure the app continues to work
+    return;
   } catch (err) {
-    console.error("[ThemesService] Error in trackThemeSelections:", err);
+    console.error("[ThemesService] Unexpected error in trackThemeSelections:", err);
   }
 };

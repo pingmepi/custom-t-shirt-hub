@@ -12,8 +12,111 @@ export const fetchThemeBasedQuestions = async (themes: string[], limit: number =
   try {
     console.log("[QuestionsService] Fetching questions for themes:", themes);
 
-    // SIMPLIFIED APPROACH: Always use default questions for now
-    console.log("[QuestionsService] Using default questions directly to ensure functionality");
+    // Check if themes array is empty or undefined
+    if (!themes || themes.length === 0) {
+      console.warn("[QuestionsService] No themes provided, using default themes");
+      // Use minimal theme as default if no themes are provided
+      themes = ["minimal"];
+    }
+
+    // Log the themes we're using
+    console.log("[QuestionsService] Using themes for question selection:", themes);
+
+    // Generate theme-specific questions based on the selected themes
+    console.log("[QuestionsService] Generating theme-specific questions for:", themes);
+
+    // Create a set of questions based on the selected themes
+    const themeBasedQuestions: Question[] = [];
+
+    // Add theme-specific questions based on the selected themes
+    if (themes.includes('music')) {
+      themeBasedQuestions.push({
+        id: "music_q1",
+        type: "text",
+        question_text: "What music genre or band would you like to feature on your t-shirt?",
+        is_active: true,
+      });
+      themeBasedQuestions.push({
+        id: "music_q2",
+        type: "choice",
+        question_text: "What music element should be emphasized?",
+        options: ["Lyrics", "Band name", "Album art", "Musical notes", "Instrument"],
+        is_active: true,
+      });
+    }
+
+    if (themes.includes('travel')) {
+      themeBasedQuestions.push({
+        id: "travel_q1",
+        type: "text",
+        question_text: "What destination or travel experience would you like on your t-shirt?",
+        is_active: true,
+      });
+      themeBasedQuestions.push({
+        id: "travel_q2",
+        type: "choice",
+        question_text: "What travel element should be featured?",
+        options: ["Landmark", "Map", "Skyline", "Nature scene", "Travel quote"],
+        is_active: true,
+      });
+    }
+
+    if (themes.includes('nature')) {
+      themeBasedQuestions.push({
+        id: "nature_q1",
+        type: "text",
+        question_text: "What natural element or scene would you like on your t-shirt?",
+        is_active: true,
+      });
+      themeBasedQuestions.push({
+        id: "nature_q2",
+        type: "choice",
+        question_text: "What type of nature imagery do you prefer?",
+        options: ["Mountains", "Ocean", "Forest", "Wildlife", "Plants/Flowers"],
+        is_active: true,
+      });
+    }
+
+    if (themes.includes('minimal')) {
+      themeBasedQuestions.push({
+        id: "minimal_q1",
+        type: "text",
+        question_text: "What simple message or symbol would you like on your minimal t-shirt?",
+        is_active: true,
+      });
+      themeBasedQuestions.push({
+        id: "minimal_q2",
+        type: "choice",
+        question_text: "What minimal style do you prefer?",
+        options: ["Text only", "Simple line art", "Geometric shapes", "Abstract", "Logo style"],
+        is_active: true,
+      });
+    }
+
+    // Add some general questions that apply to all themes
+    themeBasedQuestions.push({
+      id: "general_q1",
+      type: "color",
+      question_text: "What's your preferred color palette for this design?",
+      is_active: true,
+    });
+
+    themeBasedQuestions.push({
+      id: "general_q2",
+      type: "textarea",
+      question_text: "Any additional details you'd like to include in your design?",
+      is_active: true,
+    });
+
+    console.log(`[QuestionsService] Generated ${themeBasedQuestions.length} theme-specific questions`);
+
+    // If we have theme-based questions, return them
+    if (themeBasedQuestions.length > 0) {
+      return themeBasedQuestions;
+    }
+
+    // Fallback to default questions if no theme-specific questions were generated
+    console.log(`[QuestionsService] No theme-specific questions generated, using default questions`);
     console.log(`[QuestionsService] Default questions count: ${DEFAULT_QUESTIONS.length}`);
     return DEFAULT_QUESTIONS;
 

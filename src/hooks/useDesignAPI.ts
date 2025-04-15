@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { DesignData, QuestionResponse, UserStylePreference } from "@/lib/types";
+import { DesignData, QuestionResponse, UserStylePreference, TShirtDesign } from "@/lib/types";
 import { extractPreferences } from "@/utils/designTransformation";
 import { designImages } from "@/assets";
 
@@ -235,9 +235,107 @@ export function useDesignAPI() {
     }
   };
 
+  /**
+   * Fetch user designs from the database
+   * @param userId The ID of the user whose designs to fetch
+   * @returns Array of user designs
+   */
+  const fetchUserDesigns = async (userId: string): Promise<TShirtDesign[]> => {
+    if (!userId) {
+      setError("User ID is required to fetch designs");
+      return [];
+    }
+
+    try {
+      console.log("[DesignAPI] Fetching designs for user:", userId);
+      setLoading(true);
+      setError(null);
+
+      // First verify authentication
+      const { data: sessionData } = await supabase.auth.getSession();
+
+      // Debug authentication status
+      if (sessionData?.session) {
+        console.log("[DesignAPI] Session found:", {
+          userId: sessionData.session.user.id,
+          expiresAt: new Date(sessionData.session.expires_at * 1000).toLocaleString(),
+          tokenLength: sessionData.session.access_token.length
+        });
+
+        // Test RLS policies by trying to access a different user's designs
+        // This should fail if RLS is working correctly
+        if (sessionData.session.user.id !== userId) {
+          console.log("[DesignAPI] Warning: Attempting to fetch designs for a different user than the authenticated one");
+        }
+      } else {
+        console.error("[DesignAPI] No valid session found when fetching designs");
+        throw new Error("Authentication required");
+      }
+
+      // Fetch designs from Supabase
+      console.log(`[DesignAPI] Querying designs table for user_id: ${userId}`);
+      const { data, error } = await supabase
+        .from('designs')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      // Debug query results
+      if (data) {
+        console.log(`[DesignAPI] Query returned ${data.length} designs`);
+      }
+
+      if (error) {
+        console.error("[DesignAPI] Error fetching designs:", error);
+        throw new Error(`Failed to fetch designs: ${error.message}`);
+      }
+
+      // Parse the JSON fields in each design
+      const parsedDesigns = data?.map(design => {
+        try {
+          // Parse JSON fields if they're stored as strings
+          const questionResponses = typeof design.question_responses === 'string'
+            ? JSON.parse(design.question_responses)
+            : design.question_responses;
+
+          const designData = typeof design.design_data === 'string'
+            ? JSON.parse(design.design_data)
+            : design.design_data;
+
+          const userStyleMetadata = typeof design.user_style_metadata === 'string'
+            ? JSON.parse(design.user_style_metadata)
+            : design.user_style_metadata;
+
+          return {
+            ...design,
+            question_responses: questionResponses,
+            design_data: designData,
+            user_style_metadata: userStyleMetadata
+          } as TShirtDesign;
+        } catch (parseError) {
+          console.error("[DesignAPI] Error parsing design data:", parseError);
+          // Return the original design if parsing fails
+          return design as TShirtDesign;
+        }
+      }) || [];
+
+      console.log(`[DesignAPI] Successfully fetched ${parsedDesigns.length} designs`);
+      return parsedDesigns;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+      console.error("[DesignAPI] Error fetching designs:", err);
+      setError(errorMessage);
+      toast.error("Failed to load your designs. Please try again.");
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     saveDesign,
     fetchBaseDesignImage,
+    fetchUserDesigns,
     loading,
     error
   };

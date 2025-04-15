@@ -14,7 +14,7 @@ const QuestionStatisticsPage = () => {
     const checkAdminStatus = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        
+
         if (!user) {
           setIsAdmin(false);
           setLoading(false);
@@ -22,11 +22,21 @@ const QuestionStatisticsPage = () => {
         }
 
 
-        // For now, let's assume the admin check is done client-side
-        // You should implement proper admin validation based on your system
-        // This is a placeholder - in production, use secure server-side validation
-        const adminEmails = ['admin@example.com']; // Replace with your admin email
-        setIsAdmin(adminEmails.includes(user.email || ''));   
+        // Check if user has admin role from Supabase
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .single();
+
+        if (roleError) {
+          console.error("Error checking admin role:", roleError);
+          setIsAdmin(false);
+          return;
+        }
+
+        // Check if user has admin role
+        setIsAdmin(roleData?.role === 'admin');
 
       } catch (err) {
         console.error("Failed to verify admin access:", err);
@@ -70,9 +80,9 @@ const QuestionStatisticsPage = () => {
           View usage data for all questions in the t-shirt design process.
         </p>
       </div>
-      
+
       <QuestionStats />
-      
+
       <div className="mt-10">
         <h2 className="text-xl font-semibold mb-4">About Question Usage Tracking</h2>
         <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">

@@ -14,12 +14,12 @@ export function useDesignNavigation() {
    * Navigate to a specific step in the design flow
    */
   const navigateToStep = (
-    step: DesignStep, 
-    { 
-      questionResponses, 
-      designData 
-    }: { 
-      questionResponses: Record<string, QuestionResponse | string>; 
+    step: DesignStep,
+    {
+      questionResponses,
+      designData
+    }: {
+      questionResponses: Record<string, QuestionResponse | string>;
       designData: DesignData | null;
     }
   ) => {
@@ -28,12 +28,12 @@ export function useDesignNavigation() {
       toast.error("Please complete the questions first");
       return false;
     }
-    
+
     if (step === "options" && !validateDesignData(designData)) {
       toast.error("Please customize your design first");
       return false;
     }
-    
+
     setActiveStep(step);
     return true;
   };
@@ -44,10 +44,26 @@ export function useDesignNavigation() {
   const handleQuestionsComplete = (
     responses: Record<string, QuestionResponse | string>
   ): boolean => {
+    console.log("[useDesignNavigation] handleQuestionsComplete called with responses:", responses);
+
+    // Skip validation for theme selection only responses
+    const isThemeSelectionOnly =
+      Object.keys(responses).length === 1 &&
+      Object.keys(responses)[0] === 'theme_selection';
+
+    // If it's just theme selection, don't navigate yet - we'll show questions first
+    if (isThemeSelectionOnly) {
+      console.log("[useDesignNavigation] Theme selection only, not navigating yet");
+      return true;
+    }
+
+    // For regular question responses, validate and navigate
     if (!validateResponses(responses)) {
+      console.log("[useDesignNavigation] Response validation failed");
       return false;
     }
-    
+
+    console.log("[useDesignNavigation] Setting activeStep to 'design'");
     setActiveStep("design");
     toast.success("Preferences saved! Let's customize your design.");
     return true;

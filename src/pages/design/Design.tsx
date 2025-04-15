@@ -29,6 +29,11 @@ const DesignPage = () => {
   // Using state to manage selected themes
   const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
 
+  // Log when selectedThemes changes
+  useEffect(() => {
+    console.log("[Design] selectedThemes updated:", selectedThemes);
+  }, [selectedThemes]);
+
   // Check for saved answers in sessionStorage after login
   useEffect(() => {
     if (isAuthenticated) {
@@ -54,7 +59,10 @@ const DesignPage = () => {
           <QuestionsStepContent
             selectedThemes={selectedThemes}
             onQuestionsComplete={handleQuestionsComplete}
-            onThemesSelected={setSelectedThemes}
+            onThemesSelected={(themes) => {
+              console.log("[Design] onThemesSelected called with:", themes);
+              setSelectedThemes(themes);
+            }}
           />
         );
       case "design":

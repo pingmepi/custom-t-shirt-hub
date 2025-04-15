@@ -21,37 +21,78 @@ interface QuestionsStepContentProps {
   onThemesSelected?: (themes: string[]) => void;
 }
 
-const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete, onThemesSelected }: QuestionsStepContentProps) => {
+const QuestionsStepContent = ({ selectedThemes: initialThemes, onQuestionsComplete, onThemesSelected }: QuestionsStepContentProps) => {
   const [step, setStep] = useState<'themes' | 'questions'>('themes');
   const [isLoading, setIsLoading] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [selectedThemes, setSelectedThemes] = useState<string[]>(initialThemes || []);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   // Fetch questions based on selected themes
   useEffect(() => {
     console.log("[QuestionsStepContent] useEffect triggered, step:", step);
+    console.log("[QuestionsStepContent] Current selectedThemes in useEffect:", selectedThemes);
 
     if (step === 'questions') {
       console.log("[QuestionsStepContent] Loading questions for themes:", selectedThemes);
+      console.log("[QuestionsStepContent] Selected themes length:", selectedThemes.length);
+
+      // Ensure we have at least one theme
+      const themesToUse = selectedThemes.length > 0 ? selectedThemes : ['minimal'];
+      console.log("[QuestionsStepContent] Using themes for questions:", themesToUse);
 
       const loadQuestions = async () => {
         try {
           setIsLoading(true);
-          const fetchedQuestions = await fetchThemeBasedQuestions(selectedThemes);
+          console.log("[QuestionsStepContent] Calling fetchThemeBasedQuestions with themes:", themesToUse);
+          const fetchedQuestions = await fetchThemeBasedQuestions(themesToUse);
           console.log("[QuestionsStepContent] Fetched questions:", fetchedQuestions.length);
 
-          setQuestions(fetchedQuestions);
+          if (fetchedQuestions.length === 0) {
+            console.warn("[QuestionsStepContent] No questions fetched, using default questions");
+            // Use default questions if none were fetched
+            const defaultQuestions: Question[] = [
+              {
+                id: "q1",
+                type: "text",
+                question_text: "What's the main message you want on your t-shirt?",
+                is_active: true,
+              },
+              {
+                id: "q2",
+                type: "choice",
+                question_text: "What style are you looking for?",
+                options: ["Minimal", "Vintage", "Bold", "Artistic", "Funny"],
+                is_active: true,
+              }
+            ];
+            setQuestions(defaultQuestions);
 
-          // Initialize answers
-          const initialAnswers: Record<string, string> = {};
-          fetchedQuestions.forEach(q => {
-            initialAnswers[q.id] = q.type === 'choice' && q.options?.length ? q.options[0] : '';
-          });
-          setAnswers(initialAnswers);
+            // Initialize answers for default questions
+            const initialAnswers: Record<string, string> = {};
+            defaultQuestions.forEach(q => {
+              initialAnswers[q.id] = q.type === 'choice' && q.options?.length ? q.options[0] : '';
+            });
+            setAnswers(initialAnswers);
+          } else {
+            console.log("[QuestionsStepContent] Successfully fetched questions:", fetchedQuestions);
+            setQuestions(fetchedQuestions);
+
+            // Initialize answers
+            const initialAnswers: Record<string, string> = {};
+            fetchedQuestions.forEach(q => {
+              initialAnswers[q.id] = q.type === 'choice' && q.options?.length ? q.options[0] : '';
+            });
+            setAnswers(initialAnswers);
+
+            // Add theme_selection to answers
+            initialAnswers['theme_selection'] = themesToUse.join(',');
+            console.log("[QuestionsStepContent] Added theme_selection to answers:", initialAnswers);
+          }
         } catch (error) {
           console.error("Error loading questions:", error);
           toast.error("Failed to load questions. Please try again.");
@@ -64,15 +105,42 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete, onThemesSel
     }
   }, [step, selectedThemes, toast]);
 
-  const handleThemesSelected = () => {
+  // This function is now replaced by direct handling in the ThemeSelector callback
+  // Keeping it as a reference for future use
+  /*
+  const handleThemesSelected = (themes?: string[]) => {
     console.log("[QuestionsStepContent] handleThemesSelected called, changing step to 'questions'");
+    console.log("[QuestionsStepContent] Selected themes before step change:", themes || selectedThemes);
+
+    // If themes are provided, update the state
+    if (themes && themes.length > 0) {
+      console.log("[QuestionsStepContent] Updating selectedThemes with:", themes);
+      setSelectedThemes(themes);
+    } else {
+      console.log("[QuestionsStepContent] Using existing selectedThemes:", selectedThemes);
+    }
+
+    // Change the step to questions
+    console.log("[QuestionsStepContent] Setting step to 'questions'");
     setStep('questions');
+
+    // Force immediate loading of questions
+    const themesToUse = (themes && themes.length > 0) ? themes : selectedThemes.length > 0 ? selectedThemes : ['minimal'];
+    console.log("[QuestionsStepContent] Immediately loading questions for themes:", themesToUse);
 
     // Force a re-render by setting a timeout
     setTimeout(() => {
       console.log("[QuestionsStepContent] Current step after timeout:", step);
+      console.log("[QuestionsStepContent] Selected themes after timeout:", selectedThemes);
+
+      // Double-check that we're in the questions step
+      if (step !== 'questions') {
+        console.log("[QuestionsStepContent] Step is still not 'questions', forcing change");
+        setStep('questions');
+      }
     }, 100);
   };
+  */
 
   const handleBackToThemes = () => {
     setStep('themes');
@@ -100,17 +168,26 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete, onThemesSel
   const handleConfirmAnswers = () => {
     setShowConfirmation(false);
 
+    // Add theme_selection to answers if not already present
+    const finalAnswers = { ...answers };
+    if (!finalAnswers['theme_selection'] && selectedThemes.length > 0) {
+      finalAnswers['theme_selection'] = selectedThemes.join(',');
+      console.log("[QuestionsStepContent] Added theme_selection to answers:", finalAnswers);
+    }
+
     // If not authenticated, store answers and redirect to login
     if (!isAuthenticated) {
       // Store current question responses in session storage
-      sessionStorage.setItem('designAnswers', JSON.stringify(answers));
+      console.log("[QuestionsStepContent] User not authenticated, storing answers in session storage");
+      sessionStorage.setItem('designAnswers', JSON.stringify(finalAnswers));
       sessionStorage.setItem('selectedThemes', JSON.stringify(selectedThemes));
       navigate("/login", { state: { from: "/design" } });
       return;
     }
 
     // If authenticated, proceed with the flow
-    onQuestionsComplete(answers);
+    console.log("[QuestionsStepContent] Calling onQuestionsComplete with final answers:", finalAnswers);
+    onQuestionsComplete(finalAnswers);
   };
 
   // Restore state after authentication
@@ -124,6 +201,7 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete, onThemesSel
         // Update selected themes if needed
         const parsedThemes = JSON.parse(savedThemes);
         console.log("Restored selected themes:", parsedThemes);
+        setSelectedThemes(parsedThemes); // Make sure to update the selected themes
         onQuestionsComplete(JSON.parse(savedAnswers));
 
         // Clear the stored data
@@ -216,12 +294,20 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete, onThemesSel
     <div className="space-y-6">
       {step === 'themes' ? (
         <ThemeSelector onThemesSelected={(themes) => {
-          console.log("[QuestionsStepContent] Themes selected:", themes);
+          console.log("[QuestionsStepContent] Themes selected from ThemeSelector:", themes);
+
+          // Call the parent callback if provided
           if (onThemesSelected) {
+            console.log("[QuestionsStepContent] Calling parent onThemesSelected callback");
             onThemesSelected(themes);
           }
-          // Set step to questions to move to the next screen
-          handleThemesSelected();
+
+          // Update selected themes
+          setSelectedThemes(themes);
+
+          // Change to questions step to show the questions
+          console.log("[QuestionsStepContent] Setting step to 'questions' to load theme-based questions");
+          setStep('questions');
         }} />
       ) : (
         <div className="bg-white shadow-md rounded-lg overflow-hidden">
