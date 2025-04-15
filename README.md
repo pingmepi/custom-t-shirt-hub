@@ -1,22 +1,12 @@
-# Welcome to your Lovable project
+# Custom T-Shirt Hub
 
-## Project info
-
-**URL**: https://lovable.dev/projects/7750a3d5-db60-466a-b30a-c99df74e3a89
+A web application for designing and ordering custom t-shirts online.
 
 ## How can I edit this code?
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/7750a3d5-db60-466a-b30a-c99df74e3a89) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
 **Use your preferred IDE**
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+If you want to work locally using your own IDE, you can clone this repo and push changes.
 
 The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
@@ -94,14 +84,18 @@ When deploying to Vercel, you need to set up the following environment variables
 
 ## How can I deploy this project?
 
-Simply open [Lovable](https://lovable.dev/projects/7750a3d5-db60-466a-b30a-c99df74e3a89) and click on Share -> Publish.
+You can deploy to Vercel by connecting your GitHub repository to Vercel:
 
-Alternatively, you can deploy to Vercel by connecting your GitHub repository to Vercel:
+1. Create a Vercel account if you don't have one
+2. Import your GitHub repository
+3. Configure the build settings (Vite should be auto-detected)
+4. Set up your environment variables
+5. Deploy
 
-## Can I connect a custom domain to my Lovable project?
+## Can I connect a custom domain?
 
-Yes it is!
+Yes! When deploying with Vercel, you can connect a custom domain through the Vercel dashboard:
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+1. Go to your project in the Vercel dashboard
+2. Navigate to Settings > Domains
+3. Add your domain and follow the instructions
