@@ -1,73 +1,93 @@
-# Welcome to your Lovable project
+# Custom T-Shirt Hub
 
-## Project info
+## Project Overview
 
-**URL**: https://lovable.dev/projects/7750a3d5-db60-466a-b30a-c99df74e3a89
+The Custom T-Shirt Hub is a web application that allows users to design custom t-shirts through a guided, theme-based design flow. Users can select themes, answer questions to customize their design, and use a visual editor to make final adjustments before ordering.
 
-## How can I edit this code?
+![T-Shirt Design Platform](assets/images/design/placeholder.png)
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+- **Theme-Based Design**: Select from various design themes to start your t-shirt creation
+- **Guided Question Flow**: Answer questions to customize your design based on your preferences
+- **Visual Editor**: Fine-tune your design with a powerful canvas-based editor
+- **User Authentication**: Secure login and registration with email/password or magic links
+- **Design Storage**: Save your designs and return to them later
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/7750a3d5-db60-466a-b30a-c99df74e3a89) and start prompting.
+## Current Status
 
-Changes made via Lovable will be committed automatically to this repo.
+The project has implemented core authentication and design functionality but requires security improvements and feature completion before it can be considered production-ready. See the [Project Status](./docs/project_status.md) document for detailed information.
 
-**Use your preferred IDE**
+## Tech Stack
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- **Frontend**: React, TypeScript, Vite
+- **UI Components**: Tailwind CSS, Shadcn UI, Radix UI
+- **State Management**: React Context API, React Query
+- **Authentication**: Supabase Auth
+- **Database**: Supabase (PostgreSQL)
+- **Design Tools**: Fabric.js (Canvas API)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+For a detailed breakdown of the technology stack, see the [Tech Stack Documentation](./docs/tech_stack.md).
 
-Follow these steps:
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v16+)
+- npm or yarn
+
+### Installation
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Clone the repository
+git clone https://github.com/yourusername/custom-t-shirt-hub.git
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Navigate to the project directory
+cd custom-t-shirt-hub
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Set up environment variables
+# Copy the example .env file and fill in your Supabase credentials
+cp .env.example .env
+
+# Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Documentation
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Comprehensive documentation is available in the [docs](./docs) directory:
 
-**Use GitHub Codespaces**
+- [Project Status](./docs/project_status.md) - Current state of the project
+- [Feature Tracker](./docs/feature_tracker.md) - Implementation status of features
+- [Security Checklist](./docs/security_checklist_updated.md) - Security audit and recommendations
+- [API Documentation](./docs/api_details.md) - API endpoints and usage
+- [Tech Stack Details](./docs/tech_stack.md) - Detailed technology overview
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Security Status
 
-## What technologies are used for this project?
+Several critical security issues have been identified and need to be addressed, particularly:
 
-This project is built with .
+1. Authentication tokens stored in localStorage (XSS vulnerability)
+2. Unscoped API queries
+3. Lack of input sanitization
+4. Missing security headers
+5. No rate limiting on sensitive endpoints
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+See the [Security Checklist](./docs/security_checklist_updated.md) for a detailed breakdown of security concerns and recommendations.
 
-## How can I deploy this project?
+## Contributing
 
-Simply open [Lovable](https://lovable.dev/projects/7750a3d5-db60-466a-b30a-c99df74e3a89) and click on Share -> Publish.
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-## Can I connect a custom domain to my Lovable project?
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-Yes it is!
+## License
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+This project is licensed under the MIT License - see the LICENSE file for details.
