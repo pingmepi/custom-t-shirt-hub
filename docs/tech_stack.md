@@ -93,14 +93,24 @@ This document provides a comprehensive overview of the technology stack used in 
 ## Security Measures
 - Row-Level Security (RLS) in Supabase
 - JWT token validation
-- Secure authentication flows
+- Secure authentication flows (with some security concerns - see security checklist)
 - Input validation with Zod
+- Design ownership verification
+
+## Security Concerns
+- Authentication tokens stored in localStorage (vulnerable to XSS)
+- Unscoped API queries
+- Lack of input sanitization
+- Missing security headers
+- No rate limiting on sensitive endpoints
 
 ## Future Considerations
+- Security improvements (HttpOnly cookies, input sanitization, etc.)
 - Potential migration to Next.js for SSR/SSG capabilities
 - Integration with payment processors
 - Enhanced analytics
 - A/B testing capabilities
 - Performance monitoring
+- Comprehensive test coverage
 
 This tech stack provides a modern, scalable foundation for our custom t-shirt design application, with a focus on performance, developer experience, and user experience.

@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { clearAuthData } from "@/utils/authUtils";
 import { User, Session } from "@supabase/supabase-js";
 import { UserProfile } from "@/lib/types";
 
@@ -346,10 +347,29 @@ export const sendMagicLink = async (email: string, redirectTo: string): Promise<
 export const signOut = async (): Promise<{ error: Error | null }> => {
   console.log("[AuthService] Attempting to sign out user");
   try {
+    // First try to sign out with the standard method
     const { error } = await supabase.auth.signOut();
+
     if (error) {
       console.error("[AuthService] Sign out error:", error.message);
-      return { error };
+
+      // If the standard method fails, try a more aggressive approach
+      try {
+        // Force clear session from storage
+        console.log("[AuthService] Attempting to force clear auth session");
+
+        // Clear any session data from localStorage using the utility function
+        clearAuthData();
+
+        // Try to invalidate the session on the client side
+        await supabase.auth.setSession({ access_token: '', refresh_token: '' });
+
+        console.log("[AuthService] Forced session clear completed");
+        return { error: null };
+      } catch (forceError) {
+        console.error("[AuthService] Force sign out failed:", forceError);
+        return { error }; // Return the original error
+      }
     }
 
     console.log("[AuthService] User signed out successfully");

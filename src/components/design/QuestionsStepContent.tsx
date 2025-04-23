@@ -34,14 +34,33 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete, onThemesSel
   // Fetch questions based on selected themes
   useEffect(() => {
     console.log("[QuestionsStepContent] useEffect triggered, step:", step);
+    console.log("[QuestionsStepContent] Selected themes in useEffect:", selectedThemes);
 
     if (step === 'questions') {
-      console.log("[QuestionsStepContent] Loading questions for themes:", selectedThemes);
+      console.log("[QuestionsStepContent] Step is 'questions', loading questions for themes:", selectedThemes);
+      console.log("[QuestionsStepContent] Selected themes length:", selectedThemes.length);
+
+      // Verify we have themes to work with
+      if (selectedThemes.length === 0) {
+        console.warn("[QuestionsStepContent] No themes selected, using fallback theme");
+        // If no themes are selected, use a fallback theme
+        const fallbackTheme = ["minimal"];
+        if (onThemesSelected) {
+          onThemesSelected(fallbackTheme);
+        }
+      }
+
+      // Use the themes we have, or fallback to minimal
+      const themesToUse = selectedThemes.length > 0 ? selectedThemes : ["minimal"];
+      console.log("[QuestionsStepContent] Using themes for questions:", themesToUse);
+
+      // Log that we're definitely in the questions step
+      console.log("[QuestionsStepContent] Confirmed in questions step, proceeding to load questions");
 
       const loadQuestions = async () => {
         try {
           setIsLoading(true);
-          const fetchedQuestions = await fetchThemeBasedQuestions(selectedThemes);
+          const fetchedQuestions = await fetchThemeBasedQuestions(themesToUse);
           console.log("[QuestionsStepContent] Fetched questions:", fetchedQuestions.length);
 
           setQuestions(fetchedQuestions);
@@ -64,15 +83,35 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete, onThemesSel
     }
   }, [step, selectedThemes, toast]);
 
+  // This function is now replaced by handleThemeSelectionComplete
+  // Keeping it for reference but commented out
+  /*
   const handleThemesSelected = () => {
     console.log("[QuestionsStepContent] handleThemesSelected called, changing step to 'questions'");
-    setStep('questions');
+    console.log("[QuestionsStepContent] Current selected themes before step change:", selectedThemes);
+
+    // Use a callback to ensure we're working with the latest state
+    setStep(prevStep => {
+      console.log(`[QuestionsStepContent] Updating step from '${prevStep}' to 'questions'`);
+      return 'questions';
+    });
 
     // Force a re-render by setting a timeout
     setTimeout(() => {
+      // This will still show 'themes' because of closure, but that's expected
       console.log("[QuestionsStepContent] Current step after timeout:", step);
+      // Add an additional check to verify the state has been updated in the component
+      console.log("[QuestionsStepContent] Component re-render check");
+      console.log("[QuestionsStepContent] Selected themes after timeout:", selectedThemes);
+
+      // Double-check if we need to force another render
+      if (step !== 'questions') {
+        console.log("[QuestionsStepContent] Step still not updated, forcing update");
+        setStep('questions');
+      }
     }, 100);
   };
+  */
 
   const handleBackToThemes = () => {
     setStep('themes');
@@ -212,17 +251,73 @@ const QuestionsStepContent = ({ selectedThemes, onQuestionsComplete, onThemesSel
     );
   };
 
+  // Direct function to handle theme selection and step change
+  const handleThemeSelectionComplete = (themes: string[]) => {
+    console.log("[QuestionsStepContent] Direct theme selection handler called with themes:", themes);
+
+    // First update the parent component with selected themes
+    if (onThemesSelected) {
+      onThemesSelected(themes);
+      console.log("[QuestionsStepContent] Parent component updated with themes");
+    }
+
+    // Force immediate step change
+    console.log("[QuestionsStepContent] Forcing immediate step change to 'questions'");
+    setStep('questions');
+
+    // Double-check with a timeout
+    setTimeout(() => {
+      console.log("[QuestionsStepContent] Verifying step change, current step:", step);
+      if (step !== 'questions') {
+        console.log("[QuestionsStepContent] Step still not 'questions', forcing again");
+        setStep('questions');
+      }
+    }, 50);
+  };
+
+  // Force transition function that can be passed to child components
+  const forceTransition = () => {
+    console.log("[QuestionsStepContent] Force transition called directly");
+    setStep('questions');
+  };
+
+  // Listen for the custom events
+  useEffect(() => {
+    // This event is triggered when the continue button is clicked
+    const handleContinueClicked = () => {
+      console.log("[QuestionsStepContent] Received custom event 'theme-continue-clicked'");
+      setStep('questions');
+    };
+
+    // This event is triggered when themes are selected, but doesn't cause transition
+    const handleThemesSelected = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log("[QuestionsStepContent] Received custom event 'themes-selected'",
+        customEvent.detail ? customEvent.detail.themes : 'no themes');
+      // We don't transition here, just log the selected themes
+    };
+
+    // Add event listeners
+    document.addEventListener('theme-continue-clicked', handleContinueClicked);
+    document.addEventListener('themes-selected', handleThemesSelected);
+
+    // Clean up
+    return () => {
+      document.removeEventListener('theme-continue-clicked', handleContinueClicked);
+      document.removeEventListener('themes-selected', handleThemesSelected);
+    };
+  }, []);
+
+  // We've removed the automatic timeout-based transition
+  // Now the transition will only happen when the user explicitly clicks the continue button
+
   return (
     <div className="space-y-6">
       {step === 'themes' ? (
-        <ThemeSelector onThemesSelected={(themes) => {
-          console.log("[QuestionsStepContent] Themes selected:", themes);
-          if (onThemesSelected) {
-            onThemesSelected(themes);
-          }
-          // Set step to questions to move to the next screen
-          handleThemesSelected();
-        }} />
+        <ThemeSelector
+          onThemesSelected={handleThemeSelectionComplete}
+          forceTransition={forceTransition}
+        />
       ) : (
         <div className="bg-white shadow-md rounded-lg overflow-hidden">
           <div className="p-6">

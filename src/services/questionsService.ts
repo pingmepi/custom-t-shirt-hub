@@ -12,9 +12,21 @@ export const fetchThemeBasedQuestions = async (themes: string[], limit: number =
   try {
     console.log("[QuestionsService] Fetching questions for themes:", themes);
 
+    // Validate themes input
+    if (!themes || themes.length === 0) {
+      console.warn("[QuestionsService] No themes provided, using default themes");
+      themes = ["minimal"];
+    }
+
+    // Log the themes we're using
+    console.log("[QuestionsService] Using themes:", themes);
+
     // SIMPLIFIED APPROACH: Always use default questions for now
     console.log("[QuestionsService] Using default questions directly to ensure functionality");
     console.log(`[QuestionsService] Default questions count: ${DEFAULT_QUESTIONS.length}`);
+
+    // Add theme-specific logging
+    console.log(`[QuestionsService] Theme-specific questions would be fetched for: ${themes.join(', ')}`);
     return DEFAULT_QUESTIONS;
 
     /* Commented out database query for now

@@ -210,11 +210,11 @@ export function useDesignAPI() {
       let placeholderImageUrl = designImages.designFlow; // Using imported image
 
       if (stylePreference === "Minimal") {
-        placeholderImageUrl = designImages.placeholder;
+        placeholderImageUrl = designImages.designFlow; // Using designFlow instead of placeholder
       } else if (stylePreference === "Vintage") {
         placeholderImageUrl = designImages.designFlow;
       } else if (stylePreference === "Bold") {
-        placeholderImageUrl = designImages.placeholder;
+        placeholderImageUrl = designImages.designFlow; // Using designFlow instead of placeholder
       }
 
       console.log("Selected placeholder image:", placeholderImageUrl);

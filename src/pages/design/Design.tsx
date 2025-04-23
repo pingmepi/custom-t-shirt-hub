@@ -42,6 +42,16 @@ const DesignPage = () => {
     }
   }, [isAuthenticated, handleQuestionsComplete]);
 
+  // Handle theme selection and force step change if needed
+  const handleThemesSelected = (themes: string[]) => {
+    console.log("[DesignPage] Themes selected:", themes);
+    setSelectedThemes(themes);
+
+    // If we're still in the questions step, this will ensure the QuestionsStepContent
+    // component gets the updated themes
+    console.log("[DesignPage] Current active step:", activeStep);
+  };
+
   const renderStepContent = () => {
     // For some design steps, we require authentication
     if (activeStep === "design" && !isAuthenticated) {
@@ -54,7 +64,7 @@ const DesignPage = () => {
           <QuestionsStepContent
             selectedThemes={selectedThemes}
             onQuestionsComplete={handleQuestionsComplete}
-            onThemesSelected={setSelectedThemes}
+            onThemesSelected={handleThemesSelected}
           />
         );
       case "design":

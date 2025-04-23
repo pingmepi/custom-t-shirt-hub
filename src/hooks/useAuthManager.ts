@@ -1,5 +1,6 @@
 
 import { useState, useCallback } from "react";
+import { clearAuthData } from "@/utils/authUtils";
 import { User, Session } from "@supabase/supabase-js";
 import { UserProfile } from "@/lib/types";
 import * as authService from "@/services/authService";
@@ -113,22 +114,41 @@ export const useAuthManager = () => {
   const signOut = useCallback(async () => {
     console.log("[AuthManager] Attempting to sign out user");
     try {
-
-      const { error } = await authService.signOut();
-      if (error) {
-        throw error;
-      }
-
-      console.log("[AuthManager] User signed out successfully");
+      // Clear state first to ensure UI updates immediately
       setUser(null);
       setSession(null);
       setUserProfile(null);
+
+      // Then attempt to sign out from Supabase
+      const { error } = await authService.signOut();
+      if (error) {
+        console.error("[AuthManager] Error during sign out API call:", error);
+        // Even if the API call fails, we've already cleared the local state
+        // so the user will appear signed out from the UI perspective
+      }
+
+      console.log("[AuthManager] User signed out successfully");
+
+      // Force clear any lingering auth data from localStorage using the utility function
+      try {
+        clearAuthData();
+        console.log("[AuthManager] Cleared auth data from localStorage");
+      } catch (storageError) {
+        console.error("[AuthManager] Error clearing localStorage:", storageError);
+      }
+
     } catch (error: any) {
       console.error("[AuthManager] Sign out process failed:", error);
       toast.error(error.message || "Failed to sign out");
+
+      // Even if there's an error, try to clear state as a fallback
+      setUser(null);
+      setSession(null);
+      setUserProfile(null);
+
       throw error;
     }
-  }, [user]);
+  }, []);
 
   /**
    * Send a magic link for passwordless authentication

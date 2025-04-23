@@ -15,9 +15,10 @@ import { FALLBACK_THEMES } from "./themes/fallbackThemes";
 
 interface ThemeSelectorProps {
   onThemesSelected: (themes: string[]) => void;
+  forceTransition?: () => void; // Optional callback to force transition
 }
 
-const ThemeSelector = ({ onThemesSelected }: ThemeSelectorProps) => {
+const ThemeSelector = ({ onThemesSelected, forceTransition }: ThemeSelectorProps) => {
   const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
   const [themes, setThemes] = useState<Theme[]>([]);
   const [categories, setCategories] = useState<string[]>(['All']);
@@ -131,6 +132,9 @@ const ThemeSelector = ({ onThemesSelected }: ThemeSelectorProps) => {
   const handleContinue = async () => {
     console.log("[ThemeSelector] Continue button clicked");
 
+    // Prepare the themes to use
+    let themesToUse: string[] = [];
+
     if (selectedThemes.length === 0) {
       toast({
         title: "No theme selected",
@@ -143,23 +147,52 @@ const ThemeSelector = ({ onThemesSelected }: ThemeSelectorProps) => {
 
       if (defaultThemeId) {
         console.log(`[ThemeSelector] Using default theme: ${defaultThemeId}`);
-        // Track theme selection
-        await trackThemeSelections([defaultThemeId]);
-        onThemesSelected([defaultThemeId]);
+        themesToUse = [defaultThemeId];
       } else {
         console.log(`[ThemeSelector] No default theme found, using 'minimal'`);
-        onThemesSelected(["minimal"]);
+        themesToUse = ["minimal"];
       }
     } else {
       console.log(`[ThemeSelector] Using selected themes: ${selectedThemes.join(', ')}`);
-      // Track theme selection
-      await trackThemeSelections(selectedThemes);
-
-      onThemesSelected(selectedThemes);
+      themesToUse = [...selectedThemes];
       toast({
         title: "Themes selected",
         description: `Selected ${selectedThemes.length} themes for your design.`,
       });
+    }
+
+    try {
+      // Track theme selection
+      await trackThemeSelections(themesToUse);
+      console.log(`[ThemeSelector] Successfully tracked theme selections: ${themesToUse}`);
+
+      // Call the callback with the themes
+      console.log(`[ThemeSelector] Calling onThemesSelected with themes: ${themesToUse}`);
+      onThemesSelected(themesToUse);
+
+      console.log(`[ThemeSelector] Theme selection complete, transition should happen now`);
+
+      // Try to force the transition directly
+      if (forceTransition) {
+        console.log(`[ThemeSelector] Calling forceTransition directly`);
+        forceTransition();
+      }
+
+      // Dispatch a custom event to notify that themes have been selected
+      // This will NOT automatically transition, but will prepare the component
+      // for when the user clicks the continue button
+      const event = new CustomEvent('themes-selected', { detail: { themes: themesToUse } });
+      document.dispatchEvent(event);
+      console.log(`[ThemeSelector] Dispatched custom event 'themes-selected' with themes:`, themesToUse);
+    } catch (error) {
+      console.error("[ThemeSelector] Error in handleContinue:", error);
+      // Still try to continue even if tracking fails
+      onThemesSelected(themesToUse);
+
+      // Try to force transition even if there was an error
+      if (forceTransition) {
+        forceTransition();
+      }
     }
   };
 
@@ -194,6 +227,7 @@ const ThemeSelector = ({ onThemesSelected }: ThemeSelectorProps) => {
           selectedThemesCount={selectedThemes.length}
           onContinue={handleContinue}
           isLoading={loading}
+          forceTransition={forceTransition}
         />
       </div>
     </div>

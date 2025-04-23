@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { forceSignOut } from "@/utils/authUtils";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -11,23 +12,43 @@ const Navbar = () => {
   const { isAuthenticated, user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const closeMenu = () => setIsOpen(false);
 
   const handleSignOut = async () => {
     try {
+      console.log("[Navbar] Initiating sign out process");
       await signOut();
       toast.success("Logged out successfully");
+
+      // Force a page reload to ensure all state is cleared
+      console.log("[Navbar] Redirecting to home page after logout");
       navigate("/");
+
+      // Add a small delay before showing success message
+      setTimeout(() => {
+        // Check if we're actually logged out
+        if (!isAuthenticated) {
+          console.log("[Navbar] Logout confirmed successful");
+        } else {
+          console.warn("[Navbar] User still appears to be authenticated after logout");
+          // Use the utility function to force sign out as a last resort
+          forceSignOut();
+        }
+      }, 500);
     } catch (error: any) {
+      console.error("[Navbar] Error during sign out:", error);
       toast.error(error.message || "Failed to log out");
+
+      // Even if there's an error, try to navigate away
+      navigate("/");
     }
   };
 
   const isActive = (path: string) => {
     return location.pathname === path ? "font-medium text-brand-green" : "text-gray-700 hover:text-brand-green";
   };
-  
+
   const navLinks = [
     { text: "Home", path: "/" },
     { text: "How It Works", path: "/how-it-works" },
@@ -59,7 +80,7 @@ const Navbar = () => {
                   {link.text}
                 </Link>
               ))}
-              
+
               {userLinks.map((link) => (
                 <Link
                   key={link.path}
@@ -79,8 +100,8 @@ const Navbar = () => {
                   <User className="h-5 w-5" />
                   <span>{user?.email}</span>
                 </Link>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="sm"
                   onClick={handleSignOut}
                   className="text-gray-700 hover:text-red-600 hover:bg-red-50"
@@ -124,7 +145,7 @@ const Navbar = () => {
                       {link.text}
                     </Link>
                   ))}
-                  
+
                   {isAuthenticated && (
                     <>
                       <div className="border-t border-gray-200 pt-6">
@@ -140,8 +161,8 @@ const Navbar = () => {
                         ))}
                       </div>
                       <div className="border-t border-gray-200 pt-6">
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           className="text-red-600 hover:bg-red-50 w-full justify-start"
                           onClick={() => {
                             handleSignOut();
@@ -154,7 +175,7 @@ const Navbar = () => {
                       </div>
                     </>
                   )}
-                  
+
                   {!isAuthenticated && (
                     <div className="border-t border-gray-200 pt-6 flex flex-col space-y-4">
                       <Link to="/login" onClick={closeMenu}>

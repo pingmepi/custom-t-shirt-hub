@@ -212,7 +212,12 @@ export function useCanvasInitialization({
                   console.error("Error processing image:", error);
                   addPlaceholderText();
                 }
-              }, { crossOrigin: 'anonymous' });
+              }, { crossOrigin: 'anonymous' })
+              .catch(error => {
+                console.error("Error loading design image:", error);
+                console.log("Falling back to placeholder text due to image load error");
+                addPlaceholderText();
+              });
             } catch (error) {
               console.error("Error loading design image:", error);
               addPlaceholderText();

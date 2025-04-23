@@ -233,7 +233,7 @@ const DesignCanvas = ({ initialImageUrl, initialDesignData, onDesignUpdated }: D
         }
       } else {
         console.log("No object selected for color change");
-        toast.error('No object selected');
+        toast.error('Please select an object first before changing its color');
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);

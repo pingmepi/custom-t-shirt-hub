@@ -1,14 +1,13 @@
-import { createClient } from '@supabase/supabase-js';
+// This file is a compatibility layer to avoid breaking imports
+// It re-exports the main Supabase client from the integrations directory
 
-// Get environment variables
-const supabaseUrl = 'https://lchamzwbdmqpmabvaqpi.supabase.co';
-const supabaseAnonKey = 'your-anon-key'; // Replace with your actual anon key
+import { supabase } from '@/integrations/supabase/client';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    storageKey: 'sb-lchamzwbdmqpmabvaqpi-auth-token',
-    storage: localStorage,
-    autoRefreshToken: true,
-  }
-});
+// Re-export the supabase client
+export { supabase };
+
+// Log a warning about using the deprecated import path
+console.warn(
+  '[Deprecated] Importing supabase from "@/lib/supabase" is deprecated. ' +
+  'Please update your imports to use "@/integrations/supabase/client" instead.'
+);

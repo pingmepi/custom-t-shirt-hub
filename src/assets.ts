@@ -8,7 +8,7 @@ import mockup6 from '../assets/images/tshirt/mockup-6.webp';
 
 // Design images
 import designFlow from '../assets/images/design/designFlow.webp';
-import placeholder from '../assets/images/design/placeholder.svg';
+import placeholder from '../assets/images/design/placeholder.png'; // Changed from SVG to PNG
 import placeholder1 from '../assets/images/placeholder-1.jpeg';
 
 // Export all assets for easy access
