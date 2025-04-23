@@ -1,0 +1,109 @@
+name: Verify RLS Policies
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/**'
+      - 'schema/**'
+      - 'db/**'
+  workflow_dispatch:
+
+jobs:
+  verify-rls:
+    name: Verify RLS Policies
+    runs-on: ubuntu-latest
+    
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      
+      - name: Verify RLS policies
+        run: |
+          # Create a temporary script that outputs results in GitHub-friendly format
+          cat > verify-rls-github.sh << 'EOF'
+          #!/bin/bash
+          
+          echo "## RLS Policy Verification Results" >> $GITHUB_STEP_SUMMARY
+          
+          # Check if RLS is enabled on important tables
+          echo "### RLS Status on Tables" >> $GITHUB_STEP_SUMMARY
+          RLS_CHECK=$(supabase db query --db-url "$SUPABASE_DB_URL" --password "$SUPABASE_DB_PASSWORD" "SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public' AND tablename IN ('designs', 'profiles', 'orders');")
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "$RLS_CHECK" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          
+          # Check if necessary policies exist
+          echo "### Existing Policies" >> $GITHUB_STEP_SUMMARY
+          POLICY_CHECK=$(supabase db query --db-url "$SUPABASE_DB_URL" --password "$SUPABASE_DB_PASSWORD" "SELECT tablename, policyname, cmd, permissive FROM pg_policies WHERE schemaname = 'public' AND tablename IN ('designs', 'profiles', 'orders');")
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "$POLICY_CHECK" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          
+          # Verify specific policies for designs table
+          DESIGNS_POLICIES=$(supabase db query --db-url "$SUPABASE_DB_URL" --password "$SUPABASE_DB_PASSWORD" "SELECT policyname FROM pg_policies WHERE schemaname = 'public' AND tablename = 'designs';")
+          
+          # Check for required policies
+          REQUIRED_POLICIES=(
+              "Users can view their own designs"
+              "Users can insert their own designs"
+              "Users can update their own designs"
+              "Users can delete their own designs"
+          )
+          
+          MISSING_POLICIES=()
+          for policy in "${REQUIRED_POLICIES[@]}"; do
+              if ! echo "$DESIGNS_POLICIES" | grep -q "$policy"; then
+                  MISSING_POLICIES+=("$policy")
+              fi
+          done
+          
+          echo "### Policy Verification Results" >> $GITHUB_STEP_SUMMARY
+          if [ ${#MISSING_POLICIES[@]} -eq 0 ]; then
+              echo "✅ All required policies are present on the designs table." >> $GITHUB_STEP_SUMMARY
+          else
+              echo "❌ The following required policies are missing from the designs table:" >> $GITHUB_STEP_SUMMARY
+              for policy in "${MISSING_POLICIES[@]}"; do
+                  echo "   - $policy" >> $GITHUB_STEP_SUMMARY
+              done
+              echo "This PR contains database changes that may affect RLS policies." >> $GITHUB_STEP_SUMMARY
+              echo "Please ensure all required policies are preserved or recreated." >> $GITHUB_STEP_SUMMARY
+              exit 1
+          fi
+          
+          # Check permissions for authenticated role
+          echo "### Permissions for Authenticated Role" >> $GITHUB_STEP_SUMMARY
+          PERMISSIONS_CHECK=$(supabase db query --db-url "$SUPABASE_DB_URL" --password "$SUPABASE_DB_PASSWORD" "SELECT grantee, table_name, privilege_type FROM information_schema.role_table_grants WHERE grantee = 'authenticated' AND table_name IN ('designs', 'profiles', 'orders');")
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "$PERMISSIONS_CHECK" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          
+          exit 0
+          EOF
+          
+          chmod +x verify-rls-github.sh
+          ./verify-rls-github.sh
+      
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('${{ github.workspace }}/GITHUB_STEP_SUMMARY.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `# RLS Policy Verification\n\n${summary}`
+            });
