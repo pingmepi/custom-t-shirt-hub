@@ -36,35 +36,31 @@ So that I can ensure smooth delivery and customer satisfaction
 ```
 
 ## Functional Requirements
+- Landing page showcasing pre-designed t-shirts to inspire users
+- T-shirt color selector to preview templates on different colors (e.g., black, white, grey)
+- User authentication with email/password (basic implementation)
+- Theme selection view with ~15 predefined themes shown as cards/toggles
+- Step-by-step question flow with one question shown at a time and a progress bar
+- Confirmation dialog to review question responses before proceeding
+- Basic design editor with fabric.js for customization
+- Question response sidebar during design editing to reference user preferences
 
-### Currently Implemented
-- ✅ Landing page showcasing pre-designed t-shirts to inspire users
-- ✅ T-shirt color selector to preview templates on different colors (e.g., black, white, grey)
-- ✅ User authentication with email/password (basic implementation)
-- ✅ Theme selection view with ~15 predefined themes shown as cards/toggles
-- ✅ Step-by-step question flow with one question shown at a time and a progress bar
-- ✅ Confirmation dialog to review question responses before proceeding
-- ✅ Basic design editor with fabric.js for customization
-- ✅ Question response sidebar during design editing to reference user preferences
+- Role-based access control (Customer, Admin)
+- Capture and store all user responses to questions
+- Generate a preview design based on question inputs
+- User dashboard to view saved designs and past orders
 
-### In Progress
-- 🚧 Role-based access control (Customer, Admin)
-- 🚧 Capture and store all user responses to questions
-- 🚧 Generate a preview design based on question inputs
-- 🚧 User dashboard to view saved designs and past orders
-
-### Not Yet Implemented
-- ❌ If the user is not logged in, a sign-up pop-up should be shown
-- ❌ Allow users to edit the generated design using a visual editor
-- ❌ Store the original model-generated image and the final user-edited image
-- ❌ Maintain metadata: themes, user responses, editor actions, timestamps
-- ❌ Enable design reordering from saved history
-- ❌ Collect shipping details including phone, address, and pin code
-- ❌ Integrate payments using Razorpay or Stripe
-- ❌ Create orders with status tracking (pending, printing, shipped, delivered)
-- ❌ Admin dashboard to manage and update order statuses
-- ❌ Basic support section with contact number
-- ❌ Track question usage statistics for analytics and improvement
+- If the user is not logged in, a sign-up pop-up should be shown
+- Allow users to edit the generated design using a visual editor
+- Store the original model-generated image and the final user-edited image
+- Maintain metadata: themes, user responses, editor actions, timestamps
+- Enable design reordering from saved history
+- Collect shipping details including phone, address, and pin code
+- Integrate payments using Razorpay or Stripe
+- Create orders with status tracking (pending, printing, shipped, delivered)
+- Admin dashboard to manage and update order statuses
+- Basic support section with contact number
+- Track question usage statistics for analytics and improvement
 
 ### Must Have
  Landing page showcasing pre-designed t-shirts to inspire users
@@ -175,387 +171,6 @@ Additional Nice to Have:
 
 > **Note**: For a comprehensive list of all APIs (implemented, documented, and planned), including endpoints, payloads, and usage details, refer to [API Documentation](./api_details.md).
 
-### APIs Required
-
-#### `GET /prebuilt-designs`
-Fetches a list of pre-made design templates to display on the landing page.
-
-**Response:**
-```json
-{
-  "designs": [
-    {
-      "id": "demo-101",
-      "title": "Travel Explorer",
-      "preview_images": {
-        "white": "https://cdn.example.com/designs/demo101-white.png",
-        "black": "https://cdn.example.com/designs/demo101-black.png",
-        "grey": "https://cdn.example.com/designs/demo101-grey.png"
-      }
-    }
-  ]
-}
-```
-
-**Mandatory Fields:**
-- `id`, `title`, and at least one color variant in `preview_images`
-
-Below are the APIs along with their expected request and response JSON formats:
-
----
-
-#### `GET /themes`
-
-Fetch all available themes to be shown on the theme selection screen.
-
-**Mandatory Fields in Response:**
-
-- `id`: (string) unique identifier for each theme
-- `name`: (string) name of the theme shown on UI
-
-**Response:**
-
-```json
-{
-  "themes": [
-    {"id": "theme-1", "name": "Travel"},
-    {"id": "theme-2", "name": "Music"},
-    {"id": "theme-3", "name": "Sports"},
-    {"id": "theme-4", "name": "Art"},
-    {"id": "theme-5", "name": "Gaming"}
-  ]
-}
-```
-
-\--- along with their expected request and response JSON formats:
-
----
-
-#### `POST /generate-questions`
-
-**Mandatory Fields in Request:**
-
-- `themes`: (array of strings) list of selected theme IDs
-  **Request:**
-
-```json
-{
-  "themes": ["sports", "travel", "music"]
-}
-```
-
-**Response:**
-
-```json
-{
-  "questions": [
-    {"id": 1, "text": "What is your favorite destination?"},
-    {"id": 2, "text": "What type of clothing do you prefer?"},
-    {"id": 3, "text": "What is your go-to color palette?"},
-    {"id": 4, "text": "Any specific message or slogan?"},
-    {"id": 5, "text": "Do you want an image included?"}
-  ]
-}
-```
-
----
-
-#### `POST /submit-responses`
-
-**Mandatory Fields in Request:**
-
-- `user_id`: (string) unique identifier for the user
-- `responses`: (object) mapping of question IDs to user responses
-  **Request:**
-
-```json
-{
-  "user_id": "user-123",
-  "responses": {
-    "q1": "Paris",
-    "q2": "Oversized T-shirt",
-    "q3": "Muted pastels",
-    "q4": "Wander often",
-    "q5": "Yes"
-  }
-}
-```
-
-**Response:**
-
-```json
-{
-  "design_intent": {
-    "theme": "travel",
-    "style": "oversized",
-    "colors": "pastel",
-    "text": "Wander often",
-    "include_image": true
-  }
-}
-```
-
----
-
-#### `POST /generate-design-preview`
-
-**Mandatory Fields in Request:**
-
-- `design_intent.text`: (string)
-- `design_intent.colors`: (string)
-
-**Optional Fields:**
-
-- `design_intent.layout`
-- `design_intent.image`
-  **Request:**
-
-```json
-{
-  "design_intent": {
-    "text": "Wander often",
-    "colors": "pastel",
-    "layout": "center",
-    "image": "default-travel-icon.png"
-  }
-}
-```
-
-**Response:**
-
-```json
-{
-  "preview_url": "https://cdn.yourapp.com/previews/design123.png"
-}
-```
-
----
-
-#### `POST /save-final-design`
-
-**Mandatory Fields in Request:**
-
-- `user_id`: (string)
-- `final_design_data.text`, `final_design_data.colors`: (strings)
-
-**Optional Fields:**
-
-- `final_design_data.font`
-- `final_design_data.image`
-- `final_design_data.layout`
-- `editor_actions`: (array of strings)
-  **Request:**
-
-```json
-{
-  "user_id": "user-123",
-  "final_design_data": {
-    "text": "Wander often",
-    "colors": "pastel",
-    "font": "Sans Serif",
-    "image": "user-upload-abc.png",
-    "layout": "center"
-  },
-  "editor_actions": ["text-changed", "image-replaced", "alignment-updated"]
-}
-```
-
-**Response:**
-
-```json
-{
-  "design_id": "design-789",
-  "preview_url": "https://cdn.yourapp.com/final/design789.png",
-  "metadata": {
-    "timestamp": "2025-04-01T10:00:00Z",
-    "themes": ["travel"],
-    "question_responses": {"q1": "Paris", "q2": "Oversized T-shirt", ...},
-    "configuration": {"text": "Wander often", "colors": "pastel"},
-    "editor_actions": ["text-changed", "image-replaced"]
-  }
-}
-```
-
----
-
-#### `POST /create-order`
-
-**Mandatory Fields in Request:**
-
-- `user_id`: (string)
-- `design_id`: (string)
-- `shipping_info.name`, `address`, `city`, `state`, `postal_code`, `phone`: (strings)
-- `payment_id`: (string)
-  **Request:**
-
-```json
-{
-  "user_id": "user-123",
-  "design_id": "design-789",
-  "shipping_info": {
-    "name": "Jane Doe",
-    "address": "123 MG Road",
-    "city": "Bangalore",
-    "state": "Karnataka",
-    "postal_code": "560001",
-    "phone": "+91-9876543210"
-  },
-  "payment_id": "pay_abc123"
-}
-```
-
-**Response:**
-
-```json
-{
-  "order_id": "order-456",
-  "status": "pending"
-}
-```
-
----
-
-#### `GET /user-orders`
-
-**Mandatory Fields in Request:**
-
-- `user_id`: (string)
-  **Request:**
-
-```json
-{
-  "user_id": "user-123"
-}
-```
-
-**Response:**
-
-```json
-{
-  "orders": [
-    {
-      "order_id": "order-456",
-      "design_preview": "https://cdn.yourapp.com/final/design789.png",
-      "status": "delivered",
-      "placed_on": "2025-04-01T10:05:00Z"
-    }
-  ]
-}
-```
-
----
-
-#### `GET /admin-orders`
-
-**Optional Fields in Request:**
-
-- `filter.status`: (string) filter by order status
-  **Request:**
-
-```json
-{
-  "filter": {"status": "pending"}
-}
-```
-
-**Response:**
-
-```json
-{
-  "orders": [
-    {
-      "order_id": "order-456",
-      "user_name": "Jane Doe",
-      "design_id": "design-789",
-      "shipping_city": "Bangalore",
-      "status": "pending"
-    }
-  ]
-}
-```
-
----
-
-#### `POST /update-order-status`
-
-**Mandatory Fields in Request:**
-
-- `order_id`: (string)
-- `new_status`: (string)
-  **Request:**
-
-```json
-{
-  "order_id": "order-456",
-  "new_status": "shipped"
-}
-```
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "message": "Order status updated to shipped"
-}
-```
-
----
-
-#### `GET /design/:id`
-
-**Mandatory Fields in URL Path:**
-
-- `id`: (string) design ID
-  **Response:**
-
-```json
-{
-  "design_id": "design-789",
-  "user_id": "user-123",
-  "initial_image": "https://cdn.yourapp.com/previews/design123.png",
-  "final_image": "https://cdn.yourapp.com/final/design789.png",
-  "metadata": {
-    "themes": ["travel"],
-    "question_responses": {"q1": "Paris", ...},
-    "configuration": {"text": "Wander often", "font": "Sans Serif"},
-    "editor_actions": ["text-changed"]
-  }
-}
-```
-
-
-#### `GET /question-stats`
-
-**Response:**
-
-```json
-{
-  "most_used_questions": [
-    {"id": "q1", "text": "What's your favorite color?", "usage_count": 156},
-    {"id": "q3", "text": "What style are you looking for?", "usage_count": 142}
-  ],
-  "most_common_responses": {
-    "q1": {"Blue": 45, "Black": 32, "Red": 29},
-    "q3": {"Minimal": 67, "Bold": 42, "Vintage": 33}
-  }
-}
-```
-
-#### `GET /user-preferences/:userId`
-
-**Response:**
-
-```json
-{
-  "color_preferences": ["blue", "pastel", "muted"],
-  "style_preferences": ["minimal", "elegant"],
-  "most_recent_design_id": "design-789",
-  "total_designs": 4,
-  "total_orders": 2
-}
-```
-
 
 ### Authentication Flow
 - Email/Password authentication
@@ -593,17 +208,17 @@ Fetch all available themes to be shown on the theme selection screen.
 - Modular backend to enable future vendor integrations
 
 ## UI/UX Requirements - Implementation Status
-- ✅ Theme selection view with predefined interest themes displayed as cards or toggles
-- ✅ Progress bar for question design flow
-- ✅ One-question-at-a-time design UI
-- ✅ Confirmation dialog for reviewing responses before proceeding
-- ✅ Basic DesignCanvas with fabric.js integration
-- 🚧 Dashboard for user profile, saved designs, and orders
-- ❌ Clean dashboard for current design being edited
-- ❌ Support page with email and phone
-- ❌ Color picker input with visual selection and text input
-- 🚧 Clear error messages for failed operations
-- 🚧 Loading states for asynchronous operations
+- Theme selection view with predefined interest themes displayed as cards or toggles
+- Progress bar for question design flow
+- One-question-at-a-time design UI
+- Confirmation dialog for reviewing responses before proceeding
+- Basic DesignCanvas with fabric.js integration
+- Dashboard for user profile, saved designs, and orders
+- Clean dashboard for current design being edited
+- Support page with email and phone
+- Color picker input with visual selection and text input
+- Clear error messages for failed operations
+- Loading states for asynchronous operations
 - Clean, Flowing UX/UI
 - Landing page with a carousel or grid of already-made designs to inspire users
 - Option for users to preview each design on different t-shirt colors (e.g., white, black, grey)
