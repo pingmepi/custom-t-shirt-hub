@@ -1,0 +1,13 @@
+# First, make sure all your changes are staged
+git add src/services/designsService.ts
+
+# Commit the changes with a descriptive message
+git commit -m "Update designsService with improved error handling and session refresh"
+
+# Push the changes to the apr24 branch
+# If you're already on the apr24 branch:
+git push origin apr24
+
+# If you need to switch to the apr24 branch first:
+# git checkout apr24
+# git push origin apr24

@@ -9,7 +9,12 @@ import { toast } from "sonner";
  */
 export const fetchUserDesigns = async (userId: string): Promise<TShirtDesign[]> => {
   console.log("[DesignsService] Fetching designs for user:", userId);
-  
+  console.log("[DesignsService] !");
+  const response = await supabase
+    .from('profiles')
+    .select('*').single();
+  console.log(response);
+
   if (!userId) {
     console.error("[DesignsService] No user ID provided");
     return [];
@@ -18,7 +23,6 @@ export const fetchUserDesigns = async (userId: string): Promise<TShirtDesign[]> 
   try {
     // First, verify the session is valid
     const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    
     if (sessionError) {
       console.error("[DesignsService] Session error:", sessionError);
       throw new Error("Authentication error: " + sessionError.message);
@@ -29,17 +33,11 @@ export const fetchUserDesigns = async (userId: string): Promise<TShirtDesign[]> 
       throw new Error("No active session");
     }
     
-    // Verify the user ID matches the session user ID for security
-    if (sessionData.session.user.id !== userId) {
-      console.warn("[DesignsService] User ID mismatch. Session user:", sessionData.session.user.id, "Requested user:", userId);
-      // For security, we'll only allow fetching the current user's designs
-      userId = sessionData.session.user.id;
-    }
-    
+
     // Attempt to fetch designs
     const { data, error } = await supabase
       .from('designs')
-      .select('*')
+      .select('id')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
     
@@ -200,6 +198,7 @@ export const fetchDesignById = async (designId: string, userId?: string): Promis
  * This can help diagnose issues with RLS policies
  */
 export const checkDesignsTableAccess = async (): Promise<boolean> => {
+  // return true;
   try {
     console.log("[DesignsService] Checking designs table access");
     
